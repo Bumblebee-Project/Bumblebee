@@ -22,7 +22,7 @@ static const char acpi_optimus_dsm_muid[] = {
 
 static struct pci_dev *dis_dev;
 static acpi_handle dis_handle;
-static int dis_enabled = 0;
+static int dis_enabled = 1;
 
 /* shamelessly taken from nouveau_acpi.c */
 static int acpi_optimus_dsm(acpi_handle handle, int func, char *args,
@@ -89,7 +89,7 @@ static void bbswitch_acpi_on(void) {
 }
 
 static void bbswitch_off(void) {
-    if (dis_enabled)
+    if (!dis_enabled)
         return;
 
     printk(KERN_INFO "bbswitch: disabling discrete graphics\n");
@@ -105,7 +105,7 @@ static void bbswitch_off(void) {
 }
 
 static void bbswitch_on(void) {
-    if (!dis_enabled)
+    if (dis_enabled)
         return;
 
     printk(KERN_INFO "bbswitch: enabling discrete graphics\n");
