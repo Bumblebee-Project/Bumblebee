@@ -100,6 +100,8 @@ static void bbswitch_off(void) {
     pci_set_power_state(dis_dev, PCI_D3hot);
 
     bbswitch_acpi_off();
+
+    dis_enabled = 0;
 }
 
 static void bbswitch_on(void) {
@@ -116,6 +118,8 @@ static void bbswitch_on(void) {
         printk(KERN_WARNING "bbswitch: failed to enable %s\n",
             dev_name(&dis_dev->dev));
     pci_set_master(dis_dev);
+
+    dis_enabled = 1;
 }
 
 static int bbswitch_write(struct file *filp, const char __user *buff,
