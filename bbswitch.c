@@ -165,10 +165,10 @@ static int __init bbswitch_init(void) {
         if (pdev->vendor != PCI_VENDOR_ID_INTEL) {
             dis_dev = pdev;
             dis_handle = handle;
+            acpi_get_name(handle, ACPI_FULL_PATHNAME, &buf);
+            printk(KERN_INFO "bbswitch: Found discrete VGA device %s: %s\n",
+                dev_name(&pdev->dev), (char *)buf.pointer);
         }
-        acpi_get_name(handle, ACPI_FULL_PATHNAME, &buf);
-        printk(KERN_INFO "bbswitch: Found discrete VGA device %s: %s\n",
-            dev_name(&pdev->dev), (char *)buf.pointer);
         kfree(buf.pointer);
     }
 
