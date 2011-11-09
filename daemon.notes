@@ -1,0 +1,30 @@
+Bumblebee design layout:
+
+Bumblebee is intended to be a software implementation of the Nvidia Optimus
+behavior at the userspace level. It's primary objective is to offer the same
+power features and performance as that of Optimus cards running on Windows
+platforms.
+
+The current Bumblebee implementation (as developed by The Bumblebee Project)
+works following the client-server model. The server side is a daemon (bumblebeed)
+accepting connections from the clients (applications run under optirun) and
+should act imitating the Optimus features, such as:
+
+  On battery power:
+    - The discrete card should be allways off, unless explicitly required
+    - All renderization should be done in the integrated card.
+
+  On AC power:
+    - The card is on at all times, except by user request.
+    - The 3D application rendering should be done on the dedicated card when
+        needed.
+
+Bumblebee daemon design (WIP):
+
+Objectives:
+
+ - Manage X server start on request by 'optirun'
+ - Manage X server stop when not needed by any application
+ - Manage discrete card switchs automatically
+
+Bumblebee client design (WIP):
