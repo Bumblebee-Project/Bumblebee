@@ -104,12 +104,12 @@ static void bbswitch_off(void) {
 
     printk(KERN_INFO "bbswitch: disabling discrete graphics\n");
 
+    bbswitch_acpi_off();
+
     pci_save_state(dis_dev);
     pci_clear_master(dis_dev);
     pci_disable_device(dis_dev);
     pci_set_power_state(dis_dev, PCI_D3hot);
-
-    bbswitch_acpi_off();
 }
 
 static void bbswitch_on(void) {
