@@ -22,7 +22,6 @@ static const char acpi_optimus_dsm_muid[] = {
 
 static struct pci_dev *dis_dev;
 static acpi_handle dis_handle;
-static int dis_enabled = 1;
 
 /* shamelessly taken from nouveau_acpi.c */
 static int acpi_optimus_dsm(acpi_handle handle, int func, char *args,
@@ -88,8 +87,19 @@ static void bbswitch_acpi_on(void) {
     
 }
 
+// Returns 1 if the card is disabled, 0 if enabled
+static int is_card_disabled(void) {
+    u32 cfg_word;
+    // read first config word which contains Vendor and Device ID. If all bits
+    // are enabled, the device is assumed to be off
+    pci_read_config_dword(dis_dev, 0, &cfg_word);
+    // if one of the bits is not enabled (the card is enabled), the inverted
+    // result will be non-zero and hence logical not will make it 0 ("false")
+    return !~cfg_word;
+}
+
 static void bbswitch_off(void) {
-    if (!dis_enabled)
+    if (is_card_disabled())
         return;
 
     printk(KERN_INFO "bbswitch: disabling discrete graphics\n");
@@ -100,12 +110,10 @@ static void bbswitch_off(void) {
     pci_set_power_state(dis_dev, PCI_D3hot);
 
     bbswitch_acpi_off();
-
-    dis_enabled = 0;
 }
 
 static void bbswitch_on(void) {
-    if (dis_enabled)
+    if (!is_card_disabled())
         return;
 
     printk(KERN_INFO "bbswitch: enabling discrete graphics\n");
@@ -118,8 +126,6 @@ static void bbswitch_on(void) {
         printk(KERN_WARNING "bbswitch: failed to enable %s\n",
             dev_name(&dis_dev->dev));
     pci_set_master(dis_dev);
-
-    dis_enabled = 1;
 }
 
 static int bbswitch_write(struct file *filp, const char __user *buff,
@@ -145,8 +151,9 @@ static int bbswitch_write(struct file *filp, const char __user *buff,
 
 static int bbswitch_read(char *page, char **start, off_t off,
     int count, int *eof, void *data) {
-    int len = 0;
-    return len;
+    // show the card state. Example output: 0000:01:00:00 ON
+    return snprintf(page, count, "%s %s\n", dev_name(&dis_dev->dev),
+             is_card_disabled() ? "OFF" : "ON");
 }
 
 static int __init bbswitch_init(void) {
@@ -182,6 +189,9 @@ static int __init bbswitch_init(void) {
         printk(KERN_ERR "bbswitch: Couldn't create proc entry\n");
         return -ENOMEM;
     }
+
+    printk(KERN_INFO "bbswitch: Succesfully loaded. Discrete card %s is %s\n",
+        dev_name(&dis_dev->dev), is_card_disabled() ? "off" : "on");
 
     acpi_entry->write_proc = bbswitch_write;
     acpi_entry->read_proc = bbswitch_read;
