@@ -9,6 +9,7 @@
 #include <linux/acpi.h>
 #include <linux/module.h>
 #include <asm/uaccess.h>
+#include <linux/suspend.h>
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Toggle the discrete graphics card");
@@ -22,6 +23,11 @@ static const char acpi_optimus_dsm_muid[] = {
 
 static struct pci_dev *dis_dev;
 static acpi_handle dis_handle;
+
+/* used for keeping the PM event handler */
+static struct notifier_block nb;
+/* whether the card was off before suspend or not; on: 0, off: 1 */
+int dis_before_suspend_disabled;
 
 /* shamelessly taken from nouveau_acpi.c */
 static int acpi_optimus_dsm(acpi_handle handle, int func, char *args,
@@ -156,6 +162,29 @@ static int bbswitch_read(char *page, char **start, off_t off,
              is_card_disabled() ? "OFF" : "ON");
 }
 
+static int bbswitch_pm_handler(struct notifier_block *nbp,
+    unsigned long event_type, void *p) {
+    switch (event_type) {
+    case PM_HIBERNATION_PREPARE:
+    case PM_SUSPEND_PREPARE:
+        dis_before_suspend_disabled = is_card_disabled();
+        // enable the device before suspend to avoid the PCI config space from
+        // being saved incorrectly
+        if (dis_before_suspend_disabled)
+            bbswitch_on();
+        break;
+    case PM_POST_HIBERNATION:
+    case PM_POST_SUSPEND:
+    case PM_POST_RESTORE:
+        // after suspend, the card is on, but if it was off before suspend,
+        // disable it again
+        if (dis_before_suspend_disabled)
+            bbswitch_off();
+        break;
+    }
+    return 0;
+}
+
 static int __init bbswitch_init(void) {
     struct proc_dir_entry *acpi_entry;
     struct pci_dev *pdev = NULL;
@@ -196,11 +225,17 @@ static int __init bbswitch_init(void) {
     acpi_entry->write_proc = bbswitch_write;
     acpi_entry->read_proc = bbswitch_read;
 
+    nb.notifier_call = &bbswitch_pm_handler;
+    register_pm_notifier(&nb);
+
     return 0;
 }
 
 static void __exit bbswitch_exit(void) {
     remove_proc_entry("bbswitch", acpi_root_dir);
+
+    if (nb.notifier_call)
+        unregister_pm_notifier(&nb);
 }
 
 module_init(bbswitch_init);
