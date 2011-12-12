@@ -108,6 +108,14 @@ static void bbswitch_off(void) {
     if (is_card_disabled())
         return;
 
+    // to prevent the system from possibly locking up, don't disable the device
+    // if it's still in use by a driver (i.e. nouveau or nvidia)
+    if (dis_dev->driver) {
+        printk(KERN_WARNING "bbswitch: device %s is in use by driver '%s', "
+            "refusing OFF", dev_name(&dis_dev->dev), dis_dev->driver->name);
+        return;
+    }
+
     printk(KERN_INFO "bbswitch: disabling discrete graphics\n");
 
     bbswitch_acpi_off();
