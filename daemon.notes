@@ -10,14 +10,19 @@ works following the client-server model. The server side is a daemon (bumblebeed
 accepting connections from the clients (applications run under optirun) and
 should act imitating the Optimus features, such as:
 
-  On battery power:
-    - The discrete card should be allways off, unless explicitly required
-    - All renderization should be done in the integrated card.
+On battery power:
+ - The discrete card should be allways off, unless explicitly required
+ - All renderization should be done in the integrated card.
 
-  On AC power:
-    - The card is on at all times, except by user request.
-    - The 3D application rendering should be done on the dedicated card when
-        needed.
+On AC power:
+ - The card is on at all times, except by user request.
+ - The 3D application rendering should be done on the dedicated card when needed.
+
+Design guidelines:
+
+ - Establish a protocol to communicate server and it's clients. Maybe a code + message
+   could be enough to communicate both in huma readable and machine form. (see below)
+ - be as much KISS as possible.
 
 Bumblebee daemon design (WIP):
 
@@ -25,6 +30,46 @@ Objectives:
 
  - Manage X server start on request by 'optirun'
  - Manage X server stop when not needed by any application
- - Manage discrete card switchs automatically
+ - Manage kernel module loading/unloading.
+ - Manage discrete card switchs automatically through bbswitch kernel module
+
+Daemon/client communication protocol:
+ - Server ready
+ - Server not ready
+ - Server not started
+ - Server error
+ - Plain OK message
+
+Implementation:
+
 
 Bumblebee client design (WIP):
+
+Called with a program to be run on the second X server. It should ask the daemon if 
+the server is ready, if not request to start it. When the server is started, it should start
+the aplication throgh VirtualGL on the second X server. If a VirtualGL client is needed 
+(like the case when VGLTransport is needed) start it.
+When the program ends 'optirun' instance will send a 'done' notification.
+
+Daemon/client communication protocol:
+ - Server start request
+ - Server status request
+ - Server done notification
+
+Implementation:
+
+Proposals:
+
+ - Possibly combine client/server into a single executable - decide mode based on 
+   commandline option and/or how the application is called.
+ - Do we need a complicated protocol? Perhaps simply "echoing" a status to the client will
+   be enough? (after all - we can safely assume any client wants the use of the second X?)
+ 
+
+Protocol suggestion:
+first byte is the status or request "code", entire message will be human-readable, followed by a newline. Example:
+
+Client: "Status?\n" (S being the request code)
+Server: "Error: Could not start X\n" (E being the response code)
+Server: "Ready for requests. Card is turned on and X is running as PID 5267, 5 applications using optirun" (R being the response code)
+
