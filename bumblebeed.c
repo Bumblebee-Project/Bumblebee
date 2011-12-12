@@ -209,7 +209,7 @@ static int init_socket(void) {
     //Listen a maximum of 5 connections in queve
     int list_res = listen(bb_config.bb_socket.bb_sock_fd, 5);
     if (list_res == -1) {
-        bb_log(LOG_ERR, "Error in bind");
+        bb_log(LOG_ERR, "Error in listen");
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
