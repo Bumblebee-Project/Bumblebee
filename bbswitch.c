@@ -63,7 +63,9 @@ static int acpi_optimus_dsm(acpi_handle handle, int func, char *args,
     obj = (union acpi_object *)output.pointer;
 
     if (obj->type == ACPI_TYPE_INTEGER)
-        *result = obj->integer.value;
+        if (result)
+            *result = obj->integer.value;
+
         // REVS (revision number) not found, possibly not an Optimus?
         if (obj->integer.value == 0x80000002) {
             printk(KERN_INFO "bbswitch: Optimus function not found\n");
