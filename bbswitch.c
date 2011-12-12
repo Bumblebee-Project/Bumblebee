@@ -81,16 +81,19 @@ static int acpi_optimus_dsm(acpi_handle handle, int func, char *args,
     return 0;
 }
 
-static void bbswitch_acpi_off(void) {
+static int bbswitch_acpi_off(void) {
     char args[] = {1, 0, 0, 3};
     u32 result = 0;
 
     if (!acpi_optimus_dsm(dis_handle, 0x1A, args, &result)) {
         printk(KERN_INFO "bbswitch: Result of _DSM call: %08X\n", result);
+        return 0;
     }
+    // failure
+    return 1;
 }
-static void bbswitch_acpi_on(void) {
-    
+static int bbswitch_acpi_on(void) {
+    return 0;
 }
 
 // Returns 1 if the card is disabled, 0 if enabled
@@ -112,13 +115,17 @@ static void bbswitch_off(void) {
     // if it's still in use by a driver (i.e. nouveau or nvidia)
     if (dis_dev->driver) {
         printk(KERN_WARNING "bbswitch: device %s is in use by driver '%s', "
-            "refusing OFF", dev_name(&dis_dev->dev), dis_dev->driver->name);
+            "refusing OFF\n", dev_name(&dis_dev->dev), dis_dev->driver->name);
         return;
     }
 
     printk(KERN_INFO "bbswitch: disabling discrete graphics\n");
 
-    bbswitch_acpi_off();
+    if (bbswitch_acpi_off()) {
+        printk(KERN_WARNING "bbswitch: ACPI call failed, the device is not"
+            " disabled\n");
+        return;
+    }
 
     pci_save_state(dis_dev);
     pci_clear_master(dis_dev);
