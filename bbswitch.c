@@ -189,6 +189,11 @@ static int bbswitch_pm_handler(struct notifier_block *nbp,
         if (dis_before_suspend_disabled)
             bbswitch_off();
         break;
+    case PM_RESTORE_PREPARE:
+        // deliberately don't do anything as it does not occur before suspend
+        // nor hibernate, but before restoring a saved image. In that case,
+        // either PM_POST_HIBERNATION or PM_POST_RESTORE will be called
+        break;
     }
     return 0;
 }
