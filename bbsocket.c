@@ -23,6 +23,7 @@
  */
 
 #include "bbsocket.h"
+#include "bblogger.h"
 
 #include <poll.h>
 #include <netdb.h>
@@ -40,9 +41,7 @@ int socketConnect(char * address, int nonblock){
   //create the socket itself
   int sock = socket(PF_UNIX, SOCK_STREAM, 0);
   if (sock < 0){
-    #if DEBUG >= 1
-    //fprintf(stderr, "Could not create socket! Error: %s\n", strerror(errno));
-    #endif
+    bb_log(LOG_ERR, "Could not create socket. Error: %s\n", strerror(errno));
     return -1;
   }
   //full our the address information for the connection
@@ -60,9 +59,7 @@ int socketConnect(char * address, int nonblock){
     }
   }else{
     //connection fail
-    #if DEBUG >= 1
-    //fprintf(stderr, "Could not connect to %s! Error: %s\n", address.c_str(), strerror(errno));
-    #endif
+    bb_log(LOG_ERR, "Could not connect to %s! Error: %s\n", address, strerror(errno));
     //close the socket and set it to -1
     socketClose(&sock);
   }
@@ -72,13 +69,11 @@ int socketConnect(char * address, int nonblock){
 /// Nicely closes the given socket, setting it to -1.
 /// Never fails.
 void socketClose(int * sock){
-  #if DEBUG >= 6
-  //fprintf(stderr, "Socket closed.\n");
-  #endif
+  bb_log(LOG_INFO, "Socket closed.\n");
   //do not close closed sockets
   if (*sock == -1){return;}
   //half-close the socket first
-  shutdown(sock, SHUT_RDWR);
+  shutdown(*sock, SHUT_RDWR);
   //fully close the socket
   close(*sock);
   //set to -1 to prevent usage
@@ -132,9 +127,7 @@ int socketWrite(int * sock, void * buffer, int len){
     switch (errno){
       case EWOULDBLOCK: return 0; break;
       default:
-        #if DEBUG >= 2
-        //fprintf(stderr, "Could not write data! Error: %s\n", strerror(errno));
-        #endif
+        bb_log(LOG_WARNING, "Could not write data! Error: %s\n", strerror(errno));
         socketClose(sock);
         return 0;
         break;
@@ -162,9 +155,7 @@ int socketRead(int * sock, void * buffer, int len){
     switch (errno){
       case EWOULDBLOCK: return 0; break;
       default:
-        #if DEBUG >= 2
-        //fprintf(stderr, "Could not iread data! Error: %s\n", strerror(errno));
-        #endif
+        bb_log(LOG_WARNING, "Could not read data! Error: %s\n", strerror(errno));
         socketClose(sock);
         return 0;
         break;
@@ -192,9 +183,7 @@ int socketServer(char * address, int nonblock){
   //create the socket
   int sock = socket(AF_UNIX, SOCK_STREAM, 0);
   if (sock < 0){
-    #if DEBUG >= 1
-    //fprintf(stderr, "Could not create socket! Error: %s\n", strerror(errno));
-    #endif
+    bb_log(LOG_ERR, "Could not create socket! Error: %s\n", strerror(errno));
     return -1;
   }
   //set to nonblocking if requested
@@ -212,15 +201,11 @@ int socketServer(char * address, int nonblock){
   if (ret == 0){
     ret = listen(sock, 100);//start listening, backlog of 100 allowed
     if (ret != 0){
-      #if DEBUG >= 1
-      //fprintf(stderr, "Listen failed! Error: %s\n", strerror(errno));
-      #endif
+      bb_log(LOG_ERR, "Listen failed! Error: %s\n", strerror(errno));
       socketClose(&sock);
     }
   }else{
-    #if DEBUG >= 1
-    //fprintf(stderr, "Binding failed! Error: %s\n", strerror(errno));
-    #endif
+    bb_log(LOG_ERR, "Binding failed! Error: %s\n", strerror(errno));
     socketClose(&sock);
   }
   return sock;
@@ -244,9 +229,7 @@ int socketAccept(int * sock, int nonblock){
 
   if (r < 0){
     if ((errno != EWOULDBLOCK) && (errno != EAGAIN) && (errno != EINTR)){
-      #if DEBUG >= 1
-      //fprintf(stderr, "Error during accept - closing server socket.\n");
-      #endif
+      bb_log(LOG_ERR, "Error during accept - closing server socket: %s\n", strerror(errno));
       socketClose(sock);
     }
   }

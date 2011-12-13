@@ -34,7 +34,7 @@
 #include <fcntl.h>
 
 int socketConnect(char * address, int nonblock);
-void socketClose();
+void socketClose(int * sock);
 int socketCanRead(int sock);
 int socketCanWrite(int sock);
 int socketWrite(int * sock, void * buffer, int len);

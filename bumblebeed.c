@@ -25,46 +25,14 @@
 #include <assert.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <unistd.h>
 #include <grp.h>
-#include <syslog.h>
-#include <string.h>
 #include <signal.h>
-#include <stdarg.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include "bbcommon.h"
-
-
-
-/* Default buffer size */
-static const size_t DEFAULT_BUFFER_SIZE = 256;
-
-/* Structure containing the daemon configuration and status */
-static struct {
-    /* The name which the program was called */
-    char* program_name;
-    int is_daemonized;
-
-    /* Process ID and Session ID */
-    pid_t pid, sid;
-    /* Communication socket */
-    struct {
-        int bb_sock_fd;
-        struct sockaddr_un bb_socket_name;
-    } bb_socket;
-
-    /* Have track of their children */
-    struct {
-        int have_children;
-        pid_t x_pid;
-    } x_stat;
-} bb_config;
-
+#include "bbglobals.h"
+#include "bbsocket.h"
+#include "bblogger.h"
 
 /**
  *  Print a little note on usage 
@@ -81,185 +49,33 @@ static void print_usage(int exit_val) {
 }
 
 /**
- * Initialize log capabilities. Return 0 on success 
- */
-static int init_log(int daemon) {
-    /* Open Logggin mechanism based on configuration */
-    if (daemon) {
-        openlog(DAEMON_NAME, LOG_PID, LOG_DAEMON);
-    } else {
-    }
-    /* Should end with no error by now */
-    return 0;
-}
-
-/**
- * Log a message to the current log mechanism.
- * Try to keep log messages less than 80 characters.
- */
-static void bb_log(int priority, char* msg_format, ...) {
-    va_list args;
-	va_start(args, msg_format);
-	if (bb_config.is_daemonized) {
-	    vsyslog(priority, msg_format, args);
-	} else {
-	    char* fullmsg_fmt = malloc(DEFAULT_BUFFER_SIZE);
-	    switch (priority) {
-	        case LOG_ERR:
-	            fullmsg_fmt = strcpy(fullmsg_fmt, "[ERROR]");
-	            break;
-	        case LOG_DEBUG:
-	            fullmsg_fmt = strcpy(fullmsg_fmt, "[DEBUG]");
-	            break;
-	        case LOG_WARNING:
-	            fullmsg_fmt = strcpy(fullmsg_fmt, "[WARN]");
-	            break;
-	        default:
-	            fullmsg_fmt = strcpy(fullmsg_fmt, "[INFO]");
-	    }
-	    fullmsg_fmt = strcat(fullmsg_fmt, msg_format);
-	    //Append NL char
-	    fullmsg_fmt = strcat(fullmsg_fmt, "\n");
-	    vfprintf(stderr, fullmsg_fmt, args);
-	    free(fullmsg_fmt);
-	}
-	va_end(args);
-}
-
-/** 
- * Close logging mechanism 
- */
-static void bb_closelog(void) {
-    if (bb_config.is_daemonized) {
-        closelog();
-    } else {
-    }
-}
-
-/**
  *  Start the X server by fork-exec 
  */
 static int start_x(void) {
-    bb_log(LOG_INFO, "Dummy: Starting X server");
+    bb_log(LOG_INFO, "Dummy: Starting X server\n");
+    return 0;//dummy return value
 }
 
 /** 
  * Kill the second X server if any 
  */
 static int stop_x(void) {
-    bb_log(LOG_INFO, "Dummy: Stopping X server");
+    bb_log(LOG_INFO, "Dummy: Stopping X server\n");
+    return 0;//dummy return value
 }
 
 /** 
  * Turn Dedicated card ON 
  */
 static int bb_switch_card_on(void) {
-
+  return 0;//dummy return value
 }
 
 /**
  *  Turn Dedicated card OFF 
  */
 static int bb_switch_card_off(void) {
-
-}
-
-
-
-/**
- *  Set a PID file lock 
- */
-static int init_pidfile_lock(void) {
-    //TODO:Error handling
-    int lfp = open(PID_FILE, O_RDWR | O_CREAT, 0644);
-    if(lfp != -1) {
-        /* Lock entire file */
-        struct flock lock = {
-            .l_type = F_WRLCK,
-            .l_start = 0,
-            .l_whence = SEEK_SET,
-            .l_len = 0,
-            .l_pid = getpid()
-        };
-        if(fcntl(lfp, F_SETLK, &lock) != -1) {
-            if(ftruncate(lfp, 0) == 0) {
-                char pidtext[DEFAULT_BUFFER_SIZE];
-                snprintf(pidtext, sizeof(pidtext), "%ld\n", getpid());
-                int r = write(lfp, pidtext, strlen(pidtext));
-                if(r != -1) {
-                    return 0;
-                }
-            }
-        }
-    }
-    return 1;
-}
-
-/**
- *  Initialize a local socket for communication with optirun instances 
- */
-static int init_socket(void) {
-    bb_log(LOG_INFO, "Opening communication socket.");
-
-    /* Create the socket */
-    bb_config.bb_socket.bb_sock_fd = socket(AF_LOCAL, SOCK_STREAM, 0);
-    if ( bb_config.bb_socket.bb_sock_fd == -1 ) {
-        int error_number = errno;
-        switch (error_number) {
-            case EAFNOSUPPORT:
-            case EMFILE:
-            case EPROTONOSUPPORT:
-            case EPROTOTYPE:
-                bb_log(LOG_ERR, "Error in socket socket init: %s",
-                        strerror(error_number));
-                break;
-            case EACCES:
-            case ENOBUFS:
-            case ENOMEM:
-                bb_log(LOG_ERR, "Error in socket socket init: %s",
-                        strerror(error_number));
-                break;
-            default:
-                bb_log(LOG_ERR, "Unexpected error (bug)");
-        }
-        return (EXIT_FAILURE);
-    }
-
-    //TODO: Handle errors
-    bb_config.bb_socket.bb_socket_name.sun_family = AF_LOCAL;
-    strcpy(bb_config.bb_socket.bb_socket_name.sun_path, BBS_PATH);
-    int bind_res = bind(bb_config.bb_socket.bb_sock_fd,
-            (struct sockaddr *) &(bb_config.bb_socket.bb_socket_name),
-            SUN_LEN (&(bb_config.bb_socket.bb_socket_name)));
-    if (bind_res == -1) {
-        bb_log(LOG_ERR, "Error in bind");
-        return EXIT_FAILURE;
-    }
-    //Listen a maximum of 5 connections in queve
-    int list_res = listen(bb_config.bb_socket.bb_sock_fd, 5);
-    if (list_res == -1) {
-        bb_log(LOG_ERR, "Error in listen");
-        return EXIT_FAILURE;
-    }
-    return EXIT_SUCCESS;
-}
-
-/**
- *  Remove the socket file 
- */
-static void bb_close_socket(void) {
-    if (close(bb_config.bb_socket.bb_sock_fd) == -1) {
-        int err = errno;
-        switch(err) {
-            case EBADF:
-            case EINTR:
-            case EIO:
-                bb_log(LOG_ERR, "%s", strerror(err));
-        }
-    }
-    //TODO: Handle errors
-    unlink (bb_config.bb_socket.bb_socket_name.sun_path);
-    bb_log(LOG_INFO, "Socket closed");
+  return 0;//dummy return value
 }
 
 /** 
@@ -267,8 +83,7 @@ static void bb_close_socket(void) {
  */
 static void die_gracefully() {
     /* Release all used resources, as quicly as we can */
-    bb_close_socket();
-    remove(PID_FILE);
+    socketClose(&bb_config.bb_socket);
     bb_closelog();
     exit(EXIT_SUCCESS);
 }
@@ -296,6 +111,7 @@ static int read_configuration() {
         }
     }
     fclose(cf);
+    return 0;//placeholder
 }
 
 /**
@@ -313,8 +129,8 @@ static int daemonize(void) {
     gp = getgrnam(DEFAULT_BB_GROUP);
     if (gp == NULL) {
         int error_num = errno;
-        bb_log(LOG_ERR, "%s", strerror(error_num));
-        bb_log(LOG_ERR, "There is no \"%s\" group", DEFAULT_BB_GROUP);
+        bb_log(LOG_ERR, "%s\n", strerror(error_num));
+        bb_log(LOG_ERR, "There is no \"%s\" group\n", DEFAULT_BB_GROUP);
         exit(EXIT_FAILURE);
     }
     if (setgid((*gp).gr_gid) != -1) {
@@ -323,32 +139,26 @@ static int daemonize(void) {
     }
 
     /* Fork off the parent process */
-    bb_config.pid = fork();
-    if (bb_config.pid < 0) {
+    pid_t bb_pid = fork();
+    if (bb_pid < 0) {
         bb_config.is_daemonized = 0;
-        bb_log(LOG_ERR, "Could not fork to background");
+        bb_log(LOG_ERR, "Could not fork to background\n");
         exit (EXIT_FAILURE);
     }
     /* If we got a good PID, then we can exit the parent process. */
-    if (bb_config.pid > 0) {
+    if (bb_pid > 0) {
         exit (EXIT_SUCCESS);
-    }
-
-    /* set PID lock file */
-    if (init_pidfile_lock()) {
-        bb_log(LOG_ERR, "Could not create PID file.");
-        exit (EXIT_FAILURE);
     }
 
     /* Change the file mode mask */
     umask(023);
 
     /* Create a new SID for the child process */
-    bb_config.sid = setsid();
-    if (bb_config.sid < 0) {
+    pid_t bb_sid = setsid();
+    if (bb_sid < 0) {
         /* Log the failure */
         bb_config.is_daemonized = 0;
-        bb_log(LOG_ERR, "Could not set SID: ", strerror(errno));
+        bb_log(LOG_ERR, "Could not set SID: %s\n", strerror(errno));
         exit (EXIT_FAILURE);
     }
 
@@ -356,7 +166,7 @@ static int daemonize(void) {
     if ((chdir("/")) < 0) {
         /* Log the failure */
         bb_config.is_daemonized = 0;
-        bb_log(LOG_ERR, "Could not change to root directory: ", strerror(errno));
+        bb_log(LOG_ERR, "Could not change to root directory: %s\n", strerror(errno));
         exit (EXIT_FAILURE);
     }
 
@@ -364,6 +174,7 @@ static int daemonize(void) {
     close(STDIN_FILENO);
     close(STDOUT_FILENO);
     close(STDERR_FILENO);
+    return bb_config.is_daemonized;
 }
 
 /**
@@ -372,66 +183,34 @@ static int daemonize(void) {
 static void handle_signal(int sig) {
     switch(sig) {
         case SIGHUP:
-            bb_log(LOG_WARNING, "Received %s signal (ignoring...)", strsignal(sig));
+            bb_log(LOG_WARNING, "Received %s signal (ignoring...)\n", strsignal(sig));
             break;
         case SIGINT:
         case SIGQUIT:
         case SIGTERM:
-            bb_log(LOG_WARNING, "Received %s signal.", strsignal(sig));
+            bb_log(LOG_WARNING, "Received %s signal.\n", strsignal(sig));
             die_gracefully();
             break;
         default:
-            bb_log(LOG_WARNING, "Unhandled signal (%d) %s", strsignal(sig));
+            bb_log(LOG_WARNING, "Unhandled signal %s\n", strsignal(sig));
             break;
     }
-}
-
-/**
- *  Handle children (?) 
- */
-static void handle_children(int sig) {
-
-}
-
-/**
- *  Handle an Optirun connection 
- */
-static int handle_optirun(int optirun_socket_fd) {
-    bb_log(LOG_INFO, "Optirun instance connection accepted");
-
-    pid_t pid;
-    pid = fork();
-    if (pid < 0) {
-        /* Error in fork handling connection */
-    }
-    if (pid == 0) {
-        /* Child process to handle optirun connection */
-        close(bb_config.bb_socket.bb_sock_fd);
-        /* Handle the connection */
-
-        /* Exit child */
-        exit(0);
-    } else {
-        /* Close our end of the connection on parent process */
-        close(optirun_socket_fd);
-    }
-    return 0;
 }
 
 /* Big Fat Loop. Never returns */
 static void main_loop(void) {
-    struct sockaddr_un optirun_name;
-    socklen_t optirun_name_len;
     int optirun_socket_fd;
 
-    bb_log(LOG_INFO, "Started main loop");
+    bb_log(LOG_INFO, "Started main loop\n");
     /* Listen for Optirun conections and act accordingly */
-    for(;;) {
+    while(bb_config.bb_socket != -1) {
+        usleep(100000);//sleep 100ms to prevent 100% CPU time usage
         /* Accept a connection. */
-        optirun_socket_fd = accept(bb_config.bb_socket.bb_sock_fd,
-                               (struct sockaddr *) &optirun_name, &optirun_name_len);
-        handle_optirun(optirun_socket_fd);
-        bb_log(LOG_INFO, "Not waiting anymore, I'm a full server and I'm alive! YAY!" );
+        optirun_socket_fd = socketAccept(&bb_config.bb_socket, 1);
+        if (optirun_socket_fd >= 0){
+          /// \todo Handle the connection.
+          bb_log(LOG_INFO, "Accepted socket %i!\n", optirun_socket_fd);
+        }
     }
 }
 
@@ -450,11 +229,8 @@ int main(int argc, char* argv[]) {
     /* Initializing configuration */
     bb_config.program_name = argv[0];
     bb_config.is_daemonized = 0;
-    bb_config.x_stat.have_children = 0;
 
     /* Parse the options, set flags as necessary */
-    int daemon = 0;
-    int verbose = 0;
     int c;
     while( (c = getopt(argc, argv, "dvh|help")) != -1) {
         switch(c){
@@ -462,10 +238,9 @@ int main(int argc, char* argv[]) {
                 print_usage(EXIT_SUCCESS);
                 break;
             case 'd':
-                daemon = 1;
+                bb_config.is_daemonized = 1;
                 break;
             case 'v':
-                verbose = 1;
                 fprintf(stderr, "Warning: Verbose mode not yet implemented\n");
                 break;
             default:
@@ -476,21 +251,23 @@ int main(int argc, char* argv[]) {
     }
 
     /* Init log Mechanism */
-    if (init_log(daemon)) {
+    if (bb_init_log()) {
         fprintf(stderr, "Unexpected error, could not initialize log.");
         return 1;
     }
 
     /* Daemonized if daemon flag is activated */
-    if (daemon) {
+    if (bb_config.is_daemonized) {
         if (daemonize()) {
-            bb_log(LOG_ERR, "Error: Bumblebee could not be daemonized");
+            bb_log(LOG_ERR, "Error: Bumblebee could not be daemonized\n");
             exit(EXIT_FAILURE);
         }
     }
 
     /* Initialize communication socket */
-    if (init_socket()) {
+    bb_config.bb_socket = socketServer("/tmp/bumblebeed", 1);
+
+    if (bb_config.bb_socket < 0) {
         bb_log(LOG_ERR, "Could not initialize Communication socket. Exit.\n");
         die_gracefully();
         exit(EXIT_FAILURE);
