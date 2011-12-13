@@ -66,7 +66,9 @@ static struct {
 } bb_config;
 
 
-/* Print a little note on usage */
+/**
+ *  Print a little note on usage 
+ */
 static void print_usage(int exit_val) {
     // Print help message and exit with exit code
     printf("Usage: %s [options]\n", bb_config.program_name);
@@ -78,7 +80,9 @@ static void print_usage(int exit_val) {
     exit(exit_val);
 }
 
-/* Initialize log capabilities. Return 0 on success */
+/**
+ * Initialize log capabilities. Return 0 on success 
+ */
 static int init_log(int daemon) {
     /* Open Logggin mechanism based on configuration */
     if (daemon) {
@@ -89,7 +93,7 @@ static int init_log(int daemon) {
     return 0;
 }
 
-/*
+/**
  * Log a message to the current log mechanism.
  * Try to keep log messages less than 80 characters.
  */
@@ -122,7 +126,9 @@ static void bb_log(int priority, char* msg_format, ...) {
 	va_end(args);
 }
 
-/* close logging mechanism */
+/** 
+ * Close logging mechanism 
+ */
 static void bb_closelog(void) {
     if (bb_config.is_daemonized) {
         closelog();
@@ -130,27 +136,39 @@ static void bb_closelog(void) {
     }
 }
 
-/* Start the X server by fork-exec */
+/**
+ *  Start the X server by fork-exec 
+ */
 static int start_x(void) {
     bb_log(LOG_INFO, "Dummy: Starting X server");
 }
 
-/* Kill the second X server if any */
+/** 
+ * Kill the second X server if any 
+ */
 static int stop_x(void) {
     bb_log(LOG_INFO, "Dummy: Stopping X server");
 }
 
-/* Turn Dedicated card ON */
+/** 
+ * Turn Dedicated card ON 
+ */
 static int bb_switch_card_on(void) {
 
 }
 
-/* Turn Dedicated card OFF */
+/**
+ *  Turn Dedicated card OFF 
+ */
 static int bb_switch_card_off(void) {
 
 }
 
-/* Set a PID file lock */
+
+
+/**
+ *  Set a PID file lock 
+ */
 static int init_pidfile_lock(void) {
     //TODO:Error handling
     int lfp = open(PID_FILE, O_RDWR | O_CREAT, 0644);
@@ -177,7 +195,9 @@ static int init_pidfile_lock(void) {
     return 1;
 }
 
-/* Initialize a local socket for communication with optirun instances */
+/**
+ *  Initialize a local socket for communication with optirun instances 
+ */
 static int init_socket(void) {
     bb_log(LOG_INFO, "Opening communication socket.");
 
@@ -224,7 +244,9 @@ static int init_socket(void) {
     return EXIT_SUCCESS;
 }
 
-/* Remove the socket file */
+/**
+ *  Remove the socket file 
+ */
 static void bb_close_socket(void) {
     if (close(bb_config.bb_socket.bb_sock_fd) == -1) {
         int err = errno;
@@ -240,7 +262,9 @@ static void bb_close_socket(void) {
     bb_log(LOG_INFO, "Socket closed");
 }
 
-/* Called when server must die */
+/** 
+ * Called when server must die 
+ */
 static void die_gracefully() {
     /* Release all used resources, as quicly as we can */
     bb_close_socket();
@@ -249,7 +273,9 @@ static void die_gracefully() {
     exit(EXIT_SUCCESS);
 }
 
-/* Read the configuration file */
+/**
+ *  Read the configuration file 
+ */
 static int read_configuration() {
     FILE *cf = fopen(CONFIG_FILE, "r");
     if (cf==(NULL)) { /* An error ocurred */
@@ -272,7 +298,9 @@ static int read_configuration() {
     fclose(cf);
 }
 
-/* Fork to the background, and exit parent. */
+/**
+ *  Fork to the background, and exit parent. 
+ */
 static int daemonize(void) {
 
     /* Daemon flag, should be reset to zero if fail to daemonize */
@@ -338,7 +366,9 @@ static int daemonize(void) {
     close(STDERR_FILENO);
 }
 
-/* Handle recieved signals */
+/**
+ *  Handle recieved signals 
+ */
 static void handle_signal(int sig) {
     switch(sig) {
         case SIGHUP:
@@ -356,12 +386,16 @@ static void handle_signal(int sig) {
     }
 }
 
-/* Handle children (?) */
+/**
+ *  Handle children (?) 
+ */
 static void handle_children(int sig) {
 
 }
 
-/* Handle an Optirun connection */
+/**
+ *  Handle an Optirun connection 
+ */
 static int handle_optirun(int optirun_socket_fd) {
     bb_log(LOG_INFO, "Optirun instance connection accepted");
 
