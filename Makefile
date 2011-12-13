@@ -2,10 +2,9 @@ SRC = bumblebeed.c bbsocket.c bbglobals.c bblogger.c bbrun.c
 OBJ = $(SRC:.c=.o)
 OUT = bumblebeed
 INCLUDES =
-DEBUG = 4
 OPTIMIZE = -g
 VERSION = `git describe --tags`
-CCFLAGS = -Wall -Wextra -funsigned-char $(OPTIMIZE) -DDEBUG=$(DEBUG) -DVERSION=$(VERSION)
+CCFLAGS = -Wall -Wextra -funsigned-char $(OPTIMIZE) -DVERSION=$(VERSION)
 CC = $(CROSS)gcc
 LD = $(CROSS)ld
 AR = $(CROSS)ar

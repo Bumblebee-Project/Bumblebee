@@ -45,7 +45,9 @@ static void print_usage(int exit_val) {
     printf("Usage: %s [options]\n", bb_config.program_name);
     printf("  Options:\n");
     printf("      -d\tRun as daemon.\n");
+    printf("      -c\tBe quit.\n");
     printf("      -v\tBe verbose.\n");
+    printf("      -V\tBe VERY verbose.\n");
     printf("      -h\tShow this help screen.\n");
     printf("\n");
     exit(exit_val);
@@ -229,6 +231,7 @@ void handle_socket(struct clientsocket * C){
           usleep(100000);//sleep 100ms to give X a chance to fail
           if (!isRunning()){
             snprintf(bb_config.errors, 256, "X failed to start!");
+            bb_log(LOG_ERR, "X failed to start!\n");
           }
         }
         if (isRunning()){
@@ -238,7 +241,11 @@ void handle_socket(struct clientsocket * C){
             bb_config.appcount++;
           }
         }else{
-          r = snprintf(buffer, 256, "No, secondary X is not active.\n");
+          if (bb_config.errors[0] != 0){
+            r = snprintf(buffer, 256, "No - error: %s\n", bb_config.errors);
+          }else{
+            r = snprintf(buffer, 256, "No, secondary X is not active.\n");
+          }
         }
         socketWrite(&C->sock, buffer, r);//we assume the write is fully successful.
         break;
@@ -331,11 +338,12 @@ int main(int argc, char* argv[]) {
     /* Initializing configuration */
     bb_config.program_name = argv[0];
     bb_config.is_daemonized = 0;
+    bb_config.verbosity = VERB_WARN;
     bb_config.errors[0] = 0;//no errors, yet :-)
 
     /* Parse the options, set flags as necessary */
     int c;
-    while( (c = getopt(argc, argv, "dvh|help")) != -1) {
+    while( (c = getopt(argc, argv, "dcvVh|help")) != -1) {
         switch(c){
             case 'h':
                 print_usage(EXIT_SUCCESS);
@@ -343,8 +351,14 @@ int main(int argc, char* argv[]) {
             case 'd':
                 bb_config.is_daemonized = 1;
                 break;
+            case 'c':
+                bb_config.verbosity = VERB_NONE;
+                break;
             case 'v':
-                fprintf(stderr, "Warning: Verbose mode not yet implemented\n");
+                bb_config.verbosity = VERB_INFO;
+                break;
+            case 'V':
+                bb_config.verbosity = VERB_DEBUG;
                 break;
             default:
                 // Unrecognized option

@@ -43,6 +43,21 @@ int bb_init_log() {
  * Try to keep log messages less than 80 characters.
  */
 void bb_log(int priority, char* msg_format, ...) {
+  switch (priority) {
+    case LOG_ERR:
+      if (bb_config.verbosity < VERB_ERR){return;}
+      break;
+    case LOG_DEBUG:
+      if (bb_config.verbosity < VERB_DEBUG){return;}
+      break;
+    case LOG_WARNING:
+      if (bb_config.verbosity < VERB_WARN){return;}
+      break;
+    default:
+      if (bb_config.verbosity < VERB_INFO){return;}
+      break;
+  }
+  
   va_list args;
   va_start(args, msg_format);
   if (bb_config.is_daemonized) {

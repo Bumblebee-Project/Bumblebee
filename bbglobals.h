@@ -42,6 +42,14 @@
 #define BB_DAEMON 1
 #define BB_NODEAMON 0
 
+/* Verbosity levels */
+#define VERB_NONE 0
+#define VERB_ERR 1
+#define VERB_WARN 2
+#define VERB_INFO 3
+#define VERB_DEBUG 4
+#define VERB_ALL 4
+
 /* Default buffer size */
 #define DEFAULT_BUFFER_SIZE 256
 
@@ -53,6 +61,8 @@
 struct bb_config_struct {
     /* The name which the program was called */
     char* program_name;
+
+    int verbosity;
     int is_daemonized;
 
     /* Communication socket */
