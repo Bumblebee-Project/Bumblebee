@@ -198,19 +198,72 @@ static void handle_signal(int sig) {
     }
 }
 
-/* Big Fat Loop. Never returns */
+/// Receive and/or sent data to/from this socket.
+/// \param sock Pointer to socket. Assumed to be valid.
+void handle_socket(int * sock){
+  /// \todo Handle connection
+}
+
+/// Socket list structure for use in main_loop.
+struct clientsocket{
+  int sock;
+  clientsocket * next;
+};
+
+/* The main loop handles all connections and cleanup.
+ * It returns if there are any problems with the listening socket.
+ */
 static void main_loop(void) {
     int optirun_socket_fd;
-
+    clientsocket * first = 0;//pointer to the first socket
+    clientsocket * last = 0;//pointer to the last socket
+    clientsocket * curr = 0;//current pointer to a socket
+    clientsocket * prev = 0;//previous pointer to a socket
+    
     bb_log(LOG_INFO, "Started main loop\n");
     /* Listen for Optirun conections and act accordingly */
     while(bb_config.bb_socket != -1) {
         usleep(100000);//sleep 100ms to prevent 100% CPU time usage
+
         /* Accept a connection. */
         optirun_socket_fd = socketAccept(&bb_config.bb_socket, 1);
         if (optirun_socket_fd >= 0){
-          /// \todo Handle the connection.
           bb_log(LOG_INFO, "Accepted socket %i!\n", optirun_socket_fd);
+
+          /* add to list of sockets */
+          curr = malloc(sizeof(clientsocket));
+          curr->me = optirun_socket_fd;
+          curr->next = 0;
+          if (last == 0){
+            first = curr;
+            last = curr;
+          }else{
+            last->next = curr;
+            last = curr;
+          }
+        }
+
+        /* loop through all connections, removing dead ones, receiving/sending data to the rest */
+        curr = first;
+        prev = 0;
+        while (curr != 0){
+          if (curr->me < 0){
+            //remove from list
+            if (prev == 0){
+              first = curr->next;
+              free(curr);
+              curr = first;
+            }else{
+              prev->next = curr->next;
+              free(curr);
+              curr = prev->next;
+            }
+          }else{
+            //active connection, handle it.
+            handle_socket(&curr->me);
+            prev = curr;
+            curr = curr->next;
+          }
         }
     }
 }
