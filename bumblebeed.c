@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2011 Bumblebee Project
  * Author: Joaquín Ignacio Aramendía <samsagax@gmail.com>
+ * Author: Jaron Viëtor AKA "Thulinma" <jaron@vietors.com>
  *
  * This file is part of Bumblebee.
  *
@@ -198,27 +199,53 @@ static void handle_signal(int sig) {
     }
 }
 
-/// Receive and/or sent data to/from this socket.
-/// \param sock Pointer to socket. Assumed to be valid.
-void handle_socket(int * sock){
-  /// \todo Handle connection
-}
-
 /// Socket list structure for use in main_loop.
 struct clientsocket{
   int sock;
-  clientsocket * next;
+  int inuse;
+  struct clientsocket * next;
 };
+
+/// Receive and/or sent data to/from this socket.
+/// \param sock Pointer to socket. Assumed to be valid.
+void handle_socket(struct clientsocket * C){
+  static char buffer[256];
+  //since these are local sockets, we can safely assume we get whole messages at a time
+  int r = socketRead(&C->sock, buffer, 256);
+  if (r > 0){
+    switch (buffer[0]){
+      case 'S'://status
+        //placeholder: return E.
+        r = snprintf(buffer, 256, "Ehm... This is a placeholder version. No status available.\n");
+        socketWrite(&C->sock, buffer, r);//we assume the write is fully successful.
+        break;
+      case 'F'://force VirtualGL if possible
+      case 'C'://check if VirtualGL is allowed
+        //placeholder: return N.
+        r = snprintf(buffer, 256, "No, you can't use VirtualGL. This version can't even start X yet, are you kidding me?\n");
+        //when answering yes, if (C->inuse == 0){C->inuse = 1; bb_config.appcount++;}
+        socketWrite(&C->sock, buffer, r);//we assume the write is fully successful.
+        break;
+      case 'D'://done, close the socket.
+        socketClose(&C->sock);
+        break;
+      default:
+        bb_log(LOG_WARNING, "Unhandled message received: %*s\n", r, buffer);
+        break;
+    }
+  }
+}
+
 
 /* The main loop handles all connections and cleanup.
  * It returns if there are any problems with the listening socket.
  */
 static void main_loop(void) {
     int optirun_socket_fd;
-    clientsocket * first = 0;//pointer to the first socket
-    clientsocket * last = 0;//pointer to the last socket
-    clientsocket * curr = 0;//current pointer to a socket
-    clientsocket * prev = 0;//previous pointer to a socket
+    struct clientsocket * first = 0;//pointer to the first socket
+    struct clientsocket * last = 0;//pointer to the last socket
+    struct clientsocket * curr = 0;//current pointer to a socket
+    struct clientsocket * prev = 0;//previous pointer to a socket
     
     bb_log(LOG_INFO, "Started main loop\n");
     /* Listen for Optirun conections and act accordingly */
@@ -228,11 +255,12 @@ static void main_loop(void) {
         /* Accept a connection. */
         optirun_socket_fd = socketAccept(&bb_config.bb_socket, 1);
         if (optirun_socket_fd >= 0){
-          bb_log(LOG_INFO, "Accepted socket %i!\n", optirun_socket_fd);
+          bb_log(LOG_INFO, "Accepted new connection\n", optirun_socket_fd, bb_config.appcount);
 
           /* add to list of sockets */
-          curr = malloc(sizeof(clientsocket));
-          curr->me = optirun_socket_fd;
+          curr = malloc(sizeof(struct clientsocket));
+          curr->sock = optirun_socket_fd;
+          curr->inuse = 0;
           curr->next = 0;
           if (last == 0){
             first = curr;
@@ -247,8 +275,10 @@ static void main_loop(void) {
         curr = first;
         prev = 0;
         while (curr != 0){
-          if (curr->me < 0){
+          if (curr->sock < 0){
             //remove from list
+            if (curr->inuse > 0){bb_config.appcount--;}
+            if (last == curr){last = prev;}
             if (prev == 0){
               first = curr->next;
               free(curr);
@@ -260,7 +290,7 @@ static void main_loop(void) {
             }
           }else{
             //active connection, handle it.
-            handle_socket(&curr->me);
+            handle_socket(curr);
             prev = curr;
             curr = curr->next;
           }

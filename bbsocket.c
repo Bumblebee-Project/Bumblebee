@@ -162,9 +162,6 @@ int socketRead(int * sock, void * buffer, int len){
     }
   }
   if (r == 0){
-    #if DEBUG >= 4
-    //fprintf(stderr, "Could not iread data! Socket is closed.\n");
-    #endif
     socketClose(sock);
   }
   return r;
