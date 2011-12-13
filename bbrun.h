@@ -1,0 +1,39 @@
+/*
+ * Copyright (C) 2011 Bumblebee Project
+ * Author: Jaron Viëtor AKA "Thulinma" <jaron@vietors.com>
+ *
+ * This file is part of Bumblebee.
+ *
+ * Bumblebee is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Bumblebee is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Bumblebee. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/*
+ * Run command functions for Bumblebee
+ */
+#pragma once
+#include <unistd.h>
+
+extern pid_t curr_id;
+
+/// Attempts to run the given command, replacing the current process
+void runCmd(char * cmd);
+
+/// Attempts to run the given command after forking.
+pid_t runFork(char * cmd);
+
+/// Returns 1 if a process is currently running, 0 otherwise.
+int isRunning();
+
+/// Stops the running process, if any.
+void runStop();

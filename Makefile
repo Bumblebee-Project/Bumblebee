@@ -1,4 +1,4 @@
-SRC = bumblebeed.c bbsocket.c bbglobals.c bblogger.c
+SRC = bumblebeed.c bbsocket.c bbglobals.c bblogger.c bbrun.c
 OBJ = $(SRC:.c=.o)
 OUT = bumblebeed
 INCLUDES =
