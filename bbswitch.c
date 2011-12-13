@@ -87,9 +87,15 @@ static int acpi_call_dsm(acpi_handle handle, const char muid[], int revid,
     params[1].integer.value = revid;
     params[2].type = ACPI_TYPE_INTEGER;
     params[2].integer.value = func;
-    params[3].type = ACPI_TYPE_BUFFER;
-    params[3].buffer.length = sizeof(args);
-    params[3].buffer.pointer = args;
+    if (args) {
+        params[3].type = ACPI_TYPE_BUFFER;
+        params[3].buffer.length = sizeof(args);
+        params[3].buffer.pointer = args;
+    } else {
+        // this function does not accept arguments. Pass an empty one
+        params[3].type = ACPI_TYPE_INTEGER;
+        params[3].buffer.pointer = 0;
+    }
 
     err = acpi_evaluate_object(handle, "_DSM", &input, &output);
     if (err) {
