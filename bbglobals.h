@@ -45,6 +45,10 @@
 /* Default buffer size */
 #define DEFAULT_BUFFER_SIZE 256
 
+/* For conversting defines to strings */
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+
 /* Structure containing the daemon configuration and status */
 struct bb_config_struct {
     /* The name which the program was called */

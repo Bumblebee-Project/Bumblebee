@@ -39,6 +39,7 @@
  */
 static void print_usage(int exit_val) {
     // Print help message and exit with exit code
+    printf("%s version %s\n\n", bb_config.program_name, TOSTRING(VERSION));
     printf("Usage: %s [options]\n", bb_config.program_name);
     printf("  Options:\n");
     printf("      -d\tRun as daemon.\n");
@@ -252,9 +253,10 @@ int main(int argc, char* argv[]) {
 
     /* Init log Mechanism */
     if (bb_init_log()) {
-        fprintf(stderr, "Unexpected error, could not initialize log.");
+        fprintf(stderr, "Unexpected error, could not initialize log.\n");
         return 1;
     }
+    bb_log(LOG_INFO, "%s version %s starting...\n", bb_config.program_name, TOSTRING(VERSION));
 
     /* Daemonized if daemon flag is activated */
     if (bb_config.is_daemonized) {
