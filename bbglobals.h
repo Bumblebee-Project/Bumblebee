@@ -58,6 +58,9 @@ struct bb_config_struct {
     /* Communication socket */
     int bb_socket;
     unsigned int appcount;
+
+    /* Holds any error messages */
+    char errors[256];
 };
 
 extern struct bb_config_struct bb_config;

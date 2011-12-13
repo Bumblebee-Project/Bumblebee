@@ -54,18 +54,20 @@ static void print_usage(int exit_val) {
 /**
  *  Start the X server by fork-exec 
  */
-static int start_x(void) {
-    bb_log(LOG_INFO, "Dummy: Starting X server\n");
-    return 0;//dummy return value
+void start_x(void) {
+  bb_log(LOG_INFO, "Starting X server\n");
+  /// \todo Not hardcode this completely, probably...
+  runFork("X -config /etc/bumblebee/xorg.conf.nvidia -sharevts -nolisten tcp -noreset :8");
 }
 
 /** 
  * Kill the second X server if any 
  */
-static int stop_x(void) {
+void stop_x(void) {
+  if (isRunning()){
     bb_log(LOG_INFO, "Stopping X server\n");
     runStop();
-    return 1;//always succeeds
+  }
 }
 
 /** 
@@ -172,7 +174,7 @@ static int daemonize(void) {
 }
 
 /**
- *  Handle recieved signals 
+ *  Handle recieved signals - except SIGCHLD, which is handled in bbrun.c
  */
 static void handle_signal(int sig) {
     switch(sig) {
@@ -207,15 +209,37 @@ void handle_socket(struct clientsocket * C){
   if (r > 0){
     switch (buffer[0]){
       case 'S'://status
-        //placeholder: return E.
-        r = snprintf(buffer, 256, "Ehm... This is a placeholder version. No status available.\n");
+        if (bb_config.errors[0] != 0){
+          r = snprintf(buffer, 256, "Error: %s\n", bb_config.errors);
+        }else{
+          if (isRunning()){
+            r = snprintf(buffer, 256, "Ready. X is PID %i, %i applications using bumblebeed.\n", curr_id, bb_config.appcount);
+          }else{
+            r = snprintf(buffer, 256, "Ready. X not running (yet).\n");
+          }
+        }
         socketWrite(&C->sock, buffer, r);//we assume the write is fully successful.
         break;
       case 'F'://force VirtualGL if possible
       case 'C'://check if VirtualGL is allowed
-        //placeholder: return N.
-        r = snprintf(buffer, 256, "No, you can't use VirtualGL. This version can't even start X yet, are you kidding me?\n");
-        //when answering yes, if (C->inuse == 0){C->inuse = 1; bb_config.appcount++;}
+        /// \todo Handle power management cases and powering card on/off.
+        //no X? attempt to start it
+        if (!isRunning()){
+          start_x();
+          usleep(100000);//sleep 100ms to give X a chance to fail
+          if (!isRunning()){
+            snprintf(bb_config.errors, 256, "X failed to start!");
+          }
+        }
+        if (isRunning()){
+          r = snprintf(buffer, 256, "Yes. X is active.\n");
+          if (C->inuse == 0){
+            C->inuse = 1;
+            bb_config.appcount++;
+          }
+        }else{
+          r = snprintf(buffer, 256, "No, secondary X is not active.\n");
+        }
         socketWrite(&C->sock, buffer, r);//we assume the write is fully successful.
         break;
       case 'D'://done, close the socket.
@@ -243,6 +267,11 @@ static void main_loop(void) {
     /* Listen for Optirun conections and act accordingly */
     while(bb_config.bb_socket != -1) {
         usleep(100000);//sleep 100ms to prevent 100% CPU time usage
+
+        //stop X if there is no need to keep it running
+        if (isRunning() && (bb_config.appcount == 0)){
+          stop_x();
+        }
 
         /* Accept a connection. */
         optirun_socket_fd = socketAccept(&bb_config.bb_socket, 1);
@@ -299,11 +328,10 @@ int main(int argc, char* argv[]) {
     signal(SIGINT, handle_signal);
     signal(SIGQUIT, handle_signal);
 
-    /* TODO: Should check for PID lock, we allow only one instance */
-
     /* Initializing configuration */
     bb_config.program_name = argv[0];
     bb_config.is_daemonized = 0;
+    bb_config.errors[0] = 0;//no errors, yet :-)
 
     /* Parse the options, set flags as necessary */
     int c;

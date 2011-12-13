@@ -77,7 +77,7 @@ pid_t runFork(char * cmd){
     sigaction(SIGCHLD, &new_action, NULL);
     handler_set = 1;
   }
-  if (curr_id == 0){
+  if (isRunning()){
     bb_log(LOG_ERR, "Attempted to start a process while one was already running.\n");
     return 0;
   }
