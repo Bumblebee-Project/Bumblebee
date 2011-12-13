@@ -104,10 +104,9 @@ static int acpi_call_dsm(acpi_handle handle, const char muid[16], int revid,
 
     obj = (union acpi_object *)output.pointer;
 
-    if (obj->type == ACPI_TYPE_INTEGER && result)
-            *result = obj->integer.value;
-
-    if (obj->type == ACPI_TYPE_BUFFER) {
+    if (obj->type == ACPI_TYPE_INTEGER && result) {
+        *result = obj->integer.value;
+    } else if (obj->type == ACPI_TYPE_BUFFER) {
         if (obj->buffer.length == 4 && result) {
             *result = 0;
             *result |= obj->buffer.pointer[0];
@@ -115,6 +114,9 @@ static int acpi_call_dsm(acpi_handle handle, const char muid[16], int revid,
             *result |= (obj->buffer.pointer[2] << 16);
             *result |= (obj->buffer.pointer[3] << 24);
         }
+    } else {
+        printk(KERN_WARNING "bbswitch: _DSM call yields an unsupported result"
+            " type: %X\n", obj->type);
     }
 
     kfree(output.pointer);
