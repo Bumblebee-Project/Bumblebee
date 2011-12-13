@@ -32,6 +32,16 @@ static const char acpi_nvidia_dsm_muid[] = {
     0xB3, 0x4D, 0x7E, 0x5F, 0xEA, 0x12, 0x9F, 0xD4
 };
 
+/*
+The next UUID has been found as well in
+https://bugs.launchpad.net/lpbugreporter/+bug/752542:
+
+0xD3, 0x73, 0xD8, 0x7E, 0xD0, 0xC2, 0x4F, 0x4E,
+0xA8, 0x54, 0x0F, 0x13, 0x17, 0xB0, 0x1C, 0x2C 
+It looks like something for Intel GPU:
+http://lxr.linux.no/#linux+v3.1.5/drivers/gpu/drm/i915/intel_acpi.c
+ */
+
 #define DSM_TYPE_UNSUPPORTED    0
 #define DSM_TYPE_OPTIMUS        1
 #define DSM_TYPE_NVIDIA         2
