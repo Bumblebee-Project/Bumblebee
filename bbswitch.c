@@ -23,6 +23,15 @@ static const char acpi_optimus_dsm_muid[] = {
     0xA7, 0x2B, 0x60, 0x42, 0xA6, 0xB5, 0xBE, 0xE0,
 };
 
+static const char acpi_nvidia_dsm_muid[] = {
+    0xA0, 0xA0, 0x95, 0x9D, 0x60, 0x00, 0x48, 0x4D,
+    0xB3, 0x4D, 0x7E, 0x5F, 0xEA, 0x12, 0x9F, 0xD4
+};
+
+#define DSM_TYPE_OPTIMUS        1
+#define DSM_TYPE_NVIDIA         2
+static int dsm_type = DSM_TYPE_UNSUPPORTED;
+
 static struct pci_dev *dis_dev;
 static acpi_handle dis_handle;
 
@@ -31,22 +40,36 @@ static struct notifier_block nb;
 /* whether the card was off before suspend or not; on: 0, off: 1 */
 int dis_before_suspend_disabled;
 
-/* shamelessly taken from nouveau_acpi.c */
-static int acpi_optimus_dsm(acpi_handle handle, int func, char *args,
-    uint32_t *result) {
+static char *buffer_to_string(const char buffer[], char *target) {
+    int i;
+    for (i=0; i<sizeof(buffer); i++) {
+        sprintf(target + i * 5, "%02X,", buffer[i]);
+    }
+    target[sizeof(buffer) * 5] = '\0';
+    return target;
+}
+
+static int acpi_call_dsm(acpi_handle handle, const char muid[], int revid,
+    int func, char *args, uint32_t *result) {
     struct acpi_buffer output = { ACPI_ALLOCATE_BUFFER, NULL };
     struct acpi_object_list input;
     union acpi_object params[4];
     union acpi_object *obj;
     int err;
 
+    if (sizeof(muid) != 16) {
+        printk(KERN_WARNING "bbswitch: Invalid length for _DSM UUID: %zi\n",
+            sizeof(muid));
+        return -EINVAL;
+    }
+
     input.count = 4;
     input.pointer = params;
     params[0].type = ACPI_TYPE_BUFFER;
-    params[0].buffer.length = sizeof(acpi_optimus_dsm_muid);
-    params[0].buffer.pointer = (char *)acpi_optimus_dsm_muid;
+    params[0].buffer.length = 16;
+    params[0].buffer.pointer = (char *)muid;
     params[1].type = ACPI_TYPE_INTEGER;
-    params[1].integer.value = 0x00000100;
+    params[1].integer.value = revid;
     params[2].type = ACPI_TYPE_INTEGER;
     params[2].integer.value = func;
     params[3].type = ACPI_TYPE_BUFFER;
@@ -55,22 +78,19 @@ static int acpi_optimus_dsm(acpi_handle handle, int func, char *args,
 
     err = acpi_evaluate_object(handle, "_DSM", &input, &output);
     if (err) {
-        printk(KERN_WARNING "bbswitch: failed to evaluate _DSM: %s\n",
-            acpi_format_exception(err));
+        char tmp[5 * max(sizeof(muid), sizeof(args))];
+
+        printk(KERN_WARNING "bbswitch: failed to evaluate _DSM {%s} %X %X"
+            " {%s}: %s\n",
+            buffer_to_string(muid, tmp), revid, func,
+            buffer_to_string(args, tmp), acpi_format_exception(err));
         return err;
     }
 
     obj = (union acpi_object *)output.pointer;
 
-    if (obj->type == ACPI_TYPE_INTEGER)
-        if (result)
+    if (obj->type == ACPI_TYPE_INTEGER && result)
             *result = obj->integer.value;
-
-        // REVS (revision number) not found, possibly not an Optimus?
-        if (obj->integer.value == 0x80000002) {
-            printk(KERN_INFO "bbswitch: Optimus function not found\n");
-            return -ENODEV;
-        }
 
     if (obj->type == ACPI_TYPE_BUFFER) {
         if (obj->buffer.length == 4 && result) {
@@ -86,18 +106,59 @@ static int acpi_optimus_dsm(acpi_handle handle, int func, char *args,
     return 0;
 }
 
-static int bbswitch_acpi_off(void) {
+// Returns 1 if a _DSM function and its function index exists and 0 otherwise
+static int has_dsm_func(const char muid[], int revid, int sfnc) {
+    u32 result = 0;
+
+    // fail if the _DSM call failed
+    if (!acpi_call_dsm(dis_handle, muid, revid, 0, 0, &result))
+        return 1;
+
+    // ACPI Spec v4 9.14.1: if bit 0 is zero, no function is supported. If
+    // the n-th bit is enabled, function n is supported
+    return result & 1 && result & (1 << sfnc);
+}
+
+static int bbswitch_optimus_dsm(void) {
     char args[] = {1, 0, 0, 3};
     u32 result = 0;
 
-    if (!acpi_optimus_dsm(dis_handle, 0x1A, args, &result)) {
+    if (!acpi_call_dsm(dis_handle, acpi_optimus_dsm_muid, 0x100, 0x1A, args,
+        &result)) {
         printk(KERN_INFO "bbswitch: Result of _DSM call: %08X\n", result);
         return 0;
     }
     // failure
     return 1;
 }
+
+static int bbswitch_acpi_off(void) {
+    if (dsm_type == DSM_TYPE_NVIDIA) {
+        char args[] = {2, 0, 0, 0};
+        u32 result = 0;
+
+        if (acpi_call_dsm(dis_handle, acpi_nvidia_dsm_muid, 0x102, 0x3, args,
+            &result)) {
+            // failure
+            return 1;
+        }
+        printk(KERN_INFO "bbswitch: Result of _DSM call for OFF: %08X\n", result);
+    }
+    return 0;
+}
+
 static int bbswitch_acpi_on(void) {
+    if (dsm_type == DSM_TYPE_NVIDIA) {
+        char args[] = {1, 0, 0, 0};
+        u32 result = 0;
+
+        if (acpi_call_dsm(dis_handle, acpi_nvidia_dsm_muid, 0x102, 0x3, args,
+            &result)) {
+            // failure
+            return 1;
+        }
+        printk(KERN_INFO "bbswitch: Result of _DSM call for ON: %08X\n", result);
+    }
     return 0;
 }
 
@@ -126,7 +187,7 @@ static void bbswitch_off(void) {
 
     printk(KERN_INFO "bbswitch: disabling discrete graphics\n");
 
-    if (bbswitch_acpi_off()) {
+    if (dsm_type == DSM_TYPE_OPTIMUS && bbswitch_optimus_dsm()) {
         printk(KERN_WARNING "bbswitch: ACPI call failed, the device is not"
             " disabled\n");
         return;
@@ -136,6 +197,8 @@ static void bbswitch_off(void) {
     pci_clear_master(dis_dev);
     pci_disable_device(dis_dev);
     pci_set_power_state(dis_dev, PCI_D3hot);
+
+    bbswitch_acpi_off();
 }
 
 static void bbswitch_on(void) {
@@ -235,6 +298,15 @@ static int __init bbswitch_init(void) {
 
     if (dis_dev == NULL) {
         printk(KERN_ERR "bbswitch: No discrete VGA device found\n");
+        return -ENODEV;
+    }
+
+    if (has_dsm_func(acpi_optimus_dsm_muid, 0x100, 0x1A)) {
+        dsm_type = DSM_TYPE_OPTIMUS;
+    } else if (has_dsm_func(acpi_nvidia_dsm_muid, 0x102, 0x3)) {
+        dsm_type = DSM_TYPE_NVIDIA;
+    } else {
+        printk(KERN_ERR "bbswitch: No suitable _DSM call found.\n");
         return -ENODEV;
     }
 
