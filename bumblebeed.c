@@ -34,6 +34,7 @@
 #include "bbglobals.h"
 #include "bbsocket.h"
 #include "bblogger.h"
+#include "bbrun.h"
 
 /**
  *  Print a little note on usage 
@@ -62,8 +63,9 @@ static int start_x(void) {
  * Kill the second X server if any 
  */
 static int stop_x(void) {
-    bb_log(LOG_INFO, "Dummy: Stopping X server\n");
-    return 0;//dummy return value
+    bb_log(LOG_INFO, "Stopping X server\n");
+    runStop();
+    return 1;//always succeeds
 }
 
 /** 
@@ -78,16 +80,6 @@ static int bb_switch_card_on(void) {
  */
 static int bb_switch_card_off(void) {
   return 0;//dummy return value
-}
-
-/** 
- * Called when server must die 
- */
-static void die_gracefully() {
-    /* Release all used resources, as quicly as we can */
-    socketClose(&bb_config.bb_socket);
-    bb_closelog();
-    exit(EXIT_SUCCESS);
 }
 
 /**
@@ -191,7 +183,7 @@ static void handle_signal(int sig) {
         case SIGQUIT:
         case SIGTERM:
             bb_log(LOG_WARNING, "Received %s signal.\n", strsignal(sig));
-            die_gracefully();
+            socketClose(&bb_config.bb_socket);//closing the socket terminates the server
             break;
         default:
             bb_log(LOG_WARNING, "Unhandled signal %s\n", strsignal(sig));
@@ -306,7 +298,6 @@ int main(int argc, char* argv[]) {
     signal(SIGTERM, handle_signal);
     signal(SIGINT, handle_signal);
     signal(SIGQUIT, handle_signal);
-    signal(SIGCHLD, SIG_IGN);
 
     /* TODO: Should check for PID lock, we allow only one instance */
 
@@ -352,13 +343,8 @@ int main(int argc, char* argv[]) {
     /* Initialize communication socket */
     bb_config.bb_socket = socketServer("/tmp/bumblebeed", 1);
 
-    if (bb_config.bb_socket < 0) {
-        bb_log(LOG_ERR, "Could not initialize Communication socket. Exit.\n");
-        die_gracefully();
-        exit(EXIT_FAILURE);
-    }
-
     main_loop();
 
-    return (EXIT_SUCCESS); /* Will never, ever reach this line */
+    bb_closelog();
+    return (EXIT_SUCCESS);
 }
