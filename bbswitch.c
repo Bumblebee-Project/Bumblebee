@@ -22,12 +22,12 @@ MODULE_VERSION("0.1");
 
 extern struct proc_dir_entry *acpi_root_dir;
 
-static const char acpi_optimus_dsm_muid[] = {
+static const char acpi_optimus_dsm_muid[16] = {
     0xF8, 0xD8, 0x86, 0xA4, 0xDA, 0x0B, 0x1B, 0x47,
     0xA7, 0x2B, 0x60, 0x42, 0xA6, 0xB5, 0xBE, 0xE0,
 };
 
-static const char acpi_nvidia_dsm_muid[] = {
+static const char acpi_nvidia_dsm_muid[16] = {
     0xA0, 0xA0, 0x95, 0x9D, 0x60, 0x00, 0x48, 0x4D,
     0xB3, 0x4D, 0x7E, 0x5F, 0xEA, 0x12, 0x9F, 0xD4
 };
@@ -64,19 +64,13 @@ static char *buffer_to_string(const char buffer[], char *target) {
     return target;
 }
 
-static int acpi_call_dsm(acpi_handle handle, const char muid[], int revid,
+static int acpi_call_dsm(acpi_handle handle, const char muid[16], int revid,
     int func, char *args, uint32_t *result) {
     struct acpi_buffer output = { ACPI_ALLOCATE_BUFFER, NULL };
     struct acpi_object_list input;
     union acpi_object params[4];
     union acpi_object *obj;
     int err;
-
-    if (sizeof(muid) != 16) {
-        printk(KERN_WARNING "bbswitch: Invalid length for _DSM UUID: %zi\n",
-            sizeof(muid));
-        return -EINVAL;
-    }
 
     input.count = 4;
     input.pointer = params;
@@ -128,7 +122,7 @@ static int acpi_call_dsm(acpi_handle handle, const char muid[], int revid,
 }
 
 // Returns 1 if a _DSM function and its function index exists and 0 otherwise
-static int has_dsm_func(const char muid[], int revid, int sfnc) {
+static int has_dsm_func(const char muid[16], int revid, int sfnc) {
     u32 result = 0;
 
     // fail if the _DSM call failed
