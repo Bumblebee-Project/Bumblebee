@@ -28,6 +28,7 @@ static const char acpi_nvidia_dsm_muid[] = {
     0xB3, 0x4D, 0x7E, 0x5F, 0xEA, 0x12, 0x9F, 0xD4
 };
 
+#define DSM_TYPE_UNSUPPORTED    0
 #define DSM_TYPE_OPTIMUS        1
 #define DSM_TYPE_NVIDIA         2
 static int dsm_type = DSM_TYPE_UNSUPPORTED;
