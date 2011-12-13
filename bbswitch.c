@@ -1,9 +1,13 @@
 /**
  * Disable discrete graphics (currently nvidia only)
  *
- * Based on:
- * byo-switcheroo   Alex Williamson <alex.williamson@redhat.com>
- * acpi_call        Michal Kottman
+ * Usage:
+ * Disable discrete card
+ * # echo OFF > /proc/acpi/bbswitch
+ * Enable discrete card
+ * # echo ON > /proc/acpi/bbswitch
+ * Get status
+ * # cat /proc/acpi/bbswitch
  */
 #include <linux/pci.h>
 #include <linux/acpi.h>
