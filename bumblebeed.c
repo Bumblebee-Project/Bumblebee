@@ -156,8 +156,8 @@ static int daemonize(void) {
         bb_log(LOG_ERR, "There is no \"%s\" group\n", DEFAULT_BB_GROUP);
         exit(EXIT_FAILURE);
     }
-    if (setgid((*gp).gr_gid) != -1) {
-        bb_log(LOG_ERR, "Could not set the GID of bumblebee");
+    if (setgid(gp->gr_gid) != 0) {
+        bb_log(LOG_ERR, "Could not set the GID of bumblebee: %s\n", strerror(errno));
         exit(EXIT_FAILURE);
     }
 
