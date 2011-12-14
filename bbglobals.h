@@ -25,9 +25,7 @@
 /* TODO: TRANSFER MACROS TO CONFIGURATION STRUCT*/
 #define DAEMON_NAME "bumblebee"
 #define DEFAULT_BB_GROUP "bumblebee"
-#define BBS_PATH "/var/run/bumblebee.socket"
 #define CONFIG_FILE "/etc/bumblebee/bumblebee.conf"
-#define X_DISPLAY_NUM "8"
 
 /* Daemon states */
 #define BB_DAEMON 1
@@ -62,6 +60,10 @@ struct bb_config_struct {
     unsigned int appcount; /// Count of applications using the secondary X.
     char errors[256]; /// Error message, if any. First byte is 0 otherwise.
     int runmode; /// See running modes above.
+    int xdisplay; /// Number of the used X display for VirtualGL.
+    char xconf[256]; /// Filename for secondary X xorg.conf file.
+    char ldpath[256]; /// Path for LD for vglrun'ed applications.
+    char socketpath[256]; /// Filename for bumblebee communication socket.
 };
 
 extern struct bb_config_struct bb_config;

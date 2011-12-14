@@ -50,6 +50,10 @@ static void print_usage(int exit_val) {
     printf("      -V\tBe VERY verbose.\n");
     printf("      -r\tRun application, do not start listening.\n");
     printf("      -s\tPrint current status, do not start listening.\n");
+    printf("      -x [PATH]\txorg.conf file to use.\n");
+    printf("      -X #\tX display number to use.\n");
+    printf("      -l [PATH]\tLD driver path to use.\n");
+    printf("      -u [PATH]\tUnix socket to use.\n");
     printf("      -h\tShow this help screen.\n");
     printf("\n");
     printf("When called as optirun, -r is assumed unless -d is set.\n");
@@ -65,7 +69,7 @@ void start_x(void) {
   bb_log(LOG_INFO, "Starting X server\n");
   /// \todo Not hardcode this completely, probably...
   char buffer[256];
-  snprintf(buffer, 256, "X -config /etc/bumblebee/xorg.conf.nvidia -sharevts -nolisten tcp -noreset :8");
+  snprintf(buffer, 256, "X -config %s -sharevts -nolisten tcp -noreset :%i", bb_config.xconf, bb_config.xdisplay);
   runFork(buffer);
 }
 
@@ -348,6 +352,10 @@ int main(int argc, char* argv[]) {
     bb_config.is_daemonized = 0;
     bb_config.verbosity = VERB_WARN;
     bb_config.errors[0] = 0;//no errors, yet :-)
+    bb_config.xdisplay = 8;
+    snprintf(bb_config.xconf, 255, "/etc/bumblebee/xorg.conf.nvidia");
+    snprintf(bb_config.ldpath, 255, "/usr/lib64/nvidia-current");
+    snprintf(bb_config.socketpath, 255, "/var/run/bumblebee.socket");
     bb_config.runmode = BB_RUN_DAEMON;
     if ((strcmp(bb_config.program_name, "optirun") == 0) || (strcmp(bb_config.program_name, "./optirun") == 0)){
       bb_config.runmode = BB_RUN_APP;
@@ -355,29 +363,41 @@ int main(int argc, char* argv[]) {
     
     /* Parse the options, set flags as necessary */
     int c;
-    while( (c = getopt(argc, argv, "+dcvVh|help")) != -1) {
+    while( (c = getopt(argc, argv, "+dcvVx:X:l:u:h|help")) != -1) {
         switch(c){
-            case 'h':
+            case 'h'://help
                 print_usage(EXIT_SUCCESS);
                 break;
-            case 'd':
+            case 'd'://daemonize
                 bb_config.is_daemonized = 1;
                 bb_config.runmode = BB_RUN_DAEMON;
                 break;
-            case 'c':
+            case 'c'://clean run (no output)
                 bb_config.verbosity = VERB_NONE;
                 break;
-            case 'v':
+            case 'v'://verbose
                 bb_config.verbosity = VERB_INFO;
                 break;
-            case 'V':
+            case 'V'://VERY verbose (debug mode)
                 bb_config.verbosity = VERB_DEBUG;
                 break;
-            case 'r':
+            case 'r'://run application
                 bb_config.runmode = BB_RUN_APP;
                 break;
-            case 's':
+            case 's'://show status
                 bb_config.runmode = BB_RUN_STATUS;
+                break;
+            case 'x'://xorg.conf path
+                snprintf(bb_config.xconf, 255, "%s", optarg);
+                break;
+            case 'X'://X display number
+                bb_config.xdisplay = atoi(optarg);
+                break;
+            case 'l'://LD driver path
+                snprintf(bb_config.ldpath, 255, "%s", optarg);
+                break;
+            case 'u'://Unix socket to use
+                snprintf(bb_config.socketpath, 255, "%s", optarg);
                 break;
             default:
                 // Unrecognized option
@@ -410,11 +430,11 @@ int main(int argc, char* argv[]) {
 
     if (bb_config.runmode == BB_RUN_DAEMON){
       /* Initialize communication socket, enter main loop */
-      bb_config.bb_socket = socketServer(BBS_PATH, SOCK_NOBLOCK);
+      bb_config.bb_socket = socketServer(bb_config.socketpath, SOCK_NOBLOCK);
       main_loop();
     }else{
       /* Connect to listening daemon */
-      bb_config.bb_socket = socketConnect(BBS_PATH, SOCK_NOBLOCK);
+      bb_config.bb_socket = socketConnect(bb_config.socketpath, SOCK_NOBLOCK);
       if (bb_config.bb_socket < 0){
         bb_log(LOG_ERR, "Could not connect to bumblebee daemon - is it running?\n");
         bb_closelog();
@@ -452,7 +472,7 @@ int main(int argc, char* argv[]) {
                 break;
               case 'Y': //Yes, run through vglrun
                 bb_log(LOG_INFO, "Running application through vglrun.\n");
-                snprintf(buffer, 256, "vglrun -c proxy -d :8 -ld /usr/lib64/nvidia-current --");
+                snprintf(buffer, 256, "vglrun -c proxy -d :%i -ld %s --", bb_config.xdisplay, bb_config.ldpath);
                 runApp2(buffer, argc - optind, argv + optind);
                 socketClose(&bb_config.bb_socket);
                 break;
