@@ -48,7 +48,7 @@ void childsig_handler(int signum){
 void runCmd(char * cmd){
   //split cmd into arguments
   //supports a maximum of 20 arguments
-  char * tmp = (char*)cmd;
+  char * tmp = cmd;
   char * tmp2 = 0;
   char * args[21];
   int i = 0;
@@ -59,12 +59,41 @@ void runCmd(char * cmd){
     ++i;
     args[i] = tmp2;
   }
-  if (i == 20){args[20] = 0;}
+  if (i == 20){args[20] = 0;}else{args[i+1] = 0;}
   //execute the command
   execvp(args[0], args);
   bb_log(LOG_ERR, "Error running \"%s\": %s\n", cmd, strerror(errno));
   exit(42);
 }//runCmd
+
+/// Attempts to run the given command with prefix, replacing the current process
+void runCmd2(char * prefix, int argc, char ** argv){
+  //split cmd into arguments
+  //supports a maximum of 200 arguments
+  char * tmp = prefix;
+  char * tmp2 = 0;
+  char * args[201];
+  int i = 0;
+  int j = 0;
+  tmp2 = strtok(tmp, " ");
+  args[0] = tmp2;
+  while (tmp2 != 0 && (i < 200)){
+    tmp2 = strtok(0, " ");
+    ++i;
+    args[i] = tmp2;
+  }
+  while ((j < argc) && (i < 200)){
+    args[i] = argv[j];
+    ++i;
+    ++j;
+  }
+  if (i == 200){args[200] = 0;}else{args[i] = 0;}
+  //execute the command
+  execvp(args[0], args);
+  bb_log(LOG_ERR, "Error running \"%s\": %s\n", args[0], strerror(errno));
+  exit(42);
+}//runCmd with prefix
+
 
 /// Attempts to run the given command after forking.
 /// Returns 0 on failure, the PID of the running application otherwise.
@@ -82,6 +111,7 @@ pid_t runFork(char * cmd){
     return 0;
   }
   pid_t ret = fork();
+  printf("Mehness %i!\n", ret);
   if (ret == 0){
     runCmd(cmd);
   }else{
@@ -105,4 +135,41 @@ int isRunning(){
 /// Stops the running process, if any.
 void runStop(){
   if (isRunning()){kill(curr_id, SIGTERM);}
+}
+
+/// Attempts to run the given application, replacing the current process
+void runApp(int argc, char ** argv){
+  execvp(argv[0], argv);
+  bb_log(LOG_ERR, "Error running \"%s\": %s\n", argv[0], strerror(errno));
+  exit(42);
+}
+
+/// Attempts to run the given application with prefix, returning after the application finishes.
+void runApp2(char * prefix, int argc, char ** argv){
+  if (handler_set == 0){
+    struct sigaction new_action;
+    new_action.sa_handler = childsig_handler;
+    sigemptyset(&new_action.sa_mask);
+    new_action.sa_flags = 0;
+    sigaction(SIGCHLD, &new_action, NULL);
+    handler_set = 1;
+  }
+  if (isRunning()){
+    bb_log(LOG_ERR, "Attempted to start a process while one was already running.\n");
+    return;
+  }
+  pid_t ret = fork();
+  if (ret == 0){
+    runCmd2(prefix, argc, argv);
+  }else{
+    if (ret > 0){
+      bb_log(LOG_INFO, "Process %s started, PID %i.\n", prefix, ret);
+      curr_id = ret;
+      //sleep until process finishes
+      while (curr_id != 0){usleep(1000000);}
+    }else{
+      bb_log(LOG_ERR, "Process %s could not be started. fork() failed.\n", prefix);
+    }
+  }
+  return;
 }

@@ -23,6 +23,9 @@
  */
 #pragma once
 
+#define SOCK_BLOCK 0
+#define SOCK_NOBLOCK 1
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>

@@ -26,17 +26,8 @@
 #define DAEMON_NAME "bumblebee"
 #define DEFAULT_BB_GROUP "bumblebee"
 #define BBS_PATH "/var/run/bumblebee.socket"
-#define PID_FILE "/var/run/bumblebeed.pid"
 #define CONFIG_FILE "/etc/bumblebee/bumblebee.conf"
 #define X_DISPLAY_NUM "8"
-
-/* Optirun signals */
-#define Q_WANT_X  1
-#define Q_DONE_X  3
-
-/* Daemon responses */
-#define X_ALIVE 4
-#define X_DEAD  5
 
 /* Daemon states */
 #define BB_DAEMON 1
@@ -50,6 +41,11 @@
 #define VERB_DEBUG 4
 #define VERB_ALL 4
 
+/* Running modes */
+#define BB_RUN_DAEMON 0
+#define BB_RUN_APP 1
+#define BB_RUN_STATUS 2
+
 /* Default buffer size */
 #define DEFAULT_BUFFER_SIZE 256
 
@@ -59,18 +55,13 @@
 
 /* Structure containing the daemon configuration and status */
 struct bb_config_struct {
-    /* The name which the program was called */
-    char* program_name;
-
-    int verbosity;
-    int is_daemonized;
-
-    /* Communication socket */
-    int bb_socket;
-    unsigned int appcount;
-
-    /* Holds any error messages */
-    char errors[256];
+    char* program_name; /// How this application was called.
+    int verbosity; /// Verbosity level of messages.
+    int is_daemonized; /// 1 if running as daemon, 0 otherwise.
+    int bb_socket; /// The main socket of the application.
+    unsigned int appcount; /// Count of applications using the secondary X.
+    char errors[256]; /// Error message, if any. First byte is 0 otherwise.
+    int runmode; /// See running modes above.
 };
 
 extern struct bb_config_struct bb_config;

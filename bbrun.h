@@ -29,6 +29,9 @@ extern pid_t curr_id;
 /// Attempts to run the given command, replacing the current process
 void runCmd(char * cmd);
 
+/// Attempts to run the given command with prefix, replacing the current process
+void runCmd2(char * prefix, int argc, char ** argv);
+
 /// Attempts to run the given command after forking.
 pid_t runFork(char * cmd);
 
@@ -37,3 +40,9 @@ int isRunning();
 
 /// Stops the running process, if any.
 void runStop();
+
+/// Attempts to run the given application, replacing the current process
+void runApp(int argc, char ** argv);
+
+/// Attempts to run the given application with prefix, returning after the application finishes.
+void runApp2(char * prefix, int argc, char ** argv);
