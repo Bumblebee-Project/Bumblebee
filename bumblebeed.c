@@ -377,7 +377,7 @@ int main(int argc, char* argv[]) {
     
     /* Parse the options, set flags as necessary */
     int c;
-    while( (c = getopt(argc, argv, "+dcvVx:X:l:u:h|help")) != -1) {
+    while( (c = getopt(argc, argv, "+dcrvVx:X:l:u:h|help")) != -1) {
         switch(c){
             case 'h'://help
                 print_usage(EXIT_SUCCESS);
