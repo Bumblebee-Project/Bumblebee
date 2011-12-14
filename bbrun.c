@@ -126,6 +126,48 @@ pid_t runFork(char * cmd){
   return ret;
 }//runFork
 
+/**
+ * Forks and run the given application.
+ * More suitable for configurable arguments to pass
+ *
+ * @param argc The amount of argument passed
+ * @param argv The arguments values, the first one is the full application path
+ * @return The new process PID
+ */
+pid_t bb_run_fork(int argc, char** argv) {
+  // Set handler for this child process if not already
+  if (handler_set == 0){
+    struct sigaction new_action;
+    new_action.sa_handler = childsig_handler;
+    sigemptyset(&new_action.sa_mask);
+    new_action.sa_flags = 0;
+    sigaction(SIGCHLD, &new_action, NULL);
+    handler_set = 1;
+  }
+  if (isRunning()){
+    bb_log(LOG_ERR, "Attempted to start a process while one was already running.\n");
+    return 0;
+  }
+  // Fork and attempt to run given application
+  pid_t ret = fork();
+  if (ret == 0){
+    // Fork went ok, child process replace
+    bb_run_exec(argc, argv);
+  }else{
+    if (ret > 0){
+      // Fork went ok, parent process continues
+      bb_log(LOG_INFO, "Process %s started, PID %i.\n", cmd, ret);
+      curr_id = ret;
+    }else{
+      // Fork failed
+      bb_log(LOG_ERR, "Process %s could not be started. fork() failed.\n", cmd);
+      return 0;
+    }
+  }
+  return ret;
+
+}
+
 /// Returns 1 if a process is currently running, 0 otherwise.
 int isRunning(){
   if (curr_id == 0){return 0;}
@@ -138,7 +180,7 @@ void runStop(){
 }
 
 /// Attempts to run the given application, replacing the current process
-void runApp(int argc, char ** argv){
+void bb_run_exec(int argc, char ** argv){
   execvp(argv[0], argv);
   bb_log(LOG_ERR, "Error running \"%s\": %s\n", argv[0], strerror(errno));
   exit(42);
