@@ -197,7 +197,7 @@ static int daemonize(void) {
     close(STDIN_FILENO);
     close(STDOUT_FILENO);
     close(STDERR_FILENO);
-    return bb_config.is_daemonized;
+    return !bb_config.is_daemonized;
 }
 
 /**
