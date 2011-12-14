@@ -50,6 +50,10 @@ static void print_usage(int exit_val) {
     printf("      -V\tBe VERY verbose.\n");
     printf("      -r\tRun application, do not start listening.\n");
     printf("      -s\tPrint current status, do not start listening.\n");
+    printf("      -x [PATH]\txorg.conf file to use.\n");
+    printf("      -X #\tX display number to use.\n");
+    printf("      -l [PATH]\tLD driver path to use.\n");
+    printf("      -u [PATH]\tUnix socket to use.\n");
     printf("      -h\tShow this help screen.\n");
     printf("\n");
     printf("When called as optirun, -r is assumed unless -d is set.\n");
@@ -63,9 +67,8 @@ static void print_usage(int exit_val) {
  */
 void start_x(void) {
   bb_log(LOG_INFO, "Starting X server\n");
-  /// \todo Not hardcode this completely, probably...
-  char buffer[256];
-  snprintf(buffer, 256, "X -config /etc/bumblebee/xorg.conf.nvidia -sharevts -nolisten tcp -noreset :8");
+  char buffer[BUFFER_SIZE];
+  snprintf(buffer, BUFFER_SIZE, "X -config %s -sharevts -nolisten tcp -noreset :%i", bb_config.xconf, bb_config.xdisplay);
   runFork(buffer);
 }
 
@@ -213,19 +216,19 @@ struct clientsocket{
 /// Receive and/or sent data to/from this socket.
 /// \param sock Pointer to socket. Assumed to be valid.
 void handle_socket(struct clientsocket * C){
-  static char buffer[256];
+  static char buffer[BUFFER_SIZE];
   //since these are local sockets, we can safely assume we get whole messages at a time
-  int r = socketRead(&C->sock, buffer, 256);
+  int r = socketRead(&C->sock, buffer, BUFFER_SIZE);
   if (r > 0){
     switch (buffer[0]){
       case 'S'://status
         if (bb_config.errors[0] != 0){
-          r = snprintf(buffer, 256, "Error (%s): %s\n", TOSTRING(VERSION), bb_config.errors);
+          r = snprintf(buffer, BUFFER_SIZE, "Error (%s): %s\n", TOSTRING(VERSION), bb_config.errors);
         }else{
           if (isRunning()){
-            r = snprintf(buffer, 256, "Ready (%s). X is PID %i, %i applications using bumblebeed.\n", TOSTRING(VERSION), curr_id, bb_config.appcount);
+            r = snprintf(buffer, BUFFER_SIZE, "Ready (%s). X is PID %i, %i applications using bumblebeed.\n", TOSTRING(VERSION), curr_id, bb_config.appcount);
           }else{
-            r = snprintf(buffer, 256, "Ready (%s). X inactive.\n", TOSTRING(VERSION));
+            r = snprintf(buffer, BUFFER_SIZE, "Ready (%s). X inactive.\n", TOSTRING(VERSION));
           }
         }
         socketWrite(&C->sock, buffer, r);//we assume the write is fully successful.
@@ -238,21 +241,21 @@ void handle_socket(struct clientsocket * C){
           start_x();
           usleep(100000);//sleep 100ms to give X a chance to fail
           if (!isRunning()){
-            snprintf(bb_config.errors, 256, "X failed to start!");
+            snprintf(bb_config.errors, BUFFER_SIZE, "X failed to start!");
             bb_log(LOG_ERR, "X failed to start!\n");
           }
         }
         if (isRunning()){
-          r = snprintf(buffer, 256, "Yes. X is active.\n");
+          r = snprintf(buffer, BUFFER_SIZE, "Yes. X is active.\n");
           if (C->inuse == 0){
             C->inuse = 1;
             bb_config.appcount++;
           }
         }else{
           if (bb_config.errors[0] != 0){
-            r = snprintf(buffer, 256, "No - error: %s\n", bb_config.errors);
+            r = snprintf(buffer, BUFFER_SIZE, "No - error: %s\n", bb_config.errors);
           }else{
-            r = snprintf(buffer, 256, "No, secondary X is not active.\n");
+            r = snprintf(buffer, BUFFER_SIZE, "No, secondary X is not active.\n");
           }
         }
         socketWrite(&C->sock, buffer, r);//we assume the write is fully successful.
@@ -348,6 +351,10 @@ int main(int argc, char* argv[]) {
     bb_config.is_daemonized = 0;
     bb_config.verbosity = VERB_WARN;
     bb_config.errors[0] = 0;//no errors, yet :-)
+    bb_config.xdisplay = 8;
+    snprintf(bb_config.xconf, BUFFER_SIZE, "/etc/bumblebee/xorg.conf.nvidia");
+    snprintf(bb_config.ldpath, BUFFER_SIZE, "/usr/lib64/nvidia-current");
+    snprintf(bb_config.socketpath, BUFFER_SIZE, "/var/run/bumblebee.socket");
     bb_config.runmode = BB_RUN_DAEMON;
     if ((strcmp(bb_config.program_name, "optirun") == 0) || (strcmp(bb_config.program_name, "./optirun") == 0)){
       bb_config.runmode = BB_RUN_APP;
@@ -355,29 +362,41 @@ int main(int argc, char* argv[]) {
     
     /* Parse the options, set flags as necessary */
     int c;
-    while( (c = getopt(argc, argv, "+dcvVh|help")) != -1) {
+    while( (c = getopt(argc, argv, "+dcvVx:X:l:u:h|help")) != -1) {
         switch(c){
-            case 'h':
+            case 'h'://help
                 print_usage(EXIT_SUCCESS);
                 break;
-            case 'd':
+            case 'd'://daemonize
                 bb_config.is_daemonized = 1;
                 bb_config.runmode = BB_RUN_DAEMON;
                 break;
-            case 'c':
+            case 'c'://clean run (no output)
                 bb_config.verbosity = VERB_NONE;
                 break;
-            case 'v':
+            case 'v'://verbose
                 bb_config.verbosity = VERB_INFO;
                 break;
-            case 'V':
+            case 'V'://VERY verbose (debug mode)
                 bb_config.verbosity = VERB_DEBUG;
                 break;
-            case 'r':
+            case 'r'://run application
                 bb_config.runmode = BB_RUN_APP;
                 break;
-            case 's':
+            case 's'://show status
                 bb_config.runmode = BB_RUN_STATUS;
+                break;
+            case 'x'://xorg.conf path
+                snprintf(bb_config.xconf, BUFFER_SIZE, "%s", optarg);
+                break;
+            case 'X'://X display number
+                bb_config.xdisplay = atoi(optarg);
+                break;
+            case 'l'://LD driver path
+                snprintf(bb_config.ldpath, BUFFER_SIZE, "%s", optarg);
+                break;
+            case 'u'://Unix socket to use
+                snprintf(bb_config.socketpath, BUFFER_SIZE, "%s", optarg);
                 break;
             default:
                 // Unrecognized option
@@ -410,25 +429,25 @@ int main(int argc, char* argv[]) {
 
     if (bb_config.runmode == BB_RUN_DAEMON){
       /* Initialize communication socket, enter main loop */
-      bb_config.bb_socket = socketServer(BBS_PATH, SOCK_NOBLOCK);
+      bb_config.bb_socket = socketServer(bb_config.socketpath, SOCK_NOBLOCK);
       main_loop();
     }else{
       /* Connect to listening daemon */
-      bb_config.bb_socket = socketConnect(BBS_PATH, SOCK_NOBLOCK);
+      bb_config.bb_socket = socketConnect(bb_config.socketpath, SOCK_NOBLOCK);
       if (bb_config.bb_socket < 0){
         bb_log(LOG_ERR, "Could not connect to bumblebee daemon - is it running?\n");
         bb_closelog();
         return EXIT_FAILURE;
       }
-      char buffer[256];
+      char buffer[BUFFER_SIZE];
       int r;
 
       /* Request status */
       if (bb_config.runmode == BB_RUN_STATUS){
-        r = snprintf(buffer, 256, "Status?");
+        r = snprintf(buffer, BUFFER_SIZE, "Status?");
         socketWrite(&bb_config.bb_socket, buffer, r);
         while (bb_config.bb_socket != -1){
-          r = socketRead(&bb_config.bb_socket, buffer, 256);
+          r = socketRead(&bb_config.bb_socket, buffer, BUFFER_SIZE);
           if (r > 0){
             printf("Bumblebee status: %*s\n", r, buffer);
             socketClose(&bb_config.bb_socket);
@@ -438,10 +457,10 @@ int main(int argc, char* argv[]) {
 
       /* Run given application */
       if (bb_config.runmode == BB_RUN_APP){
-        r = snprintf(buffer, 256, "Checking availability...");
+        r = snprintf(buffer, BUFFER_SIZE, "Checking availability...");
         socketWrite(&bb_config.bb_socket, buffer, r);
         while (bb_config.bb_socket != -1){
-          r = socketRead(&bb_config.bb_socket, buffer, 256);
+          r = socketRead(&bb_config.bb_socket, buffer, BUFFER_SIZE);
           if (r > 0){
             bb_log(LOG_INFO, "Response: %*s\n", r, buffer);
             switch (buffer[0]){
@@ -452,7 +471,7 @@ int main(int argc, char* argv[]) {
                 break;
               case 'Y': //Yes, run through vglrun
                 bb_log(LOG_INFO, "Running application through vglrun.\n");
-                snprintf(buffer, 256, "vglrun -c proxy -d :8 -ld /usr/lib64/nvidia-current --");
+                snprintf(buffer, BUFFER_SIZE, "vglrun -c proxy -d :%i -ld %s --", bb_config.xdisplay, bb_config.ldpath);
                 runApp2(buffer, argc - optind, argv + optind);
                 socketClose(&bb_config.bb_socket);
                 break;
