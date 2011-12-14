@@ -142,7 +142,8 @@ static int bbswitch_optimus_dsm(void) {
 
     if (!acpi_call_dsm(dis_handle, acpi_optimus_dsm_muid, 0x100, 0x1A, args,
         &result)) {
-        printk(KERN_INFO "bbswitch: Result of _DSM call: %08X\n", result);
+        printk(KERN_INFO "bbswitch: Result of Optimus _DSM call: %08X\n",
+            result);
         return 0;
     }
     // failure
@@ -159,7 +160,8 @@ static int bbswitch_acpi_off(void) {
             // failure
             return 1;
         }
-        printk(KERN_INFO "bbswitch: Result of _DSM call for OFF: %08X\n", result);
+        printk(KERN_INFO "bbswitch: Result of _DSM call for OFF: %08X\n",
+            result);
     }
     return 0;
 }
@@ -174,7 +176,8 @@ static int bbswitch_acpi_on(void) {
             // failure
             return 1;
         }
-        printk(KERN_INFO "bbswitch: Result of _DSM call for ON: %08X\n", result);
+        printk(KERN_INFO "bbswitch: Result of _DSM call for ON: %08X\n",
+            result);
     }
     return 0;
 }
@@ -215,7 +218,9 @@ static void bbswitch_off(void) {
     pci_disable_device(dis_dev);
     pci_set_power_state(dis_dev, PCI_D3hot);
 
-    bbswitch_acpi_off();
+    if (!bbswitch_acpi_off())
+        printk(KERN_WARNING "bbswitch: The discrete card could not be disabled"
+                " by a _DSM call\n");
 }
 
 static void bbswitch_on(void) {
@@ -224,7 +229,9 @@ static void bbswitch_on(void) {
 
     printk(KERN_INFO "bbswitch: enabling discrete graphics\n");
 
-    bbswitch_acpi_on();
+    if (!bbswitch_acpi_on())
+        printk(KERN_WARNING "bbswitch: The discrete card could not be enabled"
+            " by a _DSM call\n");
 
     pci_set_power_state(dis_dev, PCI_D0);
     pci_restore_state(dis_dev);
@@ -320,8 +327,10 @@ static int __init bbswitch_init(void) {
 
     if (has_dsm_func(acpi_optimus_dsm_muid, 0x100, 0x1A)) {
         dsm_type = DSM_TYPE_OPTIMUS;
+        printk(KERN_INFO "bbswitch: detected an Optimus _DSM function\n");
     } else if (has_dsm_func(acpi_nvidia_dsm_muid, 0x102, 0x3)) {
         dsm_type = DSM_TYPE_NVIDIA;
+        printk(KERN_INFO "bbswitch: detected a nVidia _DSM function\n");
     } else {
         printk(KERN_ERR "bbswitch: No suitable _DSM call found.\n");
         return -ENODEV;
