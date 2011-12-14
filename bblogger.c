@@ -63,7 +63,7 @@ void bb_log(int priority, char* msg_format, ...) {
   if (bb_config.is_daemonized) {
       vsyslog(priority, msg_format, args);
   } else {
-      char* fullmsg_fmt = malloc(DEFAULT_BUFFER_SIZE);
+      char* fullmsg_fmt = malloc(BUFFER_SIZE);
       switch (priority) {
           case LOG_ERR:
               fullmsg_fmt = strcpy(fullmsg_fmt, "[ERROR]");

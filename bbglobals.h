@@ -44,8 +44,8 @@
 #define BB_RUN_APP 1
 #define BB_RUN_STATUS 2
 
-/* Default buffer size */
-#define DEFAULT_BUFFER_SIZE 256
+/* String buffer size */
+#define BUFFER_SIZE 256
 
 /* For conversting defines to strings */
 #define STRINGIFY(x) #x
@@ -58,12 +58,12 @@ struct bb_config_struct {
     int is_daemonized; /// 1 if running as daemon, 0 otherwise.
     int bb_socket; /// The main socket of the application.
     unsigned int appcount; /// Count of applications using the secondary X.
-    char errors[256]; /// Error message, if any. First byte is 0 otherwise.
+    char errors[BUFFER_SIZE]; /// Error message, if any. First byte is 0 otherwise.
     int runmode; /// See running modes above.
     int xdisplay; /// Number of the used X display for VirtualGL.
-    char xconf[256]; /// Filename for secondary X xorg.conf file.
-    char ldpath[256]; /// Path for LD for vglrun'ed applications.
-    char socketpath[256]; /// Filename for bumblebee communication socket.
+    char xconf[BUFFER_SIZE]; /// Filename for secondary X xorg.conf file.
+    char ldpath[BUFFER_SIZE]; /// Path for LD for vglrun'ed applications.
+    char socketpath[BUFFER_SIZE]; /// Filename for bumblebee communication socket.
 };
 
 extern struct bb_config_struct bb_config;
