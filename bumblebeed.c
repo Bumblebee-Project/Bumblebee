@@ -70,7 +70,7 @@ void start_x(void) {
  
   char disp_buffer[BUFFER_SIZE];
   snprintf(disp_buffer, BUFFER_SIZE, ":%i", bb_config.xdisplay);
-  char** x_argv = {
+  char * x_argv[] = {
          "X",
          "-config", bb_config.xconf,
          "-sharevts",

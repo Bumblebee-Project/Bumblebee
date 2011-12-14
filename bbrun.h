@@ -35,6 +35,9 @@ void runCmd2(char * prefix, int argc, char ** argv);
 /// Attempts to run the given command after forking.
 pid_t runFork(char * cmd);
 
+/// Forks and run the given application.
+pid_t bb_run_fork(char** argv);
+  
 /// Returns 1 if a process is currently running, 0 otherwise.
 int isRunning();
 
@@ -42,7 +45,7 @@ int isRunning();
 void runStop();
 
 /// Attempts to run the given application, replacing the current process
-void runApp(int argc, char ** argv);
+void bb_run_exec(char ** argv);
 
 /// Attempts to run the given application with prefix, returning after the application finishes.
 void runApp2(char * prefix, int argc, char ** argv);

@@ -25,6 +25,7 @@
 #include "bbsocket.h"
 #include "bblogger.h"
 
+#include <sys/stat.h>
 #include <poll.h>
 #include <netdb.h>
 
