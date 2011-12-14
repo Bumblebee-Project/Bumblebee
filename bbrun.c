@@ -134,7 +134,7 @@ pid_t runFork(char * cmd){
  * @param argv The arguments values, the first one is the full application path
  * @return The new process PID
  */
-pid_t bb_run_fork(int argc, char** argv) {
+pid_t bb_run_fork(char** argv) {
   // Set handler for this child process if not already
   if (handler_set == 0){
     struct sigaction new_action;
@@ -152,7 +152,7 @@ pid_t bb_run_fork(int argc, char** argv) {
   pid_t ret = fork();
   if (ret == 0){
     // Fork went ok, child process replace
-    bb_run_exec(argc, argv);
+    bb_run_exec(argv);
   }else{
     if (ret > 0){
       // Fork went ok, parent process continues
@@ -180,7 +180,7 @@ void runStop(){
 }
 
 /// Attempts to run the given application, replacing the current process
-void bb_run_exec(int argc, char ** argv){
+void bb_run_exec(char ** argv){
   execvp(argv[0], argv);
   bb_log(LOG_ERR, "Error running \"%s\": %s\n", argv[0], strerror(errno));
   exit(42);
