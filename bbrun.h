@@ -19,28 +19,30 @@
  */
 
 /*
- * Common networking functions for Bumblebee
+ * Run command functions for Bumblebee
  */
 #pragma once
-
-#define SOCK_BLOCK 0
-#define SOCK_NOBLOCK 1
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <arpa/inet.h>
 #include <unistd.h>
-#include <stdio.h>
-#include <errno.h>
-#include <string.h>
-#include <fcntl.h>
 
-int socketConnect(char * address, int nonblock);
-void socketClose(int * sock);
-int socketCanRead(int sock);
-int socketCanWrite(int sock);
-int socketWrite(int * sock, void * buffer, int len);
-int socketRead(int * sock, void * buffer, int len);
-int socketServer(char * address, int nonblock);
-int socketAccept(int * sock, int nonblock);
+extern pid_t curr_id;
+
+/// Attempts to run the given command, replacing the current process
+void runCmd(char * cmd);
+
+/// Attempts to run the given command with prefix, replacing the current process
+void runCmd2(char * prefix, int argc, char ** argv);
+
+/// Attempts to run the given command after forking.
+pid_t runFork(char * cmd);
+
+/// Returns 1 if a process is currently running, 0 otherwise.
+int isRunning();
+
+/// Stops the running process, if any.
+void runStop();
+
+/// Attempts to run the given application, replacing the current process
+void runApp(int argc, char ** argv);
+
+/// Attempts to run the given application with prefix, returning after the application finishes.
+void runApp2(char * prefix, int argc, char ** argv);

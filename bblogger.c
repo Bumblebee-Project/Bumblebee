@@ -22,21 +22,15 @@
  * bblogger.c: loggin functions for bumblebee daemon and client
  */
 
-
-#include <syslog.h>
-
-#define BB_DAEMON 1
-#define BB_NODEAMON 0
-
-/*  Default buffer size */
-static const size_t DEFAULT_BUFFER_SIZE = 256;
+#include "bblogger.h"
+#include "bbglobals.h"
 
 /**
  * Initialize log capabilities. Return 0 on success 
  */
-int bb_init_log(int daemon) {
+int bb_init_log() {
     /*  Open Logggin mechanism based on configuration */
-    if (daemon) {
+    if (bb_config.is_daemonized) {
         openlog(DAEMON_NAME, LOG_PID, LOG_DAEMON);
     } else {
     }   
@@ -48,40 +42,53 @@ int bb_init_log(int daemon) {
  * Log a message to the current log mechanism.
  * Try to keep log messages less than 80 characters.
  */
-void bb_log(int is_daemonized, int priority, char* msg_format, ...) {
-    va_list args;
-	va_start(args, msg_format);
-	if (is_daemonized) {
-	    vsyslog(priority, msg_format, args);
-	} else {
-	    char* fullmsg_fmt = malloc(DEFAULT_BUFFER_SIZE);
-	    switch (priority) {
-	        case LOG_ERR:
-	            fullmsg_fmt = strcpy(fullmsg_fmt, "[ERROR]");
-	            break;
-	        case LOG_DEBUG:
-	            fullmsg_fmt = strcpy(fullmsg_fmt, "[DEBUG]");
-	            break;
-	        case LOG_WARNING:
-	            fullmsg_fmt = strcpy(fullmsg_fmt, "[WARN]");
-	            break;
-	        default:
-	            fullmsg_fmt = strcpy(fullmsg_fmt, "[INFO]");
-	    }
-	    fullmsg_fmt = strcat(fullmsg_fmt, msg_format);
-	    //Append NL char
-	    fullmsg_fmt = strcat(fullmsg_fmt, "\n");
-	    vfprintf(stderr, fullmsg_fmt, args);
-	    free(fullmsg_fmt);
-	}
-	va_end(args);
+void bb_log(int priority, char* msg_format, ...) {
+  switch (priority) {
+    case LOG_ERR:
+      if (bb_config.verbosity < VERB_ERR){return;}
+      break;
+    case LOG_DEBUG:
+      if (bb_config.verbosity < VERB_DEBUG){return;}
+      break;
+    case LOG_WARNING:
+      if (bb_config.verbosity < VERB_WARN){return;}
+      break;
+    default:
+      if (bb_config.verbosity < VERB_INFO){return;}
+      break;
+  }
+  
+  va_list args;
+  va_start(args, msg_format);
+  if (bb_config.is_daemonized) {
+      vsyslog(priority, msg_format, args);
+  } else {
+      char* fullmsg_fmt = malloc(DEFAULT_BUFFER_SIZE);
+      switch (priority) {
+          case LOG_ERR:
+              fullmsg_fmt = strcpy(fullmsg_fmt, "[ERROR]");
+              break;
+          case LOG_DEBUG:
+              fullmsg_fmt = strcpy(fullmsg_fmt, "[DEBUG]");
+              break;
+          case LOG_WARNING:
+              fullmsg_fmt = strcpy(fullmsg_fmt, "[WARN]");
+              break;
+          default:
+              fullmsg_fmt = strcpy(fullmsg_fmt, "[INFO]");
+      }
+      fullmsg_fmt = strcat(fullmsg_fmt, msg_format);
+      vfprintf(stderr, fullmsg_fmt, args);
+      free(fullmsg_fmt);
+  }
+  va_end(args);
 }
 
 /** 
  * Close logging mechanism 
  */
-void bb_closelog(int is_daemonized) {
-    if (is_daemonized) {
+void bb_closelog() {
+    if (bb_config.is_daemonized) {
         closelog();
     } else {
     }

@@ -22,23 +22,29 @@
  * bblogger.c: loggin functions for bumblebee daemon and client
  */
 
+#include <syslog.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+
 #ifndef _BBLOGGER
 #define _BBLOGGER
 
 /**
  * Initialize log capabilities. Return 0 on success 
  */
-int bb_init_log(int daemon);
+int bb_init_log();
 
 /**
  * Log a message to the current log mechanism.
  * Try to keep log messages less than 80 characters.
  */
-void bb_log(int is_daemonized, int priority, char* msg_format, ...);
+void bb_log(int priority, char* msg_format, ...);
 
 /** 
  * Close logging mechanism 
  */
-void bb_closelog(int is_daemonized);
+void bb_closelog();
 
 #endif

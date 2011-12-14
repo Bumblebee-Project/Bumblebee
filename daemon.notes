@@ -83,13 +83,13 @@ Example:
 
 Client: "Status?\n" (S being the request code)
 Server: "Error: Could not start X\n" (E being the response code)
-Server: "Ready for requests. Running bumblebeed version 0.1. Card is turned on and X is running as PID 5267, 5 applications using optirun." (R being the response code)
-Server: "Ready for requests. Running bumblebeed version 0.1. Card is turned off and X is not running, 0 applications using optirun." (R being the response code)
-Client: "Checking, can I run <application name> through VirtualGL?" (C being the request code)
-Server: "Yes, run through VirtualGL" (Y being the response)
-Server: "No, run normally because we are on battery power" (N being the response)
-Server: "No, run normally because X could not be started" (N being the response)
-Server: "No, run normally because secondary card is manually disabled" (N being the response)
+Server: "Ready for requests. Running bumblebeed version 0.1. Card is turned on and X is running as PID 5267, 5 applications using optirun.\n" (R being the response code)
+Server: "Ready for requests. Running bumblebeed version 0.1. Card is turned off and X is not running, 0 applications using optirun.\n" (R being the response code)
+Client: "Checking, can I run <application name> through VirtualGL?\n" (C being the request code)
+Server: "Yes, run through VirtualGL\n" (Y being the response)
+Server: "No, run normally because we are on battery power\n" (N being the response)
+Server: "No, run normally because X could not be started\n" (N being the response)
+Server: "No, run normally because secondary card is manually disabled\n" (N being the response)
 etc...
 
 
