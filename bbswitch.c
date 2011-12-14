@@ -129,7 +129,7 @@ static int has_dsm_func(const char muid[16], int revid, int sfnc) {
 
     // fail if the _DSM call failed
     if (!acpi_call_dsm(dis_handle, muid, revid, 0, 0, &result))
-        return 1;
+        return 0;
 
     // ACPI Spec v4 9.14.1: if bit 0 is zero, no function is supported. If
     // the n-th bit is enabled, function n is supported
