@@ -156,11 +156,11 @@ pid_t bb_run_fork(char** argv) {
   }else{
     if (ret > 0){
       // Fork went ok, parent process continues
-      bb_log(LOG_INFO, "Process %s started, PID %i.\n", cmd, ret);
+      bb_log(LOG_INFO, "Process %s started, PID %i.\n", argv[0], ret);
       curr_id = ret;
     }else{
       // Fork failed
-      bb_log(LOG_ERR, "Process %s could not be started. fork() failed.\n", cmd);
+      bb_log(LOG_ERR, "Process %s could not be started. fork() failed.\n", argv[0]);
       return 0;
     }
   }

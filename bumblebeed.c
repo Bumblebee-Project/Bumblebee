@@ -67,9 +67,24 @@ static void print_usage(int exit_val) {
  */
 void start_x(void) {
   bb_log(LOG_INFO, "Starting X server\n");
+ 
+  char disp_buffer[BUFFER_SIZE];
+  snprintf(disp_buffer, BUFFER_SIZE, ":%i", bb_config.xdisplay);
+  char** x_argv = {
+         "X",
+         "-config", bb_config.xconf,
+         "-sharevts",
+         "-nolisten", "tcp",
+         "-noreset",
+         disp_buffer,
+         NULL
+         };
+  bb_run_fork(x_argv);
+ /*  
   char buffer[BUFFER_SIZE];
   snprintf(buffer, BUFFER_SIZE, "X -config %s -sharevts -nolisten tcp -noreset :%i", bb_config.xconf, bb_config.xdisplay);
   runFork(buffer);
+ */
 }
 
 /** 
@@ -467,7 +482,7 @@ int main(int argc, char* argv[]) {
               case 'N': //No, run normally.
                 socketClose(&bb_config.bb_socket);
                 bb_log(LOG_WARNING, "Running application normally.\n");
-                runApp(argc - optind, argv + optind);
+                bb_run_exec(argv + optind);
                 break;
               case 'Y': //Yes, run through vglrun
                 bb_log(LOG_INFO, "Running application through vglrun.\n");
