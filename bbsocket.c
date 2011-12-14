@@ -197,6 +197,8 @@ int socketServer(char * address, int nonblock){
   int ret = bind(sock, (struct sockaddr*)&addr, sizeof(addr));
   if (ret == 0){
     ret = listen(sock, 100);//start listening, backlog of 100 allowed
+    //allow reading and writing for everybody
+    chmod(address, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
     if (ret != 0){
       bb_log(LOG_ERR, "Listen failed! Error: %s\n", strerror(errno));
       socketClose(&sock);
