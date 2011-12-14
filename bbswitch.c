@@ -64,6 +64,9 @@ static char *buffer_to_string(const char buffer[], char *target) {
     return target;
 }
 
+// Returns 0 if the call succeeded and non-zero otherwise. If the call
+// succeeded, the result is stored in "result" providing that the result is an
+// integer or a buffer containing 4 values
 static int acpi_call_dsm(acpi_handle handle, const char muid[16], int revid,
     int func, char *args, uint32_t *result) {
     struct acpi_buffer output = { ACPI_ALLOCATE_BUFFER, NULL };
@@ -128,7 +131,7 @@ static int has_dsm_func(const char muid[16], int revid, int sfnc) {
     u32 result = 0;
 
     // fail if the _DSM call failed
-    if (!acpi_call_dsm(dis_handle, muid, revid, 0, 0, &result))
+    if (acpi_call_dsm(dis_handle, muid, revid, 0, 0, &result))
         return 0;
 
     // ACPI Spec v4 9.14.1: if bit 0 is zero, no function is supported. If
@@ -155,7 +158,7 @@ static int bbswitch_acpi_off(void) {
         char args[] = {2, 0, 0, 0};
         u32 result = 0;
 
-        if (acpi_call_dsm(dis_handle, acpi_nvidia_dsm_muid, 0x102, 0x3, args,
+        if (!acpi_call_dsm(dis_handle, acpi_nvidia_dsm_muid, 0x102, 0x3, args,
             &result)) {
             // failure
             return 1;
@@ -171,7 +174,7 @@ static int bbswitch_acpi_on(void) {
         char args[] = {1, 0, 0, 0};
         u32 result = 0;
 
-        if (acpi_call_dsm(dis_handle, acpi_nvidia_dsm_muid, 0x102, 0x3, args,
+        if (!acpi_call_dsm(dis_handle, acpi_nvidia_dsm_muid, 0x102, 0x3, args,
             &result)) {
             // failure
             return 1;
