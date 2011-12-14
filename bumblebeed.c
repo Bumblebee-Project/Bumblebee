@@ -64,10 +64,11 @@ static void print_usage(int exit_val) {
 
 /**
  *  Start the X server by fork-exec 
+ *
+ *  @return PID of the X instance
  */
-void start_x(void) {
-  bb_log(LOG_INFO, "Starting X server\n");
- 
+pid_t start_x(void) {
+  bb_log(LOG_INFO, "Starting X server on display %i.\n", bb_config.xdisplay);
   char disp_buffer[BUFFER_SIZE];
   snprintf(disp_buffer, BUFFER_SIZE, ":%i", bb_config.xdisplay);
   char * x_argv[] = {
@@ -79,12 +80,8 @@ void start_x(void) {
          disp_buffer,
          NULL
          };
-  bb_run_fork(x_argv);
- /*  
-  char buffer[BUFFER_SIZE];
-  snprintf(buffer, BUFFER_SIZE, "X -config %s -sharevts -nolisten tcp -noreset :%i", bb_config.xconf, bb_config.xdisplay);
-  runFork(buffer);
- */
+  pid_t x_pid = bb_run_fork(x_argv);
+  return x_pid;
 }
 
 /** 
@@ -254,6 +251,7 @@ void handle_socket(struct clientsocket * C){
         //no X? attempt to start it
         if (!isRunning()){
           start_x();
+          // TODO: Find a way to check for the X ready. Maybe sending signal 0 to the pid.
           usleep(100000);//sleep 100ms to give X a chance to fail
           if (!isRunning()){
             snprintf(bb_config.errors, BUFFER_SIZE, "X failed to start!");
@@ -367,7 +365,7 @@ int main(int argc, char* argv[]) {
     bb_config.verbosity = VERB_WARN;
     bb_config.errors[0] = 0;//no errors, yet :-)
     bb_config.xdisplay = 8;
-    snprintf(bb_config.xconf, BUFFER_SIZE, "/etc/bumblebee/xorg.conf.nvidia");
+    snprintf(bb_config.xconf, BUFFER_SIZE, "/etc/bumblebee/xorg.conf.nouveau");
     snprintf(bb_config.ldpath, BUFFER_SIZE, "/usr/lib64/nvidia-current");
     snprintf(bb_config.socketpath, BUFFER_SIZE, "/var/run/bumblebee.socket");
     bb_config.runmode = BB_RUN_DAEMON;
