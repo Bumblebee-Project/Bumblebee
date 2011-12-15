@@ -21,6 +21,7 @@
  * along with Bumblebee. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include <unistd.h> //for pid_t
 
 /* TODO: TRANSFER MACROS TO CONFIGURATION STRUCT*/
 #define DAEMON_NAME "bumblebee"
