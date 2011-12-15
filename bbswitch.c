@@ -32,17 +32,20 @@
 /// In other words: 0 means off, anything else means on.
 int bbswitch_status(){
   char buffer[BBS_BUFFER];
-  int r, i;
+  int i;
   FILE * bbs = fopen("/proc/acpi/bbswitch", "r");
   if (bbs == 0){return -1;}
-  r = fread(buffer, BBS_BUFFER, 1, bbs);
+  for (i = 0; i < BBS_BUFFER; ++i){buffer[i] = 0;}
+  fread(buffer, BBS_BUFFER-1, 1, bbs);
   fclose(bbs);
-  if (r < 2){return -1;}//reply way too small. Assume bbswitch broken.
-  for (i = 0; i < r-2; ++i){
+  //we do not check the return value of fread, since it
+  //apparently always returns 0 for some reason :S
+  for (i = 0; i < BBS_BUFFER; ++i){
     if (buffer[i] == ' '){//find the space
       if (buffer[i+2] == 'F'){return 0;}//OFF
       if (buffer[i+2] == 'N'){return 1;}//ON
     }
+    if (buffer[i] == 0){return -1;}//end of string, stop search
   }
   return -1;//space not found - assume bbswitch isn't working
 }//bbswitch_status
