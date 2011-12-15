@@ -24,15 +24,6 @@
 #pragma once
 #include <unistd.h>
 
-/// Attempts to run the given command, replacing the current process
-void runCmd(char * cmd);
-
-/// Attempts to run the given command with prefix, replacing the current process
-void runCmd2(char * prefix, int argc, char ** argv);
-
-/// Attempts to run the given command after forking.
-pid_t runFork(char * cmd);
-
 /// Forks and runs the given application.
 pid_t bb_run_fork(char** argv);
 
@@ -43,10 +34,10 @@ void bb_run_fork_wait(char** argv);
 int isRunning(pid_t proc);
 
 /// Stops the running process, if any.
-void runStop(pid_t proc);
+void bb_stop(pid_t proc);
+
+/// Stops all the running processes, if any.
+void bb_stop_all();
 
 /// Attempts to run the given application, replacing the current process
 void bb_run_exec(char ** argv);
-
-/// Attempts to run the given application with prefix, returning after the application finishes.
-void runApp2(char * prefix, int argc, char ** argv);

@@ -20,7 +20,7 @@
  */
 
 /*
- * C-coded version of the Bumblebee daemon.
+ * C-coded version of the Bumblebee daemon and optirun.
  */
 
 #include "bbglobals.h"
@@ -78,7 +78,7 @@ void start_secondary(void) {
     /// \todo Support nouveau as well
     bb_log(LOG_INFO, "Loading nvidia module\n");
     char * mod_argv[] = {
-      "insmod",
+      "modprobe",
       "nvidia",
       NULL
     };
@@ -106,7 +106,7 @@ void start_secondary(void) {
       /// \todo Maybe check X exit status and/or messages?
       if (isRunning(bb_config.x_pid)){
         bb_log(LOG_ERR, "X unresponsive after 10 seconds - aborting\n");
-        runStop(bb_config.x_pid);
+        bb_stop(bb_config.x_pid);
         snprintf(bb_config.errors, BUFFER_SIZE, "X unresponsive after 10 seconds - aborting");
       }else{
         bb_log(LOG_ERR, "X did not start properly\n");
@@ -127,7 +127,7 @@ void start_secondary(void) {
 void stop_secondary(void) {
   if (isRunning(bb_config.x_pid)){
     bb_log(LOG_INFO, "Stopping X server\n");
-    runStop(bb_config.x_pid);
+    bb_stop(bb_config.x_pid);
   }
   if (bbswitch_status() == 1){
     /// \todo Support nouveau as well
@@ -580,5 +580,6 @@ int main(int argc, char* argv[]) {
     }
 
     bb_closelog();
+    bb_stop_all();//stop any started processes that are left
     return (EXIT_SUCCESS);
 }

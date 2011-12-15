@@ -74,7 +74,7 @@ void pidlist_remove(pid_t rempid){
   while (curr != 0){
     if (curr->PID == rempid){
       if (prev != 0){prev->next = curr->next;}
-      if (curr == pidlist_start){pidlist_start = 0;}
+      if (curr == pidlist_start){pidlist_start = curr->next;}
       free(curr);
       if (prev != 0){
         curr = prev->next;
@@ -122,78 +122,6 @@ void check_handler(){
     handler_set = 1;
   }
 }//check_handler
-
-
-/// Attempts to run the given command, replacing the current process
-/// Use after forking! Never returns (exits on failure).
-void runCmd(char * cmd){
-  //split cmd into arguments
-  //supports a maximum of 20 arguments
-  char * tmp = cmd;
-  char * tmp2 = 0;
-  char * args[21];
-  int i = 0;
-  tmp2 = strtok(tmp, " ");
-  args[0] = tmp2;
-  while (tmp2 != 0 && (i < 20)){
-    tmp2 = strtok(0, " ");
-    ++i;
-    args[i] = tmp2;
-  }
-  if (i == 20){args[20] = 0;}else{args[i+1] = 0;}
-  //execute the command
-  execvp(args[0], args);
-  bb_log(LOG_ERR, "Error running \"%s\": %s\n", cmd, strerror(errno));
-  exit(42);
-}//runCmd
-
-/// Attempts to run the given command with prefix, replacing the current process
-void runCmd2(char * prefix, int argc, char ** argv){
-  //split cmd into arguments
-  //supports a maximum of 200 arguments
-  char * tmp = prefix;
-  char * tmp2 = 0;
-  char * args[201];
-  int i = 0;
-  int j = 0;
-  tmp2 = strtok(tmp, " ");
-  args[0] = tmp2;
-  while (tmp2 != 0 && (i < 200)){
-    tmp2 = strtok(0, " ");
-    ++i;
-    args[i] = tmp2;
-  }
-  while ((j < argc) && (i < 200)){
-    args[i] = argv[j];
-    ++i;
-    ++j;
-  }
-  if (i == 200){args[200] = 0;}else{args[i] = 0;}
-  //execute the command
-  execvp(args[0], args);
-  bb_log(LOG_ERR, "Error running \"%s\": %s\n", args[0], strerror(errno));
-  exit(42);
-}//runCmd with prefix
-
-
-/// Attempts to run the given command after forking.
-/// Returns 0 on failure, the PID of the running application otherwise.
-pid_t runFork(char * cmd){
-  check_handler();
-  pid_t ret = fork();
-  if (ret == 0){
-    runCmd(cmd);
-  }else{
-    if (ret > 0){
-      bb_log(LOG_INFO, "Process %s started, PID %i.\n", cmd, ret);
-      pidlist_add(ret);
-    }else{
-      bb_log(LOG_ERR, "Process %s could not be started. fork() failed.\n", cmd);
-      return 0;
-    }
-  }
-  return ret;
-}//runFork
 
 /**
  * Forks and runs the given application.
@@ -258,8 +186,21 @@ int isRunning(pid_t proc){
 }
 
 /// Stops the running process, if any.
-void runStop(pid_t proc){
+void bb_stop(pid_t proc){
   if (isRunning(proc)){kill(proc, SIGTERM);}
+}
+
+/// Stops all the running processes, if any.
+void bb_stop_all(){
+  struct pidlist * curr = 0;
+  curr = pidlist_start;
+  //no list? cancel.
+  if (curr == 0){return;}
+  //kill the whole list
+  while (curr != 0){
+    kill(curr->PID, SIGTERM);
+    curr = curr->next;
+  }
 }
 
 /// Attempts to run the given application, replacing the current process
@@ -267,23 +208,4 @@ void bb_run_exec(char ** argv){
   execvp(argv[0], argv);
   bb_log(LOG_ERR, "Error running \"%s\": %s\n", argv[0], strerror(errno));
   exit(42);
-}
-
-/// Attempts to run the given application with prefix, returning after the application finishes.
-void runApp2(char * prefix, int argc, char ** argv){
-  check_handler();
-  pid_t ret = fork();
-  if (ret == 0){
-    runCmd2(prefix, argc, argv);
-  }else{
-    if (ret > 0){
-      bb_log(LOG_INFO, "Process %s started, PID %i.\n", prefix, ret);
-      pidlist_add(ret);
-      //sleep until process finishes
-      while (isRunning(ret)){usleep(1000000);}
-    }else{
-      bb_log(LOG_ERR, "Process %s could not be started. fork() failed.\n", prefix);
-    }
-  }
-  return;
 }
