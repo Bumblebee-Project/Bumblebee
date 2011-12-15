@@ -57,6 +57,7 @@ static void print_usage(int exit_val) {
     printf("      -X #\tX display number to use.\n");
     printf("      -l [PATH]\tLD driver path to use.\n");
     printf("      -u [PATH]\tUnix socket to use.\n");
+    printf("      -m [METHOD]\tConnection method to use for VirtualGL.\n");
     printf("      -h\tShow this help screen.\n");
     printf("\n");
     printf("When called as optirun, -r is assumed unless -d is set.\n");
@@ -84,23 +85,21 @@ void start_secondary(void) {
     bb_run_fork_wait(mod_argv);
   }
   if (bbswitch_status() != 0){
-    bb_log(LOG_INFO, "Starting X server on display %i.\n", bb_config.xdisplay);
-    char disp_buffer[BUFFER_SIZE];
-    snprintf(disp_buffer, BUFFER_SIZE, ":%i", bb_config.xdisplay);
+    bb_log(LOG_INFO, "Starting X server on display %s.\n", bb_config.xdisplay);
     char * x_argv[] = {
          "X",
          "-config", bb_config.xconf,
          "-sharevts",
          "-nolisten", "tcp",
          "-noreset",
-         disp_buffer,
+         bb_config.xdisplay,
          NULL
          };
     bb_config.x_pid = bb_run_fork(x_argv);
     time_t xtimer = time(0);
     Display * xdisp = 0;
     while ((time(0) - xtimer <= 10) && isRunning(bb_config.x_pid)){
-      xdisp = XOpenDisplay(disp_buffer);
+      xdisp = XOpenDisplay(bb_config.xdisplay);
       if (xdisp != 0){break;}
     }
     if (xdisp == 0){
@@ -416,9 +415,10 @@ int main(int argc, char* argv[]) {
     bb_config.is_daemonized = 0;
     bb_config.verbosity = VERB_WARN;
     bb_config.errors[0] = 0;//no errors, yet :-)
-    bb_config.xdisplay = 8;
+    snprintf(bb_config.xdisplay, BUFFER_SIZE, ":8");
     snprintf(bb_config.xconf, BUFFER_SIZE, "/etc/bumblebee/xorg.conf.nouveau");
     snprintf(bb_config.ldpath, BUFFER_SIZE, "/usr/lib64/nvidia-current");
+    snprintf(bb_config.vglmethod, BUFFER_SIZE, "proxy");
     snprintf(bb_config.socketpath, BUFFER_SIZE, "/var/run/bumblebee.socket");
     bb_config.runmode = BB_RUN_DAEMON;
     if ((strcmp(bb_config.program_name, "optirun") == 0) || (strcmp(bb_config.program_name, "./optirun") == 0)){
@@ -427,7 +427,7 @@ int main(int argc, char* argv[]) {
     
     /* Parse the options, set flags as necessary */
     int c;
-    while( (c = getopt(argc, argv, "+dcrvVx:X:l:u:h|help")) != -1) {
+    while( (c = getopt(argc, argv, "+dcrvVm:x:X:l:u:h|help")) != -1) {
         switch(c){
             case 'h'://help
                 print_usage(EXIT_SUCCESS);
@@ -455,13 +455,16 @@ int main(int argc, char* argv[]) {
                 snprintf(bb_config.xconf, BUFFER_SIZE, "%s", optarg);
                 break;
             case 'X'://X display number
-                bb_config.xdisplay = atoi(optarg);
+                snprintf(bb_config.xdisplay, BUFFER_SIZE, "%s", optarg);
                 break;
             case 'l'://LD driver path
                 snprintf(bb_config.ldpath, BUFFER_SIZE, "%s", optarg);
                 break;
             case 'u'://Unix socket to use
                 snprintf(bb_config.socketpath, BUFFER_SIZE, "%s", optarg);
+                break;
+            case 'm'://vglclient method
+                snprintf(bb_config.vglmethod, BUFFER_SIZE, "%s", optarg);
                 break;
             default:
                 // Unrecognized option
@@ -541,8 +544,29 @@ int main(int argc, char* argv[]) {
                 break;
               case 'Y': //Yes, run through vglrun
                 bb_log(LOG_INFO, "Running application through vglrun.\n");
-                snprintf(buffer, BUFFER_SIZE, "vglrun -c proxy -d :%i -ld %s --", bb_config.xdisplay, bb_config.ldpath);
-                runApp2(buffer, argc - optind, argv + optind);
+                //run vglclient if any method other than proxy is used
+                if (strncmp(bb_config.vglmethod, "proxy", BUFFER_SIZE) != 0){
+                  char * vglclient_args[] = {
+                    "vglclient",
+                    "-detach",
+                    0
+                  };
+                  bb_run_fork(vglclient_args);
+                }
+                char ** vglrun_args = malloc(sizeof(char *) * (9 + argc - optind));
+                vglrun_args[0] = "vglrun";
+                vglrun_args[1] = "-c";
+                vglrun_args[2] = bb_config.vglmethod;
+                vglrun_args[3] = "-d";
+                vglrun_args[4] = bb_config.xdisplay;
+                vglrun_args[5] = "-ld";
+                vglrun_args[6] = bb_config.ldpath;
+                vglrun_args[7] = "--";
+                for (r = 0; r < argc - optind; r++){
+                  vglrun_args[8+r] = argv[optind + r];
+                }
+                vglrun_args[8+r] = 0;
+                bb_run_fork_wait(vglrun_args);
                 socketClose(&bb_config.bb_socket);
                 break;
               default: //Something went wrong - output and exit.

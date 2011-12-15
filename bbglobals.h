@@ -61,9 +61,10 @@ struct bb_config_struct {
     unsigned int appcount; /// Count of applications using the secondary X.
     char errors[BUFFER_SIZE]; /// Error message, if any. First byte is 0 otherwise.
     int runmode; /// See running modes above.
-    int xdisplay; /// Number of the used X display for VirtualGL.
+    char xdisplay[BUFFER_SIZE]; /// Number of the used X display for VirtualGL.
     char xconf[BUFFER_SIZE]; /// Filename for secondary X xorg.conf file.
     char ldpath[BUFFER_SIZE]; /// Path for LD for vglrun'ed applications.
+    char vglmethod[BUFFER_SIZE]; /// Method used for VirtualGL connection.
     char socketpath[BUFFER_SIZE]; /// Filename for bumblebee communication socket.
     pid_t x_pid; /// PID for X process, if any.
 };
