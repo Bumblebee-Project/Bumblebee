@@ -221,7 +221,7 @@ static void bbswitch_off(void) {
     pci_disable_device(dis_dev);
     pci_set_power_state(dis_dev, PCI_D3hot);
 
-    if (!bbswitch_acpi_off())
+    if (bbswitch_acpi_off())
         printk(KERN_WARNING "bbswitch: The discrete card could not be disabled"
                 " by a _DSM call\n");
 }
@@ -232,7 +232,7 @@ static void bbswitch_on(void) {
 
     printk(KERN_INFO "bbswitch: enabling discrete graphics\n");
 
-    if (!bbswitch_acpi_on())
+    if (bbswitch_acpi_on())
         printk(KERN_WARNING "bbswitch: The discrete card could not be enabled"
             " by a _DSM call\n");
 
