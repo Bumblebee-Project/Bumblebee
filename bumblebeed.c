@@ -474,10 +474,6 @@ int main(int argc, char* argv[]) {
     }
     bb_log(LOG_DEBUG, "%s version %s starting...\n", bb_config.program_name, TOSTRING(VERSION));
 
-    if (bbswitch_status() < 0){
-      bb_log(LOG_WARNING, "bbswitch could not be accessed. Turning the dedicated card on/off will not be possible!\n");
-    }
-
     /* Daemonized if daemon flag is activated */
     if (bb_config.is_daemonized) {
         if (daemonize()) {
@@ -487,6 +483,10 @@ int main(int argc, char* argv[]) {
     }
 
     if (bb_config.runmode == BB_RUN_DAEMON){
+      //check bbswitch availability, warn if not availble
+      if (bbswitch_status() < 0){
+        bb_log(LOG_WARNING, "bbswitch could not be accessed. Turning the dedicated card on/off will not be possible!\n");
+      }
       /* Initialize communication socket, enter main loop */
       bb_config.bb_socket = socketServer(bb_config.socketpath, SOCK_NOBLOCK);
       main_loop();
