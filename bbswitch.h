@@ -19,25 +19,16 @@
  */
 
 /*
- * Run command functions for Bumblebee
+ * bbswitch-related functions for Bumblebee
  */
 #pragma once
-#include <unistd.h>
 
-/// Forks and runs the given application.
-pid_t bb_run_fork(char** argv);
+/// Returns 0 if card is off, 1 if card is on, -1 if bbswitch not active.
+/// In other words: 0 means off, anything else means on.
+int bbswitch_status();
 
-/// Forks and runs the given application, waits for process to finish.
-void bb_run_fork_wait(char** argv);
+/// Turns card on if not already on.
+void bbswitch_on();
 
-/// Returns 1 if a process is currently running, 0 otherwise.
-int isRunning(pid_t proc);
-
-/// Stops the running process, if any.
-void bb_stop(pid_t proc);
-
-/// Stops all the running processes, if any.
-void bb_stop_all();
-
-/// Attempts to run the given application, replacing the current process
-void bb_run_exec(char ** argv);
+/// Turns card off if not already on.
+void bbswitch_off();

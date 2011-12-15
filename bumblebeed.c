@@ -20,9 +20,14 @@
  */
 
 /*
- * C-coded version of the Bumblebee daemon.
+ * C-coded version of the Bumblebee daemon and optirun.
  */
 
+#include "bbglobals.h"
+#include "bbsocket.h"
+#include "bblogger.h"
+#include "bbswitch.h"
+#include "bbrun.h"
 #include <assert.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -31,10 +36,8 @@
 #include <unistd.h>
 #include <grp.h>
 #include <signal.h>
-#include "bbglobals.h"
-#include "bbsocket.h"
-#include "bblogger.h"
-#include "bbrun.h"
+#include <time.h>
+#include <X11/Xlib.h>
 
 /**
  *  Print a little note on usage 
@@ -54,6 +57,7 @@ static void print_usage(int exit_val) {
     printf("      -X #\tX display number to use.\n");
     printf("      -l [PATH]\tLD driver path to use.\n");
     printf("      -u [PATH]\tUnix socket to use.\n");
+    printf("      -m [METHOD]\tConnection method to use for VirtualGL.\n");
     printf("      -h\tShow this help screen.\n");
     printf("\n");
     printf("When called as optirun, -r is assumed unless -d is set.\n");
@@ -63,54 +67,80 @@ static void print_usage(int exit_val) {
 }
 
 /**
- *  Start the X server by fork-exec 
+ *  Start the X server by fork-exec, turn card on if needed.
  *
- *  @return PID of the X instance
+ *  @return 0 for success, anything else for failure.
  */
-void start_x(void) {
-  bb_log(LOG_INFO, "Starting X server on display %i.\n", bb_config.xdisplay);
-  char disp_buffer[BUFFER_SIZE];
-  snprintf(disp_buffer, BUFFER_SIZE, ":%i", bb_config.xdisplay);
-  char * x_argv[] = {
+void start_secondary(void) {
+  if (bbswitch_status() == 0){
+    bb_log(LOG_INFO, "Switching dedicated card ON\n");
+    bbswitch_on();
+    /// \todo Support nouveau as well
+    bb_log(LOG_INFO, "Loading nvidia module\n");
+    char * mod_argv[] = {
+      "modprobe",
+      "nvidia",
+      NULL
+    };
+    bb_run_fork_wait(mod_argv);
+  }
+  if (bbswitch_status() != 0){
+    bb_log(LOG_INFO, "Starting X server on display %s.\n", bb_config.xdisplay);
+    char * x_argv[] = {
          "X",
          "-config", bb_config.xconf,
          "-sharevts",
          "-nolisten", "tcp",
          "-noreset",
-         disp_buffer,
+         bb_config.xdisplay,
          NULL
          };
-  bb_config.x_pid = bb_run_fork(x_argv);
-}
-
-/** 
- * Kill the second X server if any 
- */
-void stop_x(void) {
-  if (isRunning(bb_config.x_pid)){
-    bb_log(LOG_INFO, "Stopping X server\n");
-    runStop(bb_config.x_pid);
+    bb_config.x_pid = bb_run_fork(x_argv);
+    time_t xtimer = time(0);
+    Display * xdisp = 0;
+    while ((time(0) - xtimer <= 10) && isRunning(bb_config.x_pid)){
+      xdisp = XOpenDisplay(bb_config.xdisplay);
+      if (xdisp != 0){break;}
+    }
+    if (xdisp == 0){
+      /// \todo Maybe check X exit status and/or messages?
+      if (isRunning(bb_config.x_pid)){
+        bb_log(LOG_ERR, "X unresponsive after 10 seconds - aborting\n");
+        bb_stop(bb_config.x_pid);
+        snprintf(bb_config.errors, BUFFER_SIZE, "X unresponsive after 10 seconds - aborting");
+      }else{
+        bb_log(LOG_ERR, "X did not start properly\n");
+        snprintf(bb_config.errors, BUFFER_SIZE, "X did not start properly");
+      }
+    }else{
+      XCloseDisplay(xdisp);//close connection to X again
+      bb_log(LOG_INFO, "X successfully started in %i seconds\n", time(0) - xtimer);
+    }
+  }else{
+    snprintf(bb_config.errors, BUFFER_SIZE, "Could not switch dedicated card on.");
   }
 }
 
 /** 
- * Turn Dedicated card ON 
+ * Kill the second X server if any, turn card off if requested.
  */
-void bb_switch_card_on(void) {
-  bb_log(LOG_INFO, "Switching dedicated card ON");
-  /// \todo Call bbswitch
-  /// \todo Support nouveau as well
-  runApp2("insmod nvidia", 0, 0);
-}
-
-/**
- *  Turn Dedicated card OFF 
- */
-void bb_switch_card_off(void) {
-  bb_log(LOG_INFO, "Switching dedicated card OFF");
-  /// \todo Call bbswitch
-  /// \todo Support nouveau as well
-  runApp2("rmmod nvidia", 0, 0);
+void stop_secondary(void) {
+  if (isRunning(bb_config.x_pid)){
+    bb_log(LOG_INFO, "Stopping X server\n");
+    bb_stop(bb_config.x_pid);
+  }
+  if (bbswitch_status() == 1){
+    /// \todo Support nouveau as well
+    bb_log(LOG_INFO, "Unloading nvidia module\n");
+    char * mod_argv[] = {
+      "rmmod",
+      "nvidia",
+      NULL
+    };
+    bb_run_fork_wait(mod_argv);
+    bb_log(LOG_INFO, "Switching dedicated card OFF\n");
+    bbswitch_off();
+  }
 }
 
 /**
@@ -253,15 +283,7 @@ void handle_socket(struct clientsocket * C){
       case 'C'://check if VirtualGL is allowed
         /// \todo Handle power management cases and powering card on/off.
         //no X? attempt to start it
-        if (!isRunning(bb_config.x_pid)){
-          start_x();
-          // TODO: Find a way to check for the X ready. Maybe sending signal 0 to the pid.
-          usleep(100000);//sleep 100ms to give X a chance to fail
-          if (!isRunning(bb_config.x_pid)){
-            snprintf(bb_config.errors, BUFFER_SIZE, "X failed to start!");
-            bb_log(LOG_ERR, "X failed to start!\n");
-          }
-        }
+        if (!isRunning(bb_config.x_pid)){start_secondary();}
         if (isRunning(bb_config.x_pid)){
           r = snprintf(buffer, BUFFER_SIZE, "Yes. X is active.\n");
           if (C->inuse == 0){
@@ -297,15 +319,20 @@ static void main_loop(void) {
     struct clientsocket * last = 0;//pointer to the last socket
     struct clientsocket * curr = 0;//current pointer to a socket
     struct clientsocket * prev = 0;//previous pointer to a socket
-    
+    time_t lastcheck = 0;
+
     bb_log(LOG_INFO, "Started main loop\n");
     /* Listen for Optirun conections and act accordingly */
     while(bb_config.bb_socket != -1) {
         usleep(100000);//sleep 100ms to prevent 100% CPU time usage
 
-        //stop X if there is no need to keep it running
-        if ((bb_config.appcount == 0) && isRunning(bb_config.x_pid)){
-          stop_x();
+        //every five seconds
+        if (time(0) - lastcheck > 5){
+          lastcheck = time(0);
+          //stop X / card if there is no need to keep it running
+          if ((bb_config.appcount == 0) && (isRunning(bb_config.x_pid) || (bbswitch_status() > 0))){
+            stop_secondary();
+          }
         }
 
         /* Accept a connection. */
@@ -388,9 +415,10 @@ int main(int argc, char* argv[]) {
     bb_config.is_daemonized = 0;
     bb_config.verbosity = VERB_WARN;
     bb_config.errors[0] = 0;//no errors, yet :-)
-    bb_config.xdisplay = 8;
+    snprintf(bb_config.xdisplay, BUFFER_SIZE, ":8");
     snprintf(bb_config.xconf, BUFFER_SIZE, "/etc/bumblebee/xorg.conf.nouveau");
     snprintf(bb_config.ldpath, BUFFER_SIZE, "/usr/lib64/nvidia-current");
+    snprintf(bb_config.vglmethod, BUFFER_SIZE, "proxy");
     snprintf(bb_config.socketpath, BUFFER_SIZE, "/var/run/bumblebee.socket");
     bb_config.runmode = BB_RUN_DAEMON;
     if ((strcmp(bb_config.program_name, "optirun") == 0) || (strcmp(bb_config.program_name, "./optirun") == 0)){
@@ -399,7 +427,7 @@ int main(int argc, char* argv[]) {
     
     /* Parse the options, set flags as necessary */
     int c;
-    while( (c = getopt(argc, argv, "+dcrvVx:X:l:u:h|help")) != -1) {
+    while( (c = getopt(argc, argv, "+dcrvVm:x:X:l:u:h|help")) != -1) {
         switch(c){
             case 'h'://help
                 print_usage(EXIT_SUCCESS);
@@ -427,13 +455,16 @@ int main(int argc, char* argv[]) {
                 snprintf(bb_config.xconf, BUFFER_SIZE, "%s", optarg);
                 break;
             case 'X'://X display number
-                bb_config.xdisplay = atoi(optarg);
+                snprintf(bb_config.xdisplay, BUFFER_SIZE, "%s", optarg);
                 break;
             case 'l'://LD driver path
                 snprintf(bb_config.ldpath, BUFFER_SIZE, "%s", optarg);
                 break;
             case 'u'://Unix socket to use
                 snprintf(bb_config.socketpath, BUFFER_SIZE, "%s", optarg);
+                break;
+            case 'm'://vglclient method
+                snprintf(bb_config.vglmethod, BUFFER_SIZE, "%s", optarg);
                 break;
             default:
                 // Unrecognized option
@@ -465,10 +496,14 @@ int main(int argc, char* argv[]) {
     }
 
     if (bb_config.runmode == BB_RUN_DAEMON){
+      //check bbswitch availability, warn if not availble
+      if (bbswitch_status() < 0){
+        bb_log(LOG_WARNING, "bbswitch could not be accessed. Turning the dedicated card on/off will not be possible!\n");
+      }
       /* Initialize communication socket, enter main loop */
       bb_config.bb_socket = socketServer(bb_config.socketpath, SOCK_NOBLOCK);
       main_loop();
-      runStop(bb_config.x_pid);
+      stop_secondary();//stop X and/or card if needed
     }else{
       /* Connect to listening daemon */
       bb_config.bb_socket = socketConnect(bb_config.socketpath, SOCK_NOBLOCK);
@@ -509,8 +544,29 @@ int main(int argc, char* argv[]) {
                 break;
               case 'Y': //Yes, run through vglrun
                 bb_log(LOG_INFO, "Running application through vglrun.\n");
-                snprintf(buffer, BUFFER_SIZE, "vglrun -c proxy -d :%i -ld %s --", bb_config.xdisplay, bb_config.ldpath);
-                runApp2(buffer, argc - optind, argv + optind);
+                //run vglclient if any method other than proxy is used
+                if (strncmp(bb_config.vglmethod, "proxy", BUFFER_SIZE) != 0){
+                  char * vglclient_args[] = {
+                    "vglclient",
+                    "-detach",
+                    0
+                  };
+                  bb_run_fork(vglclient_args);
+                }
+                char ** vglrun_args = malloc(sizeof(char *) * (9 + argc - optind));
+                vglrun_args[0] = "vglrun";
+                vglrun_args[1] = "-c";
+                vglrun_args[2] = bb_config.vglmethod;
+                vglrun_args[3] = "-d";
+                vglrun_args[4] = bb_config.xdisplay;
+                vglrun_args[5] = "-ld";
+                vglrun_args[6] = bb_config.ldpath;
+                vglrun_args[7] = "--";
+                for (r = 0; r < argc - optind; r++){
+                  vglrun_args[8+r] = argv[optind + r];
+                }
+                vglrun_args[8+r] = 0;
+                bb_run_fork_wait(vglrun_args);
                 socketClose(&bb_config.bb_socket);
                 break;
               default: //Something went wrong - output and exit.
@@ -524,5 +580,6 @@ int main(int argc, char* argv[]) {
     }
 
     bb_closelog();
+    bb_stop_all();//stop any started processes that are left
     return (EXIT_SUCCESS);
 }
