@@ -74,6 +74,7 @@ void pidlist_remove(pid_t rempid){
   while (curr != 0){
     if (curr->PID == rempid){
       if (prev != 0){prev->next = curr->next;}
+      if (curr == pidlist_start){pidlist_start = 0;}
       free(curr);
       if (prev != 0){
         curr = prev->next;
