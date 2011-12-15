@@ -30,16 +30,80 @@
 #include <sys/wait.h>
 #include <errno.h>
 
-pid_t curr_id = 0;
 int handler_set = 0;
+
+/// Socket list structure for use in main_loop.
+struct pidlist{
+  pid_t PID;
+  struct pidlist * next;
+};
+
+struct pidlist * pidlist_start = 0; ///Begin of the linked-list of PIDs, if any.
+
+/// Adds a pid_t to the linked list of PIDs.
+/// Creates the list if it is still null.
+void pidlist_add(pid_t newpid){
+  struct pidlist * curr = 0;
+  curr = pidlist_start;
+  //no list? create one.
+  if (curr == 0){
+    curr = malloc(sizeof(struct pidlist));
+    curr->next = 0;
+    curr->PID = newpid;
+    pidlist_start = curr;
+    return;
+  }
+  //find the last item in the list
+  while ((curr != 0) && (curr->next != 0)){curr = curr->next;}
+  //curr now holds the last item, curr->next is null
+  curr->next = malloc(sizeof(struct pidlist));
+  curr = curr->next;//move to new element
+  curr->next = 0;
+  curr->PID = newpid;
+}//pidlist_add
+
+/// Removes a pid_t from the linked list of PIDs.
+/// Makes list null if empty.
+void pidlist_remove(pid_t rempid){
+  struct pidlist * curr = 0;
+  struct pidlist * prev = 0;
+  curr = pidlist_start;
+  //no list? cancel.
+  if (curr == 0){return;}
+  //find the item in the list
+  while (curr != 0){
+    if (curr->PID == rempid){
+      prev->next = curr->next;
+      free(curr);
+      curr = prev->next;
+      continue;//just in case it was added twice for some reason
+    }
+    //go to the next item
+    prev = curr;
+    curr = curr->next;
+  }
+}//pidlist_remove
+
+/// Finds a pid_t in the linked list of PIDs.
+/// Returns 0 if not found, 1 otherwise.
+int pidlist_find(pid_t findpid){
+  struct pidlist * curr = 0;
+  curr = pidlist_start;
+  //no list? cancel.
+  if (curr == 0){return 0;}
+  //find the item in the list
+  while (curr != 0){
+    if (curr->PID == findpid){return 1;}
+    curr = curr->next;
+  }
+  return 0;
+}//pidlist_find
 
 void childsig_handler(int signum){
   if (signum != SIGCHLD){return;}
   pid_t ret = wait(0);
-  if (ret == curr_id){
-    bb_log(LOG_INFO, "Process with PID %i terminated.\n", curr_id);
-    curr_id = 0;
-  }
+  bb_log(LOG_DEBUG, "Process with PID %i terminated.\n", ret);
+  pidlist_remove(ret);
 }
 
 
@@ -106,18 +170,13 @@ pid_t runFork(char * cmd){
     sigaction(SIGCHLD, &new_action, NULL);
     handler_set = 1;
   }
-  if (isRunning()){
-    bb_log(LOG_ERR, "Attempted to start a process while one was already running.\n");
-    return 0;
-  }
   pid_t ret = fork();
-  printf("Mehness %i!\n", ret);
   if (ret == 0){
     runCmd(cmd);
   }else{
     if (ret > 0){
       bb_log(LOG_INFO, "Process %s started, PID %i.\n", cmd, ret);
-      curr_id = ret;
+      pidlist_add(ret);
     }else{
       bb_log(LOG_ERR, "Process %s could not be started. fork() failed.\n", cmd);
       return 0;
@@ -144,10 +203,6 @@ pid_t bb_run_fork(char** argv) {
     sigaction(SIGCHLD, &new_action, NULL);
     handler_set = 1;
   }
-  if (isRunning()){
-    bb_log(LOG_ERR, "Attempted to start a process while one was already running.\n");
-    return 0;
-  }
   // Fork and attempt to run given application
   pid_t ret = fork();
   if (ret == 0){
@@ -157,7 +212,7 @@ pid_t bb_run_fork(char** argv) {
     if (ret > 0){
       // Fork went ok, parent process continues
       bb_log(LOG_INFO, "Process %s started, PID %i.\n", argv[0], ret);
-      curr_id = ret;
+      pidlist_add(ret);
     }else{
       // Fork failed
       bb_log(LOG_ERR, "Process %s could not be started. fork() failed.\n", argv[0]);
@@ -169,14 +224,15 @@ pid_t bb_run_fork(char** argv) {
 }
 
 /// Returns 1 if a process is currently running, 0 otherwise.
-int isRunning(){
+int isRunning(pid_t proc){
+  return pidlist_find(proc);
   if (curr_id == 0){return 0;}
   return 1;
 }
 
 /// Stops the running process, if any.
-void runStop(){
-  if (isRunning()){kill(curr_id, SIGTERM);}
+void runStop(pid_t proc){
+  if (isRunning(proc)){kill(proc, SIGTERM);}
 }
 
 /// Attempts to run the given application, replacing the current process
@@ -196,19 +252,15 @@ void runApp2(char * prefix, int argc, char ** argv){
     sigaction(SIGCHLD, &new_action, NULL);
     handler_set = 1;
   }
-  if (isRunning()){
-    bb_log(LOG_ERR, "Attempted to start a process while one was already running.\n");
-    return;
-  }
   pid_t ret = fork();
   if (ret == 0){
     runCmd2(prefix, argc, argv);
   }else{
     if (ret > 0){
       bb_log(LOG_INFO, "Process %s started, PID %i.\n", prefix, ret);
-      curr_id = ret;
+      pidlist_add(ret);
       //sleep until process finishes
-      while (curr_id != 0){usleep(1000000);}
+      while (isRunning(ret)){usleep(1000000);}
     }else{
       bb_log(LOG_ERR, "Process %s could not be started. fork() failed.\n", prefix);
     }

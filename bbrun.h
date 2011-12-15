@@ -24,8 +24,6 @@
 #pragma once
 #include <unistd.h>
 
-extern pid_t curr_id;
-
 /// Attempts to run the given command, replacing the current process
 void runCmd(char * cmd);
 
@@ -37,12 +35,12 @@ pid_t runFork(char * cmd);
 
 /// Forks and run the given application.
 pid_t bb_run_fork(char** argv);
-  
+
 /// Returns 1 if a process is currently running, 0 otherwise.
-int isRunning();
+int isRunning(pid_t proc);
 
 /// Stops the running process, if any.
-void runStop();
+void runStop(pid_t proc);
 
 /// Attempts to run the given application, replacing the current process
 void bb_run_exec(char ** argv);

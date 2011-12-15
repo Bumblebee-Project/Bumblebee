@@ -79,7 +79,7 @@ void start_x(void) {
          disp_buffer,
          NULL
          };
-  bb_run_fork(x_argv);
+  bb_config.x_pid = bb_run_fork(x_argv);
  /*  
   char buffer[BUFFER_SIZE];
   snprintf(buffer, BUFFER_SIZE, "X -config %s -sharevts -nolisten tcp -noreset :%i", bb_config.xconf, bb_config.xdisplay);
@@ -91,24 +91,28 @@ void start_x(void) {
  * Kill the second X server if any 
  */
 void stop_x(void) {
-  if (isRunning()){
+  if (isRunning(bb_config.x_pid)){
     bb_log(LOG_INFO, "Stopping X server\n");
-    runStop();
+    runStop(bb_config.x_pid);
   }
 }
 
 /** 
  * Turn Dedicated card ON 
  */
-static int bb_switch_card_on(void) {
-  return 0;//dummy return value
+void bb_switch_card_on(void) {
+  /// \todo Call bbswitch
+  /// \todo Support nouveau as well
+  runApp2("insmod nvidia", 0, 0);
 }
 
 /**
  *  Turn Dedicated card OFF 
  */
-static int bb_switch_card_off(void) {
-  return 0;//dummy return value
+void bb_switch_card_off(void) {
+  /// \todo Call bbswitch
+  /// \todo Support nouveau as well
+  runApp2("rmmod nvidia", 0, 0);
 }
 
 /**
@@ -213,7 +217,6 @@ static void handle_signal(int sig) {
         case SIGTERM:
             bb_log(LOG_WARNING, "Received %s signal.\n", strsignal(sig));
             socketClose(&bb_config.bb_socket);//closing the socket terminates the server
-            runStop();
             break;
         default:
             bb_log(LOG_WARNING, "Unhandled signal %s\n", strsignal(sig));
@@ -240,8 +243,8 @@ void handle_socket(struct clientsocket * C){
         if (bb_config.errors[0] != 0){
           r = snprintf(buffer, BUFFER_SIZE, "Error (%s): %s\n", TOSTRING(VERSION), bb_config.errors);
         }else{
-          if (isRunning()){
-            r = snprintf(buffer, BUFFER_SIZE, "Ready (%s). X is PID %i, %i applications using bumblebeed.\n", TOSTRING(VERSION), curr_id, bb_config.appcount);
+          if (isRunning(bb_config.x_pid)){
+            r = snprintf(buffer, BUFFER_SIZE, "Ready (%s). X is PID %i, %i applications using bumblebeed.\n", TOSTRING(VERSION), bb_config.x_pid, bb_config.appcount);
           }else{
             r = snprintf(buffer, BUFFER_SIZE, "Ready (%s). X inactive.\n", TOSTRING(VERSION));
           }
@@ -252,15 +255,15 @@ void handle_socket(struct clientsocket * C){
       case 'C'://check if VirtualGL is allowed
         /// \todo Handle power management cases and powering card on/off.
         //no X? attempt to start it
-        if (!isRunning()){
+        if (!isRunning(bb_config.x_pid)){
           start_x();
           usleep(100000);//sleep 100ms to give X a chance to fail
-          if (!isRunning()){
+          if (!isRunning(bb_config.x_pid)){
             snprintf(bb_config.errors, BUFFER_SIZE, "X failed to start!");
             bb_log(LOG_ERR, "X failed to start!\n");
           }
         }
-        if (isRunning()){
+        if (isRunning(bb_config.x_pid)){
           r = snprintf(buffer, BUFFER_SIZE, "Yes. X is active.\n");
           if (C->inuse == 0){
             C->inuse = 1;
@@ -302,7 +305,7 @@ static void main_loop(void) {
         usleep(100000);//sleep 100ms to prevent 100% CPU time usage
 
         //stop X if there is no need to keep it running
-        if (isRunning() && (bb_config.appcount == 0)){
+        if ((bb_config.appcount == 0) && isRunning(bb_config.x_pid)){
           stop_x();
         }
 
@@ -446,6 +449,7 @@ int main(int argc, char* argv[]) {
       /* Initialize communication socket, enter main loop */
       bb_config.bb_socket = socketServer(bb_config.socketpath, SOCK_NOBLOCK);
       main_loop();
+      runStop(bb_config.x_pid);
     }else{
       /* Connect to listening daemon */
       bb_config.bb_socket = socketConnect(bb_config.socketpath, SOCK_NOBLOCK);

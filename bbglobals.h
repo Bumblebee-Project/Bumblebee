@@ -64,6 +64,7 @@ struct bb_config_struct {
     char xconf[BUFFER_SIZE]; /// Filename for secondary X xorg.conf file.
     char ldpath[BUFFER_SIZE]; /// Path for LD for vglrun'ed applications.
     char socketpath[BUFFER_SIZE]; /// Filename for bumblebee communication socket.
+    pid_t x_pid; /// PID for X process, if any.
 };
 
 extern struct bb_config_struct bb_config;
