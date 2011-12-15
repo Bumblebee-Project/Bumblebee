@@ -109,7 +109,19 @@ void childsig_handler(int signum){
   pid_t ret = wait(0);
   bb_log(LOG_DEBUG, "Process with PID %i terminated.\n", ret);
   pidlist_remove(ret);
-}
+}//childsig_handler
+
+void check_handler(){
+  // Set handler for this child process if not already
+  if (handler_set == 0){
+    struct sigaction new_action;
+    new_action.sa_handler = childsig_handler;
+    sigemptyset(&new_action.sa_mask);
+    new_action.sa_flags = 0;
+    sigaction(SIGCHLD, &new_action, NULL);
+    handler_set = 1;
+  }
+}//check_handler
 
 
 /// Attempts to run the given command, replacing the current process
@@ -167,14 +179,7 @@ void runCmd2(char * prefix, int argc, char ** argv){
 /// Attempts to run the given command after forking.
 /// Returns 0 on failure, the PID of the running application otherwise.
 pid_t runFork(char * cmd){
-  if (handler_set == 0){
-    struct sigaction new_action;
-    new_action.sa_handler = childsig_handler;
-    sigemptyset(&new_action.sa_mask);
-    new_action.sa_flags = 0;
-    sigaction(SIGCHLD, &new_action, NULL);
-    handler_set = 1;
-  }
+  check_handler();
   pid_t ret = fork();
   if (ret == 0){
     runCmd(cmd);
@@ -191,23 +196,14 @@ pid_t runFork(char * cmd){
 }//runFork
 
 /**
- * Forks and run the given application.
+ * Forks and runs the given application.
  * More suitable for configurable arguments to pass
  *
- * @param argc The amount of argument passed
- * @param argv The arguments values, the first one is the full application path
+ * @param argv The arguments values, the first one is the application path or name
  * @return The new process PID
  */
 pid_t bb_run_fork(char** argv) {
-  // Set handler for this child process if not already
-  if (handler_set == 0){
-    struct sigaction new_action;
-    new_action.sa_handler = childsig_handler;
-    sigemptyset(&new_action.sa_mask);
-    new_action.sa_flags = 0;
-    sigaction(SIGCHLD, &new_action, NULL);
-    handler_set = 1;
-  }
+  check_handler();
   // Fork and attempt to run given application
   pid_t ret = fork();
   if (ret == 0){
@@ -226,6 +222,34 @@ pid_t bb_run_fork(char** argv) {
   }
   return ret;
 
+}
+
+/**
+ * Forks and runs the given application, waits for process to finish.
+ *
+ * @param argv The arguments values, the first one is the application path or name
+ */
+void bb_run_fork_wait(char** argv) {
+  check_handler();
+  // Fork and attempt to run given application
+  pid_t ret = fork();
+  if (ret == 0){
+    // Fork went ok, child process replace
+    bb_run_exec(argv);
+  }else{
+    if (ret > 0){
+      // Fork went ok, parent process continues
+      bb_log(LOG_INFO, "Process %s started, PID %i.\n", argv[0], ret);
+      pidlist_add(ret);
+      //sleep until process finishes
+      while (isRunning(ret)){usleep(1000000);}
+    }else{
+      // Fork failed
+      bb_log(LOG_ERR, "Process %s could not be started. fork() failed.\n", argv[0]);
+      return;
+    }
+  }
+  return;
 }
 
 /// Returns 1 if a process is currently running, 0 otherwise.
@@ -247,14 +271,7 @@ void bb_run_exec(char ** argv){
 
 /// Attempts to run the given application with prefix, returning after the application finishes.
 void runApp2(char * prefix, int argc, char ** argv){
-  if (handler_set == 0){
-    struct sigaction new_action;
-    new_action.sa_handler = childsig_handler;
-    sigemptyset(&new_action.sa_mask);
-    new_action.sa_flags = 0;
-    sigaction(SIGCHLD, &new_action, NULL);
-    handler_set = 1;
-  }
+  check_handler();
   pid_t ret = fork();
   if (ret == 0){
     runCmd2(prefix, argc, argv);

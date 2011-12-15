@@ -33,8 +33,11 @@ void runCmd2(char * prefix, int argc, char ** argv);
 /// Attempts to run the given command after forking.
 pid_t runFork(char * cmd);
 
-/// Forks and run the given application.
+/// Forks and runs the given application.
 pid_t bb_run_fork(char** argv);
+
+/// Forks and runs the given application, waits for process to finish.
+void bb_run_fork_wait(char** argv);
 
 /// Returns 1 if a process is currently running, 0 otherwise.
 int isRunning(pid_t proc);
