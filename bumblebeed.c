@@ -98,6 +98,7 @@ void stop_x(void) {
  * Turn Dedicated card ON 
  */
 static int bb_switch_card_on(void) {
+  bb_log(LOG_INFO, "Dummy: switching dedicated card ON");
   return 0;//dummy return value
 }
 
@@ -105,6 +106,7 @@ static int bb_switch_card_on(void) {
  *  Turn Dedicated card OFF 
  */
 static int bb_switch_card_off(void) {
+  bb_log(LOG_INFO, "Dummy: switching dedicated card OFF");
   return 0;//dummy return value
 }
 
