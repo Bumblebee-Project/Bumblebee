@@ -23,6 +23,11 @@
  * C-coded version of the Bumblebee daemon.
  */
 
+#include "bbglobals.h"
+#include "bbsocket.h"
+#include "bblogger.h"
+#include "bbswitch.h"
+#include "bbrun.h"
 #include <assert.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -31,10 +36,8 @@
 #include <unistd.h>
 #include <grp.h>
 #include <signal.h>
-#include "bbglobals.h"
-#include "bbsocket.h"
-#include "bblogger.h"
-#include "bbrun.h"
+#include <time.h>
+#include <X11/Xlib.h>
 
 /**
  *  Print a little note on usage 
@@ -63,15 +66,23 @@ static void print_usage(int exit_val) {
 }
 
 /**
- *  Start the X server by fork-exec 
+ *  Start the X server by fork-exec, turn card on if needed.
  *
- *  @return PID of the X instance
+ *  @return 0 for success, anything else for failure.
  */
-void start_x(void) {
-  bb_log(LOG_INFO, "Starting X server on display %i.\n", bb_config.xdisplay);
-  char disp_buffer[BUFFER_SIZE];
-  snprintf(disp_buffer, BUFFER_SIZE, ":%i", bb_config.xdisplay);
-  char * x_argv[] = {
+void start_secondary(void) {
+  if (bbswitch_status() == 0){
+    bb_log(LOG_INFO, "Switching dedicated card ON\n");
+    bbswitch_on();
+    /// \todo Support nouveau as well
+    bb_log(LOG_INFO, "Loading nvidia module\n");
+    runApp2("insmod nvidia", 0, 0);
+  }
+  if (bbswitch_status() != 0){
+    bb_log(LOG_INFO, "Starting X server on display %i.\n", bb_config.xdisplay);
+    char disp_buffer[BUFFER_SIZE];
+    snprintf(disp_buffer, BUFFER_SIZE, ":%i", bb_config.xdisplay);
+    char * x_argv[] = {
          "X",
          "-config", bb_config.xconf,
          "-sharevts",
@@ -80,37 +91,47 @@ void start_x(void) {
          disp_buffer,
          NULL
          };
-  bb_config.x_pid = bb_run_fork(x_argv);
-}
-
-/** 
- * Kill the second X server if any 
- */
-void stop_x(void) {
-  if (isRunning(bb_config.x_pid)){
-    bb_log(LOG_INFO, "Stopping X server\n");
-    runStop(bb_config.x_pid);
+    bb_config.x_pid = bb_run_fork(x_argv);
+    time_t xtimer = time(0);
+    Display * xdisp = 0;
+    while ((time(0) - xtimer <= 10) && isRunning(bb_config.x_pid)){
+      xdisp = XOpenDisplay(disp_buffer);
+      if (xdisp != 0){break;}
+    }
+    if (xdisp == 0){
+      /// \todo Maybe check X exit status and/or messages?
+      if (isRunning(bb_config.x_pid)){
+        bb_log(LOG_ERR, "X unresponsive after 10 seconds - aborting\n");
+        runStop(bb_config.x_pid);
+        snprintf(bb_config.errors, BUFFER_SIZE, "X unresponsive after 10 seconds - aborting");
+      }else{
+        bb_log(LOG_ERR, "X did not start properly\n");
+        snprintf(bb_config.errors, BUFFER_SIZE, "X did not start properly");
+      }
+    }else{
+      XCloseDisplay(xdisp);//close connection to X again
+      bb_log(LOG_INFO, "X successfully started in %i seconds\n", time(0) - xtimer);
+    }
+  }else{
+    snprintf(bb_config.errors, BUFFER_SIZE, "Could not switch dedicated card on.");
   }
 }
 
 /** 
- * Turn Dedicated card ON 
+ * Kill the second X server if any, turn card off if requested.
  */
-void bb_switch_card_on(void) {
-  bb_log(LOG_INFO, "Switching dedicated card ON");
-  /// \todo Call bbswitch
-  /// \todo Support nouveau as well
-  runApp2("insmod nvidia", 0, 0);
-}
-
-/**
- *  Turn Dedicated card OFF 
- */
-void bb_switch_card_off(void) {
-  bb_log(LOG_INFO, "Switching dedicated card OFF");
-  /// \todo Call bbswitch
-  /// \todo Support nouveau as well
-  runApp2("rmmod nvidia", 0, 0);
+void stop_secondary(void) {
+  if (isRunning(bb_config.x_pid)){
+    bb_log(LOG_INFO, "Stopping X server\n");
+    runStop(bb_config.x_pid);
+  }
+  if (bbswitch_status() == 1){
+    /// \todo Support nouveau as well
+    bb_log(LOG_INFO, "Unloading nvidia module\n");
+    runApp2("rmmod nvidia", 0, 0);
+    bb_log(LOG_INFO, "Switching dedicated card OFF\n");
+    bbswitch_off();
+  }
 }
 
 /**
@@ -253,15 +274,7 @@ void handle_socket(struct clientsocket * C){
       case 'C'://check if VirtualGL is allowed
         /// \todo Handle power management cases and powering card on/off.
         //no X? attempt to start it
-        if (!isRunning(bb_config.x_pid)){
-          start_x();
-          // TODO: Find a way to check for the X ready. Maybe sending signal 0 to the pid.
-          usleep(100000);//sleep 100ms to give X a chance to fail
-          if (!isRunning(bb_config.x_pid)){
-            snprintf(bb_config.errors, BUFFER_SIZE, "X failed to start!");
-            bb_log(LOG_ERR, "X failed to start!\n");
-          }
-        }
+        if (!isRunning(bb_config.x_pid)){start_secondary();}
         if (isRunning(bb_config.x_pid)){
           r = snprintf(buffer, BUFFER_SIZE, "Yes. X is active.\n");
           if (C->inuse == 0){
@@ -297,15 +310,20 @@ static void main_loop(void) {
     struct clientsocket * last = 0;//pointer to the last socket
     struct clientsocket * curr = 0;//current pointer to a socket
     struct clientsocket * prev = 0;//previous pointer to a socket
-    
+    time_t lastcheck = 0;
+
     bb_log(LOG_INFO, "Started main loop\n");
     /* Listen for Optirun conections and act accordingly */
     while(bb_config.bb_socket != -1) {
         usleep(100000);//sleep 100ms to prevent 100% CPU time usage
 
-        //stop X if there is no need to keep it running
-        if ((bb_config.appcount == 0) && isRunning(bb_config.x_pid)){
-          stop_x();
+        //every five seconds
+        if (time(0) - lastcheck > 5){
+          lastcheck = time(0);
+          //stop X / card if there is no need to keep it running
+          if ((bb_config.appcount == 0) && (isRunning(bb_config.x_pid) || (bbswitch_status() > 0))){
+            stop_secondary();
+          }
         }
 
         /* Accept a connection. */
@@ -468,7 +486,7 @@ int main(int argc, char* argv[]) {
       /* Initialize communication socket, enter main loop */
       bb_config.bb_socket = socketServer(bb_config.socketpath, SOCK_NOBLOCK);
       main_loop();
-      runStop(bb_config.x_pid);
+      stop_secondary();//stop X and/or card if needed
     }else{
       /* Connect to listening daemon */
       bb_config.bb_socket = socketConnect(bb_config.socketpath, SOCK_NOBLOCK);

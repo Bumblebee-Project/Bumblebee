@@ -1,4 +1,4 @@
-SRC = bumblebeed.c bbsocket.c bbglobals.c bblogger.c bbrun.c
+SRC = bumblebeed.c bbsocket.c bbglobals.c bblogger.c bbrun.c bbswitch.c
 OBJ = $(SRC:.c=.o)
 OUT = bumblebeed
 INCLUDES =
@@ -8,7 +8,7 @@ CCFLAGS = -Wall -Wextra -funsigned-char $(OPTIMIZE) -DVERSION=$(VERSION)
 CC = $(CROSS)gcc
 LD = $(CROSS)ld
 AR = $(CROSS)ar
-LIBS = 
+LIBS = -lX11
 .SUFFIXES: .c
 .PHONY: clean default
 default: $(OUT)
