@@ -230,6 +230,13 @@ int isRunning(pid_t proc){
   return 1;
 }
 
+/// Returns 1 if a process is currently running, 0 otherwise.
+int bb_is_running(pid_t proc){
+  return pidlist_find(proc);
+  if (curr_id == 0){return 0;}
+  return 1;
+}
+
 /// Stops the running process, if any.
 void runStop(pid_t proc){
   if (isRunning(proc)){kill(proc, SIGTERM);}
