@@ -73,9 +73,13 @@ void pidlist_remove(pid_t rempid){
   //find the item in the list
   while (curr != 0){
     if (curr->PID == rempid){
-      prev->next = curr->next;
+      if (prev != 0){prev->next = curr->next;}
       free(curr);
-      curr = prev->next;
+      if (prev != 0){
+        curr = prev->next;
+      }else{
+        curr = 0;
+      }
       continue;//just in case it was added twice for some reason
     }
     //go to the next item
@@ -226,8 +230,6 @@ pid_t bb_run_fork(char** argv) {
 /// Returns 1 if a process is currently running, 0 otherwise.
 int isRunning(pid_t proc){
   return pidlist_find(proc);
-  if (curr_id == 0){return 0;}
-  return 1;
 }
 
 /// Stops the running process, if any.
