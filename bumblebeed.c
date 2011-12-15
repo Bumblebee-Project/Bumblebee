@@ -352,6 +352,26 @@ static void main_loop(void) {
             curr = curr->next;
           }
         }
+    }//socket server loop
+
+    /* loop through all connections, closing all of them */
+    curr = first;
+    prev = 0;
+    while (curr != 0){
+      //close socket if not already closed
+      if (curr->sock >= 0){socketClose(&curr->sock);}
+      //remove from list
+      if (curr->inuse > 0){bb_config.appcount--;}
+      if (last == curr){last = prev;}
+      if (prev == 0){
+        first = curr->next;
+        free(curr);
+        curr = first;
+      }else{
+        prev->next = curr->next;
+        free(curr);
+        curr = prev->next;
+      }
     }
 }
 
