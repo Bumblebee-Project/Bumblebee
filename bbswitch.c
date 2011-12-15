@@ -56,9 +56,9 @@ void bbswitch_on(){
   r = bbswitch_status();
   if (r != 0){
     if (r == 1){
-      bb_log(LOG_INFO, "Card already on, not turning dedicated card on.");
+      bb_log(LOG_INFO, "Card already on, not turning dedicated card on.\n");
     }else{
-      bb_log(LOG_WARNING, "bbswitch unavailable, not turning dedicated card on.");
+      bb_log(LOG_WARNING, "bbswitch unavailable, not turning dedicated card on.\n");
     }
     return;
   }
@@ -67,12 +67,12 @@ void bbswitch_on(){
     bb_log(LOG_ERR, "Could not access bbswitch module.\n");
     return;
   }
-  r = fwrite("ON", 2, 1, bbs);
+  r = fwrite("ON\n", 4, 1, bbs);
   fclose(bbs);
-  if (r < 2){bb_log(LOG_WARNING, "bbswitch isn't listening to us!");}
+  if (r < 2){bb_log(LOG_WARNING, "bbswitch isn't listening to us!\n");}
   r = bbswitch_status();
   if (r != 1){
-    bb_log(LOG_ERR, "Failed to turn dedicated card on!");
+    bb_log(LOG_ERR, "Failed to turn dedicated card on!\n");
   }
 }//bbswitch_on
 
@@ -82,9 +82,9 @@ void bbswitch_off(){
   r = bbswitch_status();
   if (r != 1){
     if (r == 0){
-      bb_log(LOG_INFO, "Card already off, not turning dedicated card off.");
+      bb_log(LOG_INFO, "Card already off, not turning dedicated card off.\n");
     }else{
-      bb_log(LOG_WARNING, "bbswitch unavailable, not turning dedicated card off.");
+      bb_log(LOG_WARNING, "bbswitch unavailable, not turning dedicated card off.\n");
     }
     return;
   }
@@ -93,11 +93,11 @@ void bbswitch_off(){
     bb_log(LOG_ERR, "Could not access bbswitch module.\n");
     return;
   }
-  r = fwrite("OFF", 3, 1, bbs);
+  r = fwrite("OFF\n", 5, 1, bbs);
   fclose(bbs);
-  if (r < 3){bb_log(LOG_WARNING, "bbswitch isn't listening to us!");}
+  if (r < 3){bb_log(LOG_WARNING, "bbswitch isn't listening to us!\n");}
   r = bbswitch_status();
   if (r != 0){
-    bb_log(LOG_ERR, "Failed to turn dedicated card off!");
+    bb_log(LOG_ERR, "Failed to turn dedicated card off!\n");
   }
 }//bbswitch_off
