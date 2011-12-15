@@ -76,7 +76,12 @@ void start_secondary(void) {
     bbswitch_on();
     /// \todo Support nouveau as well
     bb_log(LOG_INFO, "Loading nvidia module\n");
-    runApp2("insmod nvidia", 0, 0);
+    char * mod_argv[] = {
+      "insmod",
+      "nvidia",
+      NULL
+    };
+    bb_run_fork_wait(mod_argv);
   }
   if (bbswitch_status() != 0){
     bb_log(LOG_INFO, "Starting X server on display %i.\n", bb_config.xdisplay);
@@ -128,7 +133,12 @@ void stop_secondary(void) {
   if (bbswitch_status() == 1){
     /// \todo Support nouveau as well
     bb_log(LOG_INFO, "Unloading nvidia module\n");
-    runApp2("rmmod nvidia", 0, 0);
+    char * mod_argv[] = {
+      "rmmod",
+      "nvidia",
+      NULL
+    };
+    bb_run_fork_wait(mod_argv);
     bb_log(LOG_INFO, "Switching dedicated card OFF\n");
     bbswitch_off();
   }
