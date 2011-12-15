@@ -64,10 +64,11 @@ static void print_usage(int exit_val) {
 
 /**
  *  Start the X server by fork-exec 
+ *
+ *  @return PID of the X instance
  */
 void start_x(void) {
-  bb_log(LOG_INFO, "Starting X server\n");
- 
+  bb_log(LOG_INFO, "Starting X server on display %i.\n", bb_config.xdisplay);
   char disp_buffer[BUFFER_SIZE];
   snprintf(disp_buffer, BUFFER_SIZE, ":%i", bb_config.xdisplay);
   char * x_argv[] = {
@@ -80,11 +81,6 @@ void start_x(void) {
          NULL
          };
   bb_config.x_pid = bb_run_fork(x_argv);
- /*  
-  char buffer[BUFFER_SIZE];
-  snprintf(buffer, BUFFER_SIZE, "X -config %s -sharevts -nolisten tcp -noreset :%i", bb_config.xconf, bb_config.xdisplay);
-  runFork(buffer);
- */
 }
 
 /** 
@@ -101,6 +97,7 @@ void stop_x(void) {
  * Turn Dedicated card ON 
  */
 void bb_switch_card_on(void) {
+  bb_log(LOG_INFO, "Switching dedicated card ON");
   /// \todo Call bbswitch
   /// \todo Support nouveau as well
   runApp2("insmod nvidia", 0, 0);
@@ -110,6 +107,7 @@ void bb_switch_card_on(void) {
  *  Turn Dedicated card OFF 
  */
 void bb_switch_card_off(void) {
+  bb_log(LOG_INFO, "Switching dedicated card OFF");
   /// \todo Call bbswitch
   /// \todo Support nouveau as well
   runApp2("rmmod nvidia", 0, 0);
@@ -257,6 +255,7 @@ void handle_socket(struct clientsocket * C){
         //no X? attempt to start it
         if (!isRunning(bb_config.x_pid)){
           start_x();
+          // TODO: Find a way to check for the X ready. Maybe sending signal 0 to the pid.
           usleep(100000);//sleep 100ms to give X a chance to fail
           if (!isRunning(bb_config.x_pid)){
             snprintf(bb_config.errors, BUFFER_SIZE, "X failed to start!");
@@ -390,7 +389,7 @@ int main(int argc, char* argv[]) {
     bb_config.verbosity = VERB_WARN;
     bb_config.errors[0] = 0;//no errors, yet :-)
     bb_config.xdisplay = 8;
-    snprintf(bb_config.xconf, BUFFER_SIZE, "/etc/bumblebee/xorg.conf.nvidia");
+    snprintf(bb_config.xconf, BUFFER_SIZE, "/etc/bumblebee/xorg.conf.nouveau");
     snprintf(bb_config.ldpath, BUFFER_SIZE, "/usr/lib64/nvidia-current");
     snprintf(bb_config.socketpath, BUFFER_SIZE, "/var/run/bumblebee.socket");
     bb_config.runmode = BB_RUN_DAEMON;
