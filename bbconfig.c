@@ -25,6 +25,25 @@
 #include "bbconfig.h"
 #include "bblog.h"
 
+static struct bb_key_value {
+  char key[BUFFER_SIZE];
+  char value[BUFFER_SIZE];
+}
+
+/** 
+ * Takes a line and returns a key-value pair
+ *
+ * @param line String to be broken into a key-value pair
+ */
+struct bb_key_value bb_get_key_value(const char* line){
+  struct bb_key_value kvpair;
+  if (EOF == sscanf(line, "%[^=]=%[^\n]", kvpair.key, kvpair.value)) {
+    int err_val = errno;
+    printf("Error parsing configuration file: %s\n", strerror(err_val));
+  } 
+  return kvpair;
+}
+
 /**
  * Strips all whitespaces from a string
  *
