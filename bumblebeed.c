@@ -98,13 +98,13 @@ void start_secondary(void) {
     bb_config.x_pid = bb_run_fork(x_argv);
     time_t xtimer = time(0);
     Display * xdisp = 0;
-    while ((time(0) - xtimer <= 10) && isRunning(bb_config.x_pid)){
+    while ((time(0) - xtimer <= 10) && bb_is_running(bb_config.x_pid)){
       xdisp = XOpenDisplay(bb_config.xdisplay);
       if (xdisp != 0){break;}
     }
     if (xdisp == 0){
       /// \todo Maybe check X exit status and/or messages?
-      if (isRunning(bb_config.x_pid)){
+      if (bb_is_running(bb_config.x_pid)){
         bb_log(LOG_ERR, "X unresponsive after 10 seconds - aborting\n");
         bb_stop(bb_config.x_pid);
         snprintf(bb_config.errors, BUFFER_SIZE, "X unresponsive after 10 seconds - aborting");
@@ -125,7 +125,7 @@ void start_secondary(void) {
  * Kill the second X server if any, turn card off if requested.
  */
 void stop_secondary(void) {
-  if (isRunning(bb_config.x_pid)){
+  if (bb_is_running(bb_config.x_pid)){
     bb_log(LOG_INFO, "Stopping X server\n");
     bb_stop(bb_config.x_pid);
   }
@@ -271,7 +271,7 @@ void handle_socket(struct clientsocket * C){
         if (bb_config.errors[0] != 0){
           r = snprintf(buffer, BUFFER_SIZE, "Error (%s): %s\n", TOSTRING(VERSION), bb_config.errors);
         }else{
-          if (isRunning(bb_config.x_pid)){
+          if (bb_is_running(bb_config.x_pid)){
             r = snprintf(buffer, BUFFER_SIZE, "Ready (%s). X is PID %i, %i applications using bumblebeed.\n", TOSTRING(VERSION), bb_config.x_pid, bb_config.appcount);
           }else{
             r = snprintf(buffer, BUFFER_SIZE, "Ready (%s). X inactive.\n", TOSTRING(VERSION));
@@ -283,8 +283,8 @@ void handle_socket(struct clientsocket * C){
       case 'C'://check if VirtualGL is allowed
         /// \todo Handle power management cases and powering card on/off.
         //no X? attempt to start it
-        if (!isRunning(bb_config.x_pid)){start_secondary();}
-        if (isRunning(bb_config.x_pid)){
+        if (!bb_is_running(bb_config.x_pid)){start_secondary();}
+        if (bb_is_running(bb_config.x_pid)){
           r = snprintf(buffer, BUFFER_SIZE, "Yes. X is active.\n");
           if (C->inuse == 0){
             C->inuse = 1;
@@ -330,7 +330,7 @@ static void main_loop(void) {
         if (time(0) - lastcheck > 5){
           lastcheck = time(0);
           //stop X / card if there is no need to keep it running
-          if ((bb_config.appcount == 0) && (isRunning(bb_config.x_pid) || (bbswitch_status() > 0))){
+          if ((bb_config.appcount == 0) && (bb_is_running(bb_config.x_pid) || (bbswitch_status() > 0))){
             stop_secondary();
           }
         }
