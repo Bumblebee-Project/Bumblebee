@@ -421,10 +421,12 @@ int main(int argc, char* argv[]) {
     snprintf(bb_config.vglmethod, BUFFER_SIZE, "proxy");
     snprintf(bb_config.socketpath, BUFFER_SIZE, "/var/run/bumblebee.socket");
     bb_config.runmode = BB_RUN_DAEMON;
-    if ((strcmp(bb_config.program_name, "optirun") == 0) || (strcmp(bb_config.program_name, "./optirun") == 0)){
+
+    int path_pfx_len = strlen(bb_config.program_name) - strlen("optirun");
+    if (path_pfx_len >= 0 && (path_pfx_len == 0 || *(bb_config.program_name + path_pfx_len - 1) == '/') && strcmp(bb_config.program_name + path_pfx_len, "optirun") == 0){
       bb_config.runmode = BB_RUN_APP;
     }
-    
+
     /* Parse the options, set flags as necessary */
     int c;
     while( (c = getopt(argc, argv, "+dcrvVm:x:X:l:u:h|help")) != -1) {
