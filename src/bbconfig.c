@@ -69,6 +69,15 @@ void stripws(char* str) {
  *  @return 0 on success. 
  */
 static int read_configuration() {
+  /* Hardcoded standard configuration */
+  bb_s_config {
+    .x_display=":8";
+    .x_conf_file="etc/bumblebee/xorg.conf.nouveau";
+    .ld_path="";
+    .socket_path="var/run/bumblebee.socket";
+    .pm_enabled=0;
+    .stop_on_exit=0;
+  }
   FILE *cf = fopen(CONFIG_FILE, "r");
   if (cf==(NULL)) { /* An error ocurred */
     int err_num = errno;
@@ -87,18 +96,29 @@ static int read_configuration() {
         bb_log(LOG_ERR, "Error in config file: %s", strerror(err_num));
       }
   } else {
-    char line[MAX_LINE];
+    char line[BUFFER_SIZE];
     while (fgets(line, sizeof line, cf) != NULL) {
       stripws(line);
       /* Ignore empty lines and comments */
       if ((line[0] != '#') && (line[0] != '\n')) {
         /* Parse configuration based on the run mode */
-        printf("%s",line);
+        struct kvp = bb_get_key_value(line);
+        if (strcmp(kvp.key, "VGL_DISPLAY")){
+        
+        } else if (strcmp(kvp.key, "STOP_SERVICE_ON_EXIT")){
+
+        } else if (strcmp(kvp.key, "X_CONFFILE")){
+
+        } else if (strcmp(kvp.key, "VGL_COMPRESS")){
+
+        } else if (strcmp(kvp.key, "ECO_MODE")){
+
+        } else if (strcmp(kvp.key, "FALLBACK_START")){
+
+        }
       }
     }
   }
-  char* argval;
-  int ret_val;
   fclose(cf);
   return 0;
 }
