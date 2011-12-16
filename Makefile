@@ -13,10 +13,8 @@ LIBS = -lX11
 .PHONY: clean default
 default: $(OUT)
 .c.o:
-	$(CC) $(INCLUDES) $(CCFLAGS) $(LIBS) -c $< -o $@
+	$(CC) $(INCLUDES) $(CCFLAGS) -c $< -o $@
 $(OUT): $(OBJ)
-	$(CC) $(LIBS) -o $(OUT) $(OBJ)
+	$(CC) -o $(OUT) $(OBJ) $(LIBS)
 clean:
-	rm -rf $(OBJ) $(OUT) *~
-
-
+	rm -f $(OBJ) $(OUT)

@@ -31,7 +31,7 @@ pid_t bb_run_fork(char** argv);
 void bb_run_fork_wait(char** argv);
 
 /// Returns 1 if a process is currently running, 0 otherwise.
-int isRunning(pid_t proc);
+int bb_is_running(pid_t proc);
 
 /// Stops the running process, if any.
 void bb_stop(pid_t proc);

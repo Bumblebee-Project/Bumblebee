@@ -32,15 +32,13 @@
 /// In other words: 0 means off, anything else means on.
 int bbswitch_status(){
   char buffer[BBS_BUFFER];
-  int i;
+  int i, r;
   FILE * bbs = fopen("/proc/acpi/bbswitch", "r");
   if (bbs == 0){return -1;}
   for (i = 0; i < BBS_BUFFER; ++i){buffer[i] = 0;}
-  fread(buffer, BBS_BUFFER-1, 1, bbs);
+  r = fread(buffer, 1, BBS_BUFFER-1, bbs);
   fclose(bbs);
-  //we do not check the return value of fread, since it
-  //apparently always returns 0 for some reason :S
-  for (i = 0; i < BBS_BUFFER; ++i){
+  for (i = 0; (i < BBS_BUFFER) && (i < r); ++i){
     if (buffer[i] == ' '){//find the space
       if (buffer[i+2] == 'F'){return 0;}//OFF
       if (buffer[i+2] == 'N'){return 1;}//ON
@@ -67,7 +65,7 @@ void bbswitch_on(){
     bb_log(LOG_ERR, "Could not access bbswitch module.\n");
     return;
   }
-  r = fwrite("ON\n", 4, 1, bbs);
+  r = fwrite("ON\n", 1, 4, bbs);
   fclose(bbs);
   if (r < 2){bb_log(LOG_WARNING, "bbswitch isn't listening to us!\n");}
   r = bbswitch_status();
@@ -93,7 +91,7 @@ void bbswitch_off(){
     bb_log(LOG_ERR, "Could not access bbswitch module.\n");
     return;
   }
-  r = fwrite("OFF\n", 5, 1, bbs);
+  r = fwrite("OFF\n", 1, 5, bbs);
   fclose(bbs);
   if (r < 3){bb_log(LOG_WARNING, "bbswitch isn't listening to us!\n");}
   r = bbswitch_status();

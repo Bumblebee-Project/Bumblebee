@@ -170,7 +170,7 @@ void bb_run_fork_wait(char** argv) {
       bb_log(LOG_INFO, "Process %s started, PID %i.\n", argv[0], ret);
       pidlist_add(ret);
       //sleep until process finishes
-      while (isRunning(ret)){usleep(1000000);}
+      while (bb_is_running(ret)){usleep(1000000);}
     }else{
       // Fork failed
       bb_log(LOG_ERR, "Process %s could not be started. fork() failed.\n", argv[0]);
@@ -181,20 +181,13 @@ void bb_run_fork_wait(char** argv) {
 }
 
 /// Returns 1 if a process is currently running, 0 otherwise.
-int isRunning(pid_t proc){
-  return pidlist_find(proc);
-}
-
-/// Returns 1 if a process is currently running, 0 otherwise.
 int bb_is_running(pid_t proc){
   return pidlist_find(proc);
-  if (curr_id == 0){return 0;}
-  return 1;
 }
 
 /// Stops the running process, if any.
 void bb_stop(pid_t proc){
-  if (isRunning(proc)){kill(proc, SIGTERM);}
+  if (bb_is_running(proc)){kill(proc, SIGTERM);}
 }
 
 /// Stops all the running processes, if any.
