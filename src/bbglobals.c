@@ -24,3 +24,4 @@
 #include "bbglobals.h"
 
 struct bb_config_struct bb_config;
+struct bb_status_struct bb_status;

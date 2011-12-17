@@ -79,7 +79,7 @@ struct bb_status_struct {
   int runmode; /// See running modes above.
   char vglmethod[BUFFER_SIZE]; /// Method used for VirtualGL connection.
   pid_t x_pid; /// PID for X process, if any.
-}
+};
 
 extern struct bb_config_struct bb_config;
 extern struct bb_status_struct bb_status;
