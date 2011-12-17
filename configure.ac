@@ -3,25 +3,27 @@
 
 AC_PREREQ([2.68])
 AC_INIT([bumblebeed], [0.1], [https://github.com/Bumblebee-Project/bumblebeed])
-AC_CONFIG_SRCDIR([bbsocket.c bumblebeed.c])
+AC_CONFIG_AUX_DIR([build-aux])
+AC_CONFIG_SRCDIR([src/bbsocket.c])
 AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_FILES([Makefile])
+AM_INIT_AUTOMAKE([1.10.2 -Wall foreign subdir-objects
+	tar-pax no-dist-gzip dist-xz])
 
 # Checks for programs.
 AC_PROG_CC
+AM_PROG_CC_C_O
+
+regular_CPPFLAGS="-D_FILE_OFFSET_BITS=64 -D_REENTRANT"
+regular_CFLAGS="-Wall -Waggregate-return \
+	-Wmissing-declarations -Wmissing-prototypes -Wredundant-decls \
+	-Wshadow -Wstrict-prototypes -Winline -Wformat=2 -pipe"
+AC_SUBST([regular_CPPFLAGS])
+AC_SUBST([regular_CFLAGS])
 
 # Checks for libraries.
 
 # Checks for header files.
-AC_PATH_X
-AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h stdlib.h string.h sys/socket.h syslog.h unistd.h])
+PKG_CHECK_MODULES([libX11], [x11])
 
-# Checks for typedefs, structures, and compiler characteristics.
-AC_TYPE_PID_T
-
-# Checks for library functions.
-AC_FUNC_FORK
-AC_FUNC_MALLOC
-AC_CHECK_FUNCS([socket strerror])
-
+AC_CONFIG_FILES([Makefile src/Makefile])
 AC_OUTPUT
