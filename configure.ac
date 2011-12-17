@@ -2,10 +2,13 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.68])
-AC_INIT([bumblebeed], [0.1], [https://github.com/Bumblebee-Project/bumblebeed])
+AC_INIT([bumblebeed], [bleeding-edge], [https://github.com/Bumblebee-Project/bumblebeed])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_SRCDIR([src/bbsocket.c])
 AC_CONFIG_HEADERS([config.h])
+
+AC_DEFINE_UNQUOTED(GITVERSION, "`git describe --tags`", "git version number")
+
 AM_INIT_AUTOMAKE([1.10.2 -Wall foreign subdir-objects
 	tar-pax no-dist-gzip dist-xz])
 
