@@ -25,6 +25,8 @@
 #include "bbswitch.h"
 #include "bbrun.h"
 #include "bblogger.h"
+#include "bbglobals.h"
+#include <X11/Xlib.h>
 
 /**
  *  Start the X server by fork-exec, turn card on if needed.

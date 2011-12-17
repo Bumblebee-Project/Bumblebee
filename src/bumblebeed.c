@@ -38,7 +38,6 @@
 #include <grp.h>
 #include <signal.h>
 #include <time.h>
-#include <X11/Xlib.h>
 
 /**
  *  Print a little note on usage 
