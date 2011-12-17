@@ -68,7 +68,7 @@ static char *buffer_to_string(const char buffer[], char *target) {
 // succeeded, the result is stored in "result" providing that the result is an
 // integer or a buffer containing 4 values
 static int acpi_call_dsm(acpi_handle handle, const char muid[16], int revid,
-    int func, char *args, uint32_t *result) {
+    int func, char args[4], uint32_t *result) {
     struct acpi_buffer output = { ACPI_ALLOCATE_BUFFER, NULL };
     struct acpi_object_list input;
     union acpi_object params[4];
@@ -84,14 +84,14 @@ static int acpi_call_dsm(acpi_handle handle, const char muid[16], int revid,
     params[1].integer.value = revid;
     params[2].type = ACPI_TYPE_INTEGER;
     params[2].integer.value = func;
+    params[3].type = ACPI_TYPE_BUFFER;
+    params[3].buffer.length = 4;
     if (args) {
-        params[3].type = ACPI_TYPE_BUFFER;
-        params[3].buffer.length = sizeof(args);
         params[3].buffer.pointer = args;
     } else {
-        // this function does not accept arguments. Pass an empty one
-        params[3].type = ACPI_TYPE_INTEGER;
-        params[3].buffer.pointer = 0;
+        // Some implementations (Asus U36SD) seem to check the args before the
+        // function ID and crash if it is not a buffer.
+        params[3].buffer.pointer = (char[4]){0, 0, 0, 0};
     }
 
     err = acpi_evaluate_object(handle, "_DSM", &input, &output);
