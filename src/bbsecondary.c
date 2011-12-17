@@ -27,6 +27,7 @@
 #include "bblogger.h"
 #include "bbglobals.h"
 #include <X11/Xlib.h>
+#include <time.h>
 
 /**
  *  Start the X server by fork-exec, turn card on if needed.
