@@ -49,9 +49,8 @@ static void print_usage(int exit_val) {
   printf("Usage: %s [options]\n", bb_status.program_name);
   printf("  Options:\n");
   printf("      -d\tRun as daemon.\n");
-  printf("      -c\tBe quit.\n");
-  printf("      -v\tBe verbose.\n");
-  printf("      -V\tBe VERY verbose.\n");
+  printf("      -q\tBe quiet.\n");
+  printf("      -v\tBe verbose (twice for extra verbosity)\n");
   printf("      -x [PATH]\txorg.conf file to use.\n");
   printf("      -X #\tX display number to use.\n");
   printf("      -u [PATH]\tUnix socket to use.\n");
@@ -350,14 +349,16 @@ int main(int argc, char* argv[]) {
       case 'd'://daemonize
         bb_status.is_daemonized = 1;
         break;
-      case 'c'://clean run (no output)
+      case 'q'://quiet mode
         bb_status.verbosity = VERB_NONE;
         break;
       case 'v'://verbose
-        bb_status.verbosity = VERB_INFO;
-        break;
-      case 'V'://VERY verbose (debug mode)
-        bb_status.verbosity = VERB_DEBUG;
+        // -v -v is very verbose
+        if (bb_status.verbosity == VERB_INFO) {
+          bb_status.verbosity = VERB_DEBUG;
+        } else {
+          bb_status.verbosity = VERB_INFO;
+        }
         break;
       case 'x'://xorg.conf path
         snprintf(bb_config.xconf, BUFFER_SIZE, "%s", optarg);
