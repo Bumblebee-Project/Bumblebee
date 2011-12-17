@@ -34,33 +34,33 @@ uninstall:
     for OBJ in $OBJS; do rm -f lib/$(OBJ); done
 
 clean:
-				/bin/rm -f bumblebeed
-				cd libs && rm -f $(OBJS)
+    /bin/rm -f bumblebeed
+    cd libs && rm -f $(OBJS)
 
 distclean: clean
 mostlyclean: clean
 maintainer-clean: clean
 
 bumblebeed: objects
-				$(CC) -o bumblebeed $(CFLAGS) $(LIBS)
+    $(CC) -o bumblebeed $(CFLAGS) $(LIBS)
 
 objects:
-				for SOURCE in $SOURCES; do
-								$(CC) $(CFLAGS) $(LIBS) -c src/$(SOURCE) -o lib/$(SOURCE:.c=.o)
-				done
+    for SOURCE in $SOURCES; do
+        $(CC) $(CFLAGS) $(LIBS) -c src/$(SOURCE) -o lib/$(SOURCE:.c=.o)
+    done
 
 ${srcdir}/configure: configure.in aclocal.m4
-				cd ${srcdir} && autoconf
+    cd ${srcdir} && autoconf
 
 ${srcdir}/config.h.in: stamp-h.in
 ${srcdir}/stamp-h.in: configure.in aclocal.m4
-				cd ${srcdir} && autoheader
-				echo timestamp > ${srcdir}/stamp-h.in
+    cd ${srcdir} && autoheader
+    echo timestamp > ${srcdir}/stamp-h.in
 
 config.h: stamp-h
 stamp-h: config.h.in config.status
-				./config.status
+    ./config.status
 Makefile: Makefile.in config.status
-				./config.status
+    ./config.status
 config.status: configure
-				./config.status --recheck
+    ./config.status --recheck
