@@ -28,7 +28,7 @@
 /**
  * Initialize log capabilities. Return 0 on success 
  */
-int bb_init_log() {
+int bb_init_log(void) {
     /*  Open Logggin mechanism based on configuration */
     if (bb_config.is_daemonized) {
         openlog(DAEMON_NAME, LOG_PID, LOG_DAEMON);
@@ -87,7 +87,7 @@ void bb_log(int priority, char* msg_format, ...) {
 /** 
  * Close logging mechanism 
  */
-void bb_closelog() {
+void bb_closelog(void) {
     if (bb_config.is_daemonized) {
         closelog();
     } else {

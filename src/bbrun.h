@@ -37,7 +37,25 @@ int bb_is_running(pid_t proc);
 void bb_stop(pid_t proc);
 
 /// Stops all the running processes, if any.
-void bb_stop_all();
+void bb_stop_all(void);
 
 /// Attempts to run the given application, replacing the current process
 void bb_run_exec(char ** argv);
+
+/// Adds a pid_t to the linked list of PIDs.
+/// Creates the list if it is still null.
+void pidlist_add(pid_t newpid);
+
+/// Removes a pid_t from the linked list of PIDs.
+/// Makes list null if empty.
+void pidlist_remove(pid_t rempid);
+
+/// Finds a pid_t in the linked list of PIDs.
+/// Returns 0 if not found, 1 otherwise.
+int pidlist_find(pid_t findpid);
+
+/// TODO: doc function
+void childsig_handler(int signum);
+
+/// TODO: doc function
+void check_handler(void);

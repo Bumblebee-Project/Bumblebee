@@ -111,7 +111,7 @@ void childsig_handler(int signum){
   pidlist_remove(ret);
 }//childsig_handler
 
-void check_handler(){
+void check_handler(void){
   // Set handler for this child process if not already
   if (handler_set == 0){
     struct sigaction new_action;
@@ -191,7 +191,7 @@ void bb_stop(pid_t proc){
 }
 
 /// Stops all the running processes, if any.
-void bb_stop_all(){
+void bb_stop_all(void){
   struct pidlist * curr = 0;
   curr = pidlist_start;
   //no list? cancel.

@@ -33,7 +33,7 @@
  *
  *  @return 0 for success, anything else for failure.
  */
-void start_secondary() {
+void start_secondary(void) {
   if (bbswitch_status() == 0){
     bb_log(LOG_INFO, "Switching dedicated card ON\n");
     bbswitch_on();
@@ -86,7 +86,7 @@ void start_secondary() {
 /**
  * Kill the second X server if any, turn card off if requested.
  */
-void stop_secondary() {
+void stop_secondary(void) {
   if (bb_is_running(bb_config.x_pid)){
     bb_log(LOG_INFO, "Stopping X server\n");
     bb_stop(bb_config.x_pid);

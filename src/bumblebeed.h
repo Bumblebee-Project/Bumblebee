@@ -1,6 +1,7 @@
 /*
- * Copyright (c) 2011, The Bumblebee Project
- * Author: Joaquín Ignacio Aramendía samsagax@gmail.com
+ * Copyright (C) 2011 Bumblebee Project
+ * Author: Joaquín Ignacio Aramendía <samsagax@gmail.com>
+ * Author: Jaron Viëtor AKA "Thulinma" <jaron@vietors.com>
  *
  * This file is part of Bumblebee.
  *
@@ -18,33 +19,9 @@
  * along with Bumblebee. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * bblogger.c: loggin functions for bumblebee daemon and client
- */
+/// Socket list structure for use in main_loop.
+struct clientsocket;
 
-#include <syslog.h>
-#include <stdarg.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-
-#ifndef _BBLOGGER
-#define _BBLOGGER
-
-/**
- * Initialize log capabilities. Return 0 on success 
- */
-int bb_init_log(void);
-
-/**
- * Log a message to the current log mechanism.
- * Try to keep log messages less than 80 characters.
- */
-void bb_log(int priority, char* msg_format, ...);
-
-/** 
- * Close logging mechanism 
- */
-void bb_closelog(void);
-
-#endif
+/// Receive and/or sent data to/from this socket.
+/// \param sock Pointer to socket. Assumed to be valid.
+void handle_socket(struct clientsocket * C);

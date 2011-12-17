@@ -23,11 +23,13 @@
  * C-coded version of the Bumblebee daemon and optirun.
  */
 
+#include "bumblebeed.h"
 #include "config.h"
 #include "bbglobals.h"
 #include "bbsocket.h"
 #include "bblogger.h"
 #include "bbsecondary.h"
+#include "bbswitch.h"
 #include "bbrun.h"
 #include <assert.h>
 #include <sys/types.h>
