@@ -23,10 +23,10 @@
  * C-coded version of the Bumblebee daemon and optirun.
  */
 
+#include "config.h"
 #include "bbglobals.h"
 #include "bbsocket.h"
 #include "bblogger.h"
-#include "bbsecondary.h"
 #include "bbrun.h"
 #include <assert.h>
 #include <sys/types.h>
@@ -37,14 +37,13 @@
 #include <grp.h>
 #include <signal.h>
 #include <time.h>
-#include <X11/Xlib.h>
 
 /**
  *  Print a little note on usage
  */
 static void print_usage(int exit_val) {
   // Print help message and exit with exit code
-  printf("%s version %s\n\n", bb_status.program_name, TOSTRING(VERSION));
+  printf("%s version %s\n\n", bb_status.program_name, TOSTRING(GITVERSION));
   printf("Usage: %s [options] -- [application to run] [application options]\n", bb_status.program_name);
   printf("  Options:\n");
   printf("      -q\tBe quiet.\n");
@@ -149,7 +148,7 @@ int main(int argc, char* argv[]) {
     fprintf(stderr, "Unexpected error, could not initialize log.\n");
     return 1;
   }
-  bb_log(LOG_DEBUG, "%s version %s starting...\n", bb_status.program_name, TOSTRING(VERSION));
+  bb_log(LOG_DEBUG, "%s version %s starting...\n", bb_status.program_name, TOSTRING(GITVERSION));
 
   /* Connect to listening daemon */
   bb_config.bb_socket = socketConnect(bb_config.socketpath, SOCK_NOBLOCK);

@@ -45,7 +45,7 @@
  */
 static void print_usage(int exit_val) {
   // Print help message and exit with exit code
-  printf("%s version %s\n\n", bb_status.program_name, TOSTRING(VERSION));
+  printf("%s version %s\n\n", bb_status.program_name, TOSTRING(GITVERSION));
   printf("Usage: %s [options]\n", bb_status.program_name);
   printf("  Options:\n");
   printf("      -d\tRun as daemon.\n");
@@ -178,12 +178,12 @@ static void handle_socket(struct clientsocket * C) {
     switch (buffer[0]) {
       case 'S'://status
         if (bb_status.errors[0] != 0) {
-          r = snprintf(buffer, BUFFER_SIZE, "Error (%s): %s\n", TOSTRING(VERSION), bb_status.errors);
+          r = snprintf(buffer, BUFFER_SIZE, "Error (%s): %s\n", TOSTRING(GITVERSION), bb_status.errors);
         } else {
           if (bb_is_running(bb_status.x_pid)) {
-            r = snprintf(buffer, BUFFER_SIZE, "Ready (%s). X is PID %i, %i applications using bumblebeed.\n", TOSTRING(VERSION), bb_status.x_pid, bb_status.appcount);
+            r = snprintf(buffer, BUFFER_SIZE, "Ready (%s). X is PID %i, %i applications using bumblebeed.\n", TOSTRING(GITVERSION), bb_status.x_pid, bb_status.appcount);
           } else {
-            r = snprintf(buffer, BUFFER_SIZE, "Ready (%s). X inactive.\n", TOSTRING(VERSION));
+            r = snprintf(buffer, BUFFER_SIZE, "Ready (%s). X inactive.\n", TOSTRING(GITVERSION));
           }
         }
         socketWrite(&C->sock, buffer, r); //we assume the write is fully successful.
@@ -387,7 +387,7 @@ int main(int argc, char* argv[]) {
     fprintf(stderr, "Unexpected error, could not initialize log.\n");
     return 1;
   }
-  bb_log(LOG_DEBUG, "%s version %s starting...\n", bb_status.program_name, TOSTRING(VERSION));
+  bb_log(LOG_DEBUG, "%s version %s starting...\n", bb_status.program_name, TOSTRING(GITVERSION));
 
   /* Daemonized if daemon flag is activated */
   if (bb_status.is_daemonized) {
