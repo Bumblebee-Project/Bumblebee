@@ -40,7 +40,7 @@
 #include <time.h>
 
 /**
- *  Print a little note on usage 
+ *  Print a little note on usage
  */
 static void print_usage(int exit_val) {
     // Print help message and exit with exit code
@@ -60,28 +60,35 @@ static void print_usage(int exit_val) {
 }
 
 /**
- *  Fork to the background, and exit parent. 
+ * Change GID and umask of the daemon
+ */
+static int bb_chgid(void) {
+  /* Change the Group ID of bumblebee */
+  struct group *gp;
+  errno = 0;
+  gp = getgrnam(DEFAULT_BB_GROUP);
+  if (gp == NULL) {
+    int error_num = errno;
+    bb_log(LOG_ERR, "%s\n", strerror(error_num));
+    bb_log(LOG_ERR, "There is no \"%s\" group\n", DEFAULT_BB_GROUP);
+    exit(EXIT_FAILURE);
+  }
+  if (setgid(gp->gr_gid) != 0) {
+    bb_log(LOG_ERR, "Could not set the GID of bumblebee: %s\n", strerror(errno));
+    exit(EXIT_FAILURE);
+  }
+  /* Change the file mode mask */
+  umask(023);
+  return 0;
+}
+
+/**
+ *  Fork to the background, and exit parent.
  */
 static int daemonize(void) {
 
     /* Daemon flag, should be reset to zero if fail to daemonize */
     bb_config.is_daemonized = 1;
-
-    //TODO: CHANGE GID ON DAEMON
-    /* Change the Group ID of bumblebee */
-    struct group *gp;
-    errno = 0;
-    gp = getgrnam(DEFAULT_BB_GROUP);
-    if (gp == NULL) {
-        int error_num = errno;
-        bb_log(LOG_ERR, "%s\n", strerror(error_num));
-        bb_log(LOG_ERR, "There is no \"%s\" group\n", DEFAULT_BB_GROUP);
-        exit(EXIT_FAILURE);
-    }
-    if (setgid(gp->gr_gid) != 0) {
-        bb_log(LOG_ERR, "Could not set the GID of bumblebee: %s\n", strerror(errno));
-        exit(EXIT_FAILURE);
-    }
 
     /* Fork off the parent process */
     pid_t bb_pid = fork();
@@ -94,9 +101,6 @@ static int daemonize(void) {
     if (bb_pid > 0) {
         exit (EXIT_SUCCESS);
     }
-
-    /* Change the file mode mask */
-    umask(023);
 
     /* Create a new SID for the child process */
     pid_t bb_sid = setsid();
@@ -313,7 +317,7 @@ int main(int argc, char* argv[]) {
 
     /* Parse the options, set flags as necessary */
     int c;
-    while( (c = getopt(argc, argv, "+dcvVx:X:u:h|help")) != -1) {
+    while( (c = getopt(argc, argv, "+dcvVx:g:X:u:h|help")) != -1) {
         switch(c){
             case 'h'://help
                 print_usage(EXIT_SUCCESS);
@@ -339,12 +343,17 @@ int main(int argc, char* argv[]) {
             case 'u'://Unix socket to use
                 snprintf(bb_config.socketpath, BUFFER_SIZE, "%s", optarg);
                 break;
+            case 'g': //group name to use
+                printf("group name changing is still not supported. Using default");
             default:
                 // Unrecognized option
                 print_usage(EXIT_FAILURE);
                 break;
         }
     }
+
+    /* Change GID and mask according to configuration */
+    bb_chgid();
 
     /* Init log Mechanism */
     if (bb_init_log()) {
