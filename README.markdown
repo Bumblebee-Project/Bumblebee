@@ -11,8 +11,8 @@ smart power management of the dGPU when it's not in use.
 Build Requirements
 -------------------
 
-autotools (2.68+ recommended)
-libx11 and development headers
+autotools (2.68+ recommended)  
+libx11 and development headers  
 [bbswitch](https://github.com/Lekensteyn/acpi-stuff/tree/master/bbswitch) (optional)
 
 Building
