@@ -40,12 +40,12 @@
 #include <X11/Xlib.h>
 
 /**
- *  Print a little note on usage 
+ *  Print a little note on usage
  */
 static void print_usage(int exit_val) {
     // Print help message and exit with exit code
-    printf("%s version %s\n\n", bb_config.program_name, TOSTRING(VERSION));
-    printf("Usage: %s [options] -- [application to run] [application options]\n", bb_config.program_name);
+    printf("%s version %s\n\n", bb_status.program_name, TOSTRING(VERSION));
+    printf("Usage: %s [options] -- [application to run] [application options]\n", bb_status.program_name);
     printf("  Options:\n");
     printf("      -c\tBe quiet.\n");
     printf("      -v\tBe verbose.\n");
@@ -90,16 +90,16 @@ int main(int argc, char* argv[]) {
     signal(SIGQUIT, handle_signal);
 
     /* Initializing configuration */
-    bb_config.program_name = argv[0];
-    bb_config.is_daemonized = 0;
-    bb_config.verbosity = VERB_WARN;
-    bb_config.errors[0] = 0;//no errors, yet :-)
+    bb_status.program_name = argv[0];
+    bb_status.is_daemonized = 0;
+    bb_status.verbosity = VERB_WARN;
+    bb_status.errors[0] = 0;//no errors, yet :-)
     snprintf(bb_config.xdisplay, BUFFER_SIZE, ":8");
     snprintf(bb_config.xconf, BUFFER_SIZE, "/etc/bumblebee/xorg.conf.nouveau");
     snprintf(bb_config.ldpath, BUFFER_SIZE, "/usr/lib64/nvidia-current");
-    snprintf(bb_config.vglmethod, BUFFER_SIZE, "proxy");
+    snprintf(bb_status.vglmethod, BUFFER_SIZE, "proxy");
     snprintf(bb_config.socketpath, BUFFER_SIZE, "/var/run/bumblebee.socket");
-    bb_config.runmode = BB_RUN_APP;
+    bb_status.runmode = BB_RUN_APP;
 
     /* Parse the options, set flags as necessary */
     int c;
@@ -109,13 +109,13 @@ int main(int argc, char* argv[]) {
                 print_usage(EXIT_SUCCESS);
                 break;
             case 'c'://clean run (no output)
-                bb_config.verbosity = VERB_NONE;
+                bb_status.verbosity = VERB_NONE;
                 break;
             case 'v'://verbose
-                bb_config.verbosity = VERB_INFO;
+                bb_status.verbosity = VERB_INFO;
                 break;
             case 'V'://VERY verbose (debug mode)
-                bb_config.verbosity = VERB_DEBUG;
+                bb_status.verbosity = VERB_DEBUG;
                 break;
             case 'X'://X display number
                 snprintf(bb_config.xdisplay, BUFFER_SIZE, "%s", optarg);
@@ -127,7 +127,7 @@ int main(int argc, char* argv[]) {
                 snprintf(bb_config.socketpath, BUFFER_SIZE, "%s", optarg);
                 break;
             case 'm'://vglclient method
-                snprintf(bb_config.vglmethod, BUFFER_SIZE, "%s", optarg);
+                snprintf(bb_status.vglmethod, BUFFER_SIZE, "%s", optarg);
                 break;
             default:
                 // Unrecognized option
@@ -139,8 +139,8 @@ int main(int argc, char* argv[]) {
     /* change runmode to status if no application given to run
      * and current runmode is run application.
      */
-    if ((bb_config.runmode == BB_RUN_APP) && (optind >= argc)){
-      bb_config.runmode = BB_RUN_STATUS;
+    if ((bb_status.runmode == BB_RUN_APP) && (optind >= argc)){
+      bb_status.runmode = BB_RUN_STATUS;
     }
 
     /* Init log Mechanism */
@@ -148,7 +148,7 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "Unexpected error, could not initialize log.\n");
         return 1;
     }
-    bb_log(LOG_DEBUG, "%s version %s starting...\n", bb_config.program_name, TOSTRING(VERSION));
+    bb_log(LOG_DEBUG, "%s version %s starting...\n", bb_status.program_name, TOSTRING(VERSION));
 
     /* Connect to listening daemon */
     bb_config.bb_socket = socketConnect(bb_config.socketpath, SOCK_NOBLOCK);
@@ -161,7 +161,7 @@ int main(int argc, char* argv[]) {
     int r;
 
     /* Request status */
-    if (bb_config.runmode == BB_RUN_STATUS){
+    if (bb_status.runmode == BB_RUN_STATUS){
       r = snprintf(buffer, BUFFER_SIZE, "Status?");
       socketWrite(&bb_config.bb_socket, buffer, r);
       while (bb_config.bb_socket != -1){
@@ -174,7 +174,7 @@ int main(int argc, char* argv[]) {
     }
 
     /* Run given application */
-    if (bb_config.runmode == BB_RUN_APP){
+    if (bb_status.runmode == BB_RUN_APP){
       r = snprintf(buffer, BUFFER_SIZE, "Checking availability...");
       socketWrite(&bb_config.bb_socket, buffer, r);
       while (bb_config.bb_socket != -1){
@@ -190,7 +190,7 @@ int main(int argc, char* argv[]) {
             case 'Y': //Yes, run through vglrun
               bb_log(LOG_INFO, "Running application through vglrun.\n");
               //run vglclient if any method other than proxy is used
-              if (strncmp(bb_config.vglmethod, "proxy", BUFFER_SIZE) != 0){
+              if (strncmp(bb_status.vglmethod, "proxy", BUFFER_SIZE) != 0){
                 char * vglclient_args[] = {
                   "vglclient",
                   "-detach",
@@ -201,7 +201,7 @@ int main(int argc, char* argv[]) {
               char ** vglrun_args = malloc(sizeof(char *) * (9 + argc - optind));
               vglrun_args[0] = "vglrun";
               vglrun_args[1] = "-c";
-              vglrun_args[2] = bb_config.vglmethod;
+              vglrun_args[2] = bb_status.vglmethod;
               vglrun_args[3] = "-d";
               vglrun_args[4] = bb_config.xdisplay;
               vglrun_args[5] = "-ld";

@@ -44,8 +44,8 @@
  */
 static void print_usage(int exit_val) {
     // Print help message and exit with exit code
-    printf("%s version %s\n\n", bb_config.program_name, TOSTRING(VERSION));
-    printf("Usage: %s [options]\n", bb_config.program_name);
+    printf("%s version %s\n\n", bb_status.program_name, TOSTRING(VERSION));
+    printf("Usage: %s [options]\n", bb_status.program_name);
     printf("  Options:\n");
     printf("      -d\tRun as daemon.\n");
     printf("      -c\tBe quit.\n");
@@ -57,6 +57,19 @@ static void print_usage(int exit_val) {
     printf("      -h\tShow this help screen.\n");
     printf("\n");
     exit(exit_val);
+}
+
+/**
+ * Load sane, hardcoded defaults. Can be overriden later by configuration
+ * file parsing.
+ */
+void bb_load_default_config(void){
+  /* Configuration part of the structure */
+  snprintf(bb_config.xdisplay, BUFFER_SIZE, ":8");
+  snprintf(bb_config.xconf, BUFFER_SIZE, "/etc/bumblebee/xorg.conf.nouveau");
+  snprintf(bb_config.ldpath, BUFFER_SIZE, "/usr/lib64/nvidia-current");
+  snprintf(bb_config.socketpath, BUFFER_SIZE, "/var/run/bumblebee.socket");
+  snprintf(bb_config.gidname, BUFFER_SIZE, "bumblebee");
 }
 
 /**
@@ -88,12 +101,12 @@ static int bb_chgid(void) {
 static int daemonize(void) {
 
     /* Daemon flag, should be reset to zero if fail to daemonize */
-    bb_config.is_daemonized = 1;
+    bb_status.is_daemonized = 1;
 
     /* Fork off the parent process */
     pid_t bb_pid = fork();
     if (bb_pid < 0) {
-        bb_config.is_daemonized = 0;
+        bb_status.is_daemonized = 0;
         bb_log(LOG_ERR, "Could not fork to background\n");
         exit (EXIT_FAILURE);
     }
@@ -106,7 +119,7 @@ static int daemonize(void) {
     pid_t bb_sid = setsid();
     if (bb_sid < 0) {
         /* Log the failure */
-        bb_config.is_daemonized = 0;
+        bb_status.is_daemonized = 0;
         bb_log(LOG_ERR, "Could not set SID: %s\n", strerror(errno));
         exit (EXIT_FAILURE);
     }
@@ -114,7 +127,7 @@ static int daemonize(void) {
     /* Change the current working directory */
     if ((chdir("/")) < 0) {
         /* Log the failure */
-        bb_config.is_daemonized = 0;
+        bb_status.is_daemonized = 0;
         bb_log(LOG_ERR, "Could not change to root directory: %s\n", strerror(errno));
         exit (EXIT_FAILURE);
     }
@@ -123,7 +136,7 @@ static int daemonize(void) {
     close(STDIN_FILENO);
     close(STDOUT_FILENO);
     close(STDERR_FILENO);
-    return !bb_config.is_daemonized;
+    return !bb_status.is_daemonized;
 }
 
 /**
@@ -162,11 +175,11 @@ void handle_socket(struct clientsocket * C){
   if (r > 0){
     switch (buffer[0]){
       case 'S'://status
-        if (bb_config.errors[0] != 0){
-          r = snprintf(buffer, BUFFER_SIZE, "Error (%s): %s\n", TOSTRING(VERSION), bb_config.errors);
+        if (bb_status.errors[0] != 0){
+          r = snprintf(buffer, BUFFER_SIZE, "Error (%s): %s\n", TOSTRING(VERSION), bb_status.errors);
         }else{
-          if (bb_is_running(bb_config.x_pid)){
-            r = snprintf(buffer, BUFFER_SIZE, "Ready (%s). X is PID %i, %i applications using bumblebeed.\n", TOSTRING(VERSION), bb_config.x_pid, bb_config.appcount);
+          if (bb_is_running(bb_status.x_pid)){
+            r = snprintf(buffer, BUFFER_SIZE, "Ready (%s). X is PID %i, %i applications using bumblebeed.\n", TOSTRING(VERSION), bb_status.x_pid, bb_status.appcount);
           }else{
             r = snprintf(buffer, BUFFER_SIZE, "Ready (%s). X inactive.\n", TOSTRING(VERSION));
           }
@@ -177,16 +190,16 @@ void handle_socket(struct clientsocket * C){
       case 'C'://check if VirtualGL is allowed
         /// \todo Handle power management cases and powering card on/off.
         //no X? attempt to start it
-        if (!bb_is_running(bb_config.x_pid)){start_secondary();}
-        if (bb_is_running(bb_config.x_pid)){
+        if (!bb_is_running(bb_status.x_pid)){start_secondary();}
+        if (bb_is_running(bb_status.x_pid)){
           r = snprintf(buffer, BUFFER_SIZE, "Yes. X is active.\n");
           if (C->inuse == 0){
             C->inuse = 1;
-            bb_config.appcount++;
+            bb_status.appcount++;
           }
         }else{
-          if (bb_config.errors[0] != 0){
-            r = snprintf(buffer, BUFFER_SIZE, "No - error: %s\n", bb_config.errors);
+          if (bb_status.errors[0] != 0){
+            r = snprintf(buffer, BUFFER_SIZE, "No - error: %s\n", bb_status.errors);
           }else{
             r = snprintf(buffer, BUFFER_SIZE, "No, secondary X is not active.\n");
           }
@@ -224,7 +237,7 @@ static void main_loop(void) {
         if (time(0) - lastcheck > 5){
           lastcheck = time(0);
           //stop X / card if there is no need to keep it running
-          if ((bb_config.appcount == 0) && (bb_is_running(bb_config.x_pid) || (bbswitch_status() > 0))){
+          if ((bb_status.appcount == 0) && (bb_is_running(bb_status.x_pid) || (bbswitch_status() > 0))){
             stop_secondary();
           }
         }
@@ -232,7 +245,7 @@ static void main_loop(void) {
         /* Accept a connection. */
         optirun_socket_fd = socketAccept(&bb_config.bb_socket, SOCK_NOBLOCK);
         if (optirun_socket_fd >= 0){
-          bb_log(LOG_INFO, "Accepted new connection\n", optirun_socket_fd, bb_config.appcount);
+          bb_log(LOG_INFO, "Accepted new connection\n", optirun_socket_fd, bb_status.appcount);
 
           /* add to list of sockets */
           curr = malloc(sizeof(struct clientsocket));
@@ -254,7 +267,7 @@ static void main_loop(void) {
         while (curr != 0){
           if (curr->sock < 0){
             //remove from list
-            if (curr->inuse > 0){bb_config.appcount--;}
+            if (curr->inuse > 0){bb_status.appcount--;}
             if (last == curr){last = prev;}
             if (prev == 0){
               first = curr->next;
@@ -281,7 +294,7 @@ static void main_loop(void) {
       //close socket if not already closed
       if (curr->sock >= 0){socketClose(&curr->sock);}
       //remove from list
-      if (curr->inuse > 0){bb_config.appcount--;}
+      if (curr->inuse > 0){bb_status.appcount--;}
       if (last == curr){last = prev;}
       if (prev == 0){
         first = curr->next;
@@ -305,16 +318,14 @@ int main(int argc, char* argv[]) {
     signal(SIGQUIT, handle_signal);
 
     /* Initializing configuration */
-    bb_config.program_name = argv[0];
-    bb_config.is_daemonized = 0;
-    bb_config.verbosity = VERB_WARN;
-    bb_config.errors[0] = 0;//no errors, yet :-)
-    snprintf(bb_config.xdisplay, BUFFER_SIZE, ":8");
-    snprintf(bb_config.xconf, BUFFER_SIZE, "/etc/bumblebee/xorg.conf.nouveau");
-    snprintf(bb_config.ldpath, BUFFER_SIZE, "/usr/lib64/nvidia-current");
-    snprintf(bb_config.vglmethod, BUFFER_SIZE, "proxy");
-    snprintf(bb_config.socketpath, BUFFER_SIZE, "/var/run/bumblebee.socket");
-    snprintf(bb_config.gidname, BUFFER_SIZE, "bumblebee");
+    bb_load_default_config();
+
+    /* Initialize status */
+    bb_status.program_name = argv[0];
+    bb_status.is_daemonized = 0;
+    bb_status.verbosity = VERB_WARN;
+    bb_status.errors[0] = 0;//no errors, yet :-)
+    snprintf(bb_status.vglmethod, BUFFER_SIZE, "proxy");
 
     /* Parse the options, set flags as necessary */
     int c;
@@ -324,16 +335,16 @@ int main(int argc, char* argv[]) {
                 print_usage(EXIT_SUCCESS);
                 break;
             case 'd'://daemonize
-                bb_config.is_daemonized = 1;
+                bb_status.is_daemonized = 1;
                 break;
             case 'c'://clean run (no output)
-                bb_config.verbosity = VERB_NONE;
+                bb_status.verbosity = VERB_NONE;
                 break;
             case 'v'://verbose
-                bb_config.verbosity = VERB_INFO;
+                bb_status.verbosity = VERB_INFO;
                 break;
             case 'V'://VERY verbose (debug mode)
-                bb_config.verbosity = VERB_DEBUG;
+                bb_status.verbosity = VERB_DEBUG;
                 break;
             case 'x'://xorg.conf path
                 snprintf(bb_config.xconf, BUFFER_SIZE, "%s", optarg);
@@ -362,10 +373,10 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "Unexpected error, could not initialize log.\n");
         return 1;
     }
-    bb_log(LOG_DEBUG, "%s version %s starting...\n", bb_config.program_name, TOSTRING(VERSION));
+    bb_log(LOG_DEBUG, "%s version %s starting...\n", bb_status.program_name, TOSTRING(VERSION));
 
     /* Daemonized if daemon flag is activated */
-    if (bb_config.is_daemonized) {
+    if (bb_status.is_daemonized) {
         if (daemonize()) {
             bb_log(LOG_ERR, "Error: Bumblebee could not be daemonized\n");
             exit(EXIT_FAILURE);

@@ -57,29 +57,29 @@ void start_secondary() {
       bb_config.xdisplay,
       NULL
     };
-    bb_config.x_pid = bb_run_fork(x_argv);
+    bb_status.x_pid = bb_run_fork(x_argv);
     time_t xtimer = time(0);
     Display * xdisp = 0;
-    while ((time(0) - xtimer <= 10) && bb_is_running(bb_config.x_pid)){
+    while ((time(0) - xtimer <= 10) && bb_is_running(bb_status.x_pid)){
       xdisp = XOpenDisplay(bb_config.xdisplay);
       if (xdisp != 0){break;}
     }
     if (xdisp == 0){
       /// \todo Maybe check X exit status and/or messages?
-      if (bb_is_running(bb_config.x_pid)){
+      if (bb_is_running(bb_status.x_pid)){
         bb_log(LOG_ERR, "X unresponsive after 10 seconds - aborting\n");
-        bb_stop(bb_config.x_pid);
-        snprintf(bb_config.errors, BUFFER_SIZE, "X unresponsive after 10 seconds - aborting");
+        bb_stop(bb_status.x_pid);
+        snprintf(bb_status.errors, BUFFER_SIZE, "X unresponsive after 10 seconds - aborting");
       }else{
         bb_log(LOG_ERR, "X did not start properly\n");
-        snprintf(bb_config.errors, BUFFER_SIZE, "X did not start properly");
+        snprintf(bb_status.errors, BUFFER_SIZE, "X did not start properly");
       }
     }else{
       XCloseDisplay(xdisp);//close connection to X again
       bb_log(LOG_INFO, "X successfully started in %i seconds\n", time(0) - xtimer);
     }
   }else{
-    snprintf(bb_config.errors, BUFFER_SIZE, "Could not switch dedicated card on.");
+    snprintf(bb_status.errors, BUFFER_SIZE, "Could not switch dedicated card on.");
   }
 }
 
@@ -87,9 +87,9 @@ void start_secondary() {
  * Kill the second X server if any, turn card off if requested.
  */
 void stop_secondary() {
-  if (bb_is_running(bb_config.x_pid)){
+  if (bb_is_running(bb_status.x_pid)){
     bb_log(LOG_INFO, "Stopping X server\n");
-    bb_stop(bb_config.x_pid);
+    bb_stop(bb_status.x_pid);
   }
   if (bbswitch_status() == 1){
     /// \todo Support nouveau as well
