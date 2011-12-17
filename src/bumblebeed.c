@@ -23,7 +23,6 @@
  * C-coded version of the Bumblebee daemon and optirun.
  */
 
-#include "bumblebeed.h"
 #include "config.h"
 #include "bbglobals.h"
 #include "bbsocket.h"
@@ -153,7 +152,7 @@ struct clientsocket{
 
 /// Receive and/or sent data to/from this socket.
 /// \param sock Pointer to socket. Assumed to be valid.
-void handle_socket(struct clientsocket * C){
+static void handle_socket(struct clientsocket * C){
   static char buffer[BUFFER_SIZE];
   //since these are local sockets, we can safely assume we get whole messages at a time
   int r = socketRead(&C->sock, buffer, BUFFER_SIZE);

@@ -42,7 +42,7 @@ struct pidlist * pidlist_start = 0; ///Begin of the linked-list of PIDs, if any.
 
 /// Adds a pid_t to the linked list of PIDs.
 /// Creates the list if it is still null.
-void pidlist_add(pid_t newpid){
+static void pidlist_add(pid_t newpid){
   struct pidlist * curr = 0;
   curr = pidlist_start;
   //no list? create one.
@@ -64,7 +64,7 @@ void pidlist_add(pid_t newpid){
 
 /// Removes a pid_t from the linked list of PIDs.
 /// Makes list null if empty.
-void pidlist_remove(pid_t rempid){
+static void pidlist_remove(pid_t rempid){
   struct pidlist * curr = 0;
   struct pidlist * prev = 0;
   curr = pidlist_start;
@@ -91,7 +91,7 @@ void pidlist_remove(pid_t rempid){
 
 /// Finds a pid_t in the linked list of PIDs.
 /// Returns 0 if not found, 1 otherwise.
-int pidlist_find(pid_t findpid){
+static int pidlist_find(pid_t findpid){
   struct pidlist * curr = 0;
   curr = pidlist_start;
   //no list? cancel.
@@ -104,14 +104,14 @@ int pidlist_find(pid_t findpid){
   return 0;
 }//pidlist_find
 
-void childsig_handler(int signum){
+static void childsig_handler(int signum){
   if (signum != SIGCHLD){return;}
   pid_t ret = wait(0);
   bb_log(LOG_DEBUG, "Process with PID %i terminated.\n", ret);
   pidlist_remove(ret);
 }//childsig_handler
 
-void check_handler(void){
+static void check_handler(void){
   // Set handler for this child process if not already
   if (handler_set == 0){
     struct sigaction new_action;
