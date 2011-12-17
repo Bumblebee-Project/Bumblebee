@@ -26,7 +26,6 @@
 #include "bbglobals.h"
 #include "bbsocket.h"
 #include "bblogger.h"
-#include "bbsecondary.h"
 #include "bbrun.h"
 #include <assert.h>
 #include <sys/types.h>
@@ -37,7 +36,6 @@
 #include <grp.h>
 #include <signal.h>
 #include <time.h>
-#include <X11/Xlib.h>
 
 /**
  *  Print a little note on usage
