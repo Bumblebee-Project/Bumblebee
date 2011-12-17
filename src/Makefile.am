@@ -1,7 +1,7 @@
 # -*- Makefile -*
 
-AM_CPPFLAGS = -DVERSION=${VERSION} ${libX11_CFLAGS}
-AM_CFLAGS = -Wall -Wextra -funsigned-char
+AM_CPPFLAGS = ${regular_CPPFLAGS} -DVERSION=${VERSION} ${libX11_CFLAGS}
+AM_CFLAGS = ${regular_CFLAGS} -Wextra -funsigned-char
 
 bin_PROGRAMS = bumblebeed
 

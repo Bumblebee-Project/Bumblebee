@@ -13,6 +13,13 @@ AM_INIT_AUTOMAKE([1.10.2 -Wall foreign subdir-objects
 AC_PROG_CC
 AM_PROG_CC_C_O
 
+regular_CPPFLAGS="-D_FILE_OFFSET_BITS=64 -D_REENTRANT"
+regular_CFLAGS="-Wall -Waggregate-return \
+	-Wmissing-declarations -Wmissing-prototypes -Wredundant-decls \
+	-Wshadow -Wstrict-prototypes -Winline -Wformat=2 -pipe"
+AC_SUBST([regular_CPPFLAGS])
+AC_SUBST([regular_CFLAGS])
+
 # Checks for libraries.
 
 # Checks for header files.
