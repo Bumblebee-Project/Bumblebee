@@ -3,6 +3,7 @@
 
 AC_PREREQ([2.68])
 AC_INIT([bumblebeed], [0.1], [https://github.com/Bumblebee-Project/bumblebeed])
+AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_SRCDIR([src/bbsocket.c])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile])
