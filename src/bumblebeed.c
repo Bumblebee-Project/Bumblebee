@@ -66,11 +66,11 @@ static int bb_chgid(void) {
   /* Change the Group ID of bumblebee */
   struct group *gp;
   errno = 0;
-  gp = getgrnam(DEFAULT_BB_GROUP);
+  gp = getgrnam(bb_config.gidname);
   if (gp == NULL) {
     int error_num = errno;
     bb_log(LOG_ERR, "%s\n", strerror(error_num));
-    bb_log(LOG_ERR, "There is no \"%s\" group\n", DEFAULT_BB_GROUP);
+    bb_log(LOG_ERR, "There is no \"%s\" group\n", bb_config.gidname);
     exit(EXIT_FAILURE);
   }
   if (setgid(gp->gr_gid) != 0) {
@@ -314,6 +314,7 @@ int main(int argc, char* argv[]) {
     snprintf(bb_config.ldpath, BUFFER_SIZE, "/usr/lib64/nvidia-current");
     snprintf(bb_config.vglmethod, BUFFER_SIZE, "proxy");
     snprintf(bb_config.socketpath, BUFFER_SIZE, "/var/run/bumblebee.socket");
+    snprintf(bb_config.gidname, BUFFER_SIZE, "bumblebee");
 
     /* Parse the options, set flags as necessary */
     int c;

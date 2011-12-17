@@ -25,7 +25,6 @@
 
 /* TODO: TRANSFER MACROS TO CONFIGURATION STRUCT*/
 #define DAEMON_NAME "bumblebee"
-#define DEFAULT_BB_GROUP "bumblebee"
 #define CONFIG_FILE "/etc/bumblebee/bumblebee.conf"
 
 /* Daemon states */
@@ -66,6 +65,7 @@ struct bb_config_struct {
     char ldpath[BUFFER_SIZE]; /// Path for LD for vglrun'ed applications.
     char vglmethod[BUFFER_SIZE]; /// Method used for VirtualGL connection.
     char socketpath[BUFFER_SIZE]; /// Filename for bumblebee communication socket.
+    char gidname[BUFFER_SIZE];
     pid_t x_pid; /// PID for X process, if any.
 };
 
