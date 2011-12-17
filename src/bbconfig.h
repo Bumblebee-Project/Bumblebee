@@ -31,29 +31,29 @@
 
 /* Structure containing the status of the application */
 struct bb_status_struct {
-  char* program_name; /// How this application was called.
-  int verbosity;  ///Verbosity level of messages.
-  int bb_socket;  /// The socket file descriptor of the application.
-  unsigned int appcount;  /// Count applications using the X server.
-  char errors[BUFFER_SIZE]; /// Error message if any. First byte is 0 otherwise.
-  int runmode;  /// Running mode.
+    char* program_name; /// How this application was called.
+    int verbosity; ///Verbosity level of messages.
+    int bb_socket; /// The socket file descriptor of the application.
+    unsigned int appcount; /// Count applications using the X server.
+    char errors[BUFFER_SIZE]; /// Error message if any. First byte is 0 otherwise.
+    int runmode; /// Running mode.
 }
 
 /* Structure containing the server configuration. Only valid if running 
  * as daemon/server */
 struct bb_server_config_struct {
-  char x_display[BUFFER_SIZE];  /// X display number to use.
-  char x_conf_file[BUFFER_SIZE];  /// Path to the X configuration file to use.
-  char ld_path[BUFFER_SIZE];  /// LD_LIBRARY_PATH to launch applications.
-  char socket_path[BUFFER_SIZE];  /// Path to the server socket.
-  int pm_enabled; /// Wether power management is enabled.
-  int stop_on_exit; /// Wether to stop the X server on last optirun instance exit.
+    char x_display[BUFFER_SIZE]; /// X display number to use.
+    char x_conf_file[BUFFER_SIZE]; /// Path to the X configuration file to use.
+    char ld_path[BUFFER_SIZE]; /// LD_LIBRARY_PATH to launch applications.
+    char socket_path[BUFFER_SIZE]; /// Path to the server socket.
+    int pm_enabled; /// Wether power management is enabled.
+    int stop_on_exit; /// Wether to stop the X server on last optirun instance exit.
 }
 
 /* Structure containing the client configuration. Only valid when running 
  * as cleint */
 struct bb_client_config_struct {
-  char* vgl_compress;
+    char* vgl_compress;
 }
 
 extern struct bb_status_struct bb_status;

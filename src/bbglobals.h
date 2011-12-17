@@ -53,32 +53,32 @@
 
 /* Structure containing the daemon configuration and status */
 struct bb_config_struct {
-  //char* program_name; /// How this application was called.
-  //int verbosity; /// Verbosity level of messages.
-  //int is_daemonized; /// 1 if running as daemon, 0 otherwise.
-  int bb_socket; /// The main socket of the application.
-  //unsigned int appcount; /// Count of applications using the secondary X.
-  //char errors[BUFFER_SIZE]; /// Error message, if any. First byte is 0 otherwise.
-  //int runmode; /// See running modes above.
-  char xdisplay[BUFFER_SIZE]; /// Number of the used X display for VirtualGL.
-  char xconf[BUFFER_SIZE]; /// Filename for secondary X xorg.conf file.
-  char ldpath[BUFFER_SIZE]; /// Path for LD for vglrun'ed applications.
-  //char vglmethod[BUFFER_SIZE]; /// Method used for VirtualGL connection.
-  char socketpath[BUFFER_SIZE]; /// Filename for bumblebee communication socket.
-  char gidname[BUFFER_SIZE];
-  //pid_t x_pid; /// PID for X process, if any.
+    //char* program_name; /// How this application was called.
+    //int verbosity; /// Verbosity level of messages.
+    //int is_daemonized; /// 1 if running as daemon, 0 otherwise.
+    int bb_socket; /// The main socket of the application.
+    //unsigned int appcount; /// Count of applications using the secondary X.
+    //char errors[BUFFER_SIZE]; /// Error message, if any. First byte is 0 otherwise.
+    //int runmode; /// See running modes above.
+    char xdisplay[BUFFER_SIZE]; /// Number of the used X display for VirtualGL.
+    char xconf[BUFFER_SIZE]; /// Filename for secondary X xorg.conf file.
+    char ldpath[BUFFER_SIZE]; /// Path for LD for vglrun'ed applications.
+    //char vglmethod[BUFFER_SIZE]; /// Method used for VirtualGL connection.
+    char socketpath[BUFFER_SIZE]; /// Filename for bumblebee communication socket.
+    char gidname[BUFFER_SIZE];
+    //pid_t x_pid; /// PID for X process, if any.
 };
 
 /* Structure containing the daemon status */
 struct bb_status_struct {
-  char* program_name; /// How this application was called.
-  int verbosity; /// Verbosity level of messages.
-  int is_daemonized; /// 1 if running as daemon, 0 otherwise.
-  unsigned int appcount; /// Count of applications using the secondary X.
-  char errors[BUFFER_SIZE]; /// Error message, if any. First byte is 0 otherwise.
-  int runmode; /// See running modes above.
-  char vglmethod[BUFFER_SIZE]; /// Method used for VirtualGL connection.
-  pid_t x_pid; /// PID for X process, if any.
+    char* program_name; /// How this application was called.
+    int verbosity; /// Verbosity level of messages.
+    int is_daemonized; /// 1 if running as daemon, 0 otherwise.
+    unsigned int appcount; /// Count of applications using the secondary X.
+    char errors[BUFFER_SIZE]; /// Error message, if any. First byte is 0 otherwise.
+    int runmode; /// See running modes above.
+    char vglmethod[BUFFER_SIZE]; /// Method used for VirtualGL connection.
+    pid_t x_pid; /// PID for X process, if any.
 };
 
 extern struct bb_config_struct bb_config;

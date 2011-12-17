@@ -38,10 +38,11 @@
 /// \param address String containing the location of the Unix socket to connect to.
 /// \param nonblock Whether the socket should be nonblocking. 1 means nonblocking, 0 means blocking.
 /// \return An integer representing the socket, or -1 if connection failed.
-int socketConnect(char * address, int nonblock){
+
+int socketConnect(char * address, int nonblock) {
   //create the socket itself
   int sock = socket(PF_UNIX, SOCK_STREAM, 0);
-  if (sock < 0){
+  if (sock < 0) {
     bb_log(LOG_ERR, "Could not create socket. Error: %s\n", strerror(errno));
     return -1;
   }
@@ -50,15 +51,15 @@ int socketConnect(char * address, int nonblock){
   addr.sun_family = AF_UNIX;
   strcpy(addr.sun_path, address);
   //attempt to connect
-  int r = connect(sock, (struct sockaddr*)&addr, sizeof(addr));
-  if (r == 0){
+  int r = connect(sock, (struct sockaddr*) & addr, sizeof (addr));
+  if (r == 0) {
     //connection success, set nonblocking if requested.
-    if (nonblock == 1){
+    if (nonblock == 1) {
       int flags = fcntl(sock, F_GETFL, 0);
       flags |= O_NONBLOCK;
       fcntl(sock, F_SETFL, flags);
     }
-  }else{
+  } else {
     //connection fail
     bb_log(LOG_ERR, "Could not connect to %s! Error: %s\n", address, strerror(errno));
     //close the socket and set it to -1
@@ -69,10 +70,13 @@ int socketConnect(char * address, int nonblock){
 
 /// Nicely closes the given socket, setting it to -1.
 /// Never fails.
-void socketClose(int * sock){
+
+void socketClose(int * sock) {
   bb_log(LOG_INFO, "Socket closed.\n");
   //do not close closed sockets
-  if (*sock == -1){return;}
+  if (*sock == -1) {
+    return;
+  }
   //half-close the socket first
   shutdown(*sock, SHUT_RDWR);
   //fully close the socket
@@ -85,32 +89,38 @@ void socketClose(int * sock){
 /// Calls poll() on the socket, checking if data is available.
 /// This function may return 1 even if there is no data, but never returns 0 when there is.
 /// \return 1 if data can be read, 0 otherwise.
-int socketCanRead(int sock){
-  if (sock < 0){return 0;}
+
+int socketCanRead(int sock) {
+  if (sock < 0) {
+    return 0;
+  }
   struct pollfd PFD;
   PFD.fd = sock;
   PFD.events = POLLIN;
   PFD.revents = 0;
   poll(&PFD, 1, 5);
-  if ((PFD.revents & POLLIN) == POLLIN){
+  if ((PFD.revents & POLLIN) == POLLIN) {
     return 1;
-  }else{
+  } else {
     return 0;
   }
 }//socketCanRead
 
 /// Calls poll() on the socket, checking if data can be written.
 /// \return 1 if data can be written, 0 otherwise.
-int socketCanWrite(int sock){
-  if (sock < 0){return 0;}
+
+int socketCanWrite(int sock) {
+  if (sock < 0) {
+    return 0;
+  }
   struct pollfd PFD;
   PFD.fd = sock;
   PFD.events = POLLOUT;
   PFD.revents = 0;
   poll(&PFD, 1, 5);
-  if ((PFD.revents & POLLOUT) == POLLOUT){
+  if ((PFD.revents & POLLOUT) == POLLOUT) {
     return 1;
-  }else{
+  } else {
     return 0;
   }
 }//socketCanWrite
@@ -121,12 +131,16 @@ int socketCanWrite(int sock){
 /// \param buffer Location of the buffer to write from.
 /// \param len Amount of bytes to write.
 /// \returns The amount of bytes actually written.
-int socketWrite(int * sock, void * buffer, int len){
-  if (*sock < 0){return 0;}
+
+int socketWrite(int * sock, void * buffer, int len) {
+  if (*sock < 0) {
+    return 0;
+  }
   int r = send(*sock, buffer, len, 0);
-  if (r < 0){
-    switch (errno){
-      case EWOULDBLOCK: return 0; break;
+  if (r < 0) {
+    switch (errno) {
+      case EWOULDBLOCK: return 0;
+        break;
       default:
         bb_log(LOG_WARNING, "Could not write data! Error: %s\n", strerror(errno));
         socketClose(sock);
@@ -134,10 +148,10 @@ int socketWrite(int * sock, void * buffer, int len){
         break;
     }
   }
-  if (r == 0){
-    #if DEBUG >= 4
+  if (r == 0) {
+#if DEBUG >= 4
     //fprintf(stderr, "Could not iwrite data! Socket is closed.\n");
-    #endif
+#endif
     socketClose(sock);
   }
   return r;
@@ -149,12 +163,16 @@ int socketWrite(int * sock, void * buffer, int len){
 /// \param buffer Location of the buffer to read to.
 /// \param len Amount of bytes to read.
 /// \returns The amount of bytes actually read.
-int socketRead(int * sock, void * buffer, int len){
-  if (*sock < 0){return 0;}
+
+int socketRead(int * sock, void * buffer, int len) {
+  if (*sock < 0) {
+    return 0;
+  }
   int r = recv(*sock, buffer, len, 0);
-  if (r < 0){
-    switch (errno){
-      case EWOULDBLOCK: return 0; break;
+  if (r < 0) {
+    switch (errno) {
+      case EWOULDBLOCK: return 0;
+        break;
       default:
         bb_log(LOG_WARNING, "Could not read data! Error: %s\n", strerror(errno));
         socketClose(sock);
@@ -162,7 +180,7 @@ int socketRead(int * sock, void * buffer, int len){
         break;
     }
   }
-  if (r == 0){
+  if (r == 0) {
     socketClose(sock);
   }
   return r;
@@ -175,17 +193,18 @@ int socketRead(int * sock, void * buffer, int len){
 /// \param address The location of the Unix socket to bind to.
 /// \param nonblock Whether accept() calls will be nonblocking. 0 = Blocking, 1 = Nonblocking.
 /// \param return The socket itself, or -1 upon failure.
-int socketServer(char * address, int nonblock){
+
+int socketServer(char * address, int nonblock) {
   //delete the file currently there, if any
   unlink(address);
   //create the socket
   int sock = socket(AF_UNIX, SOCK_STREAM, 0);
-  if (sock < 0){
+  if (sock < 0) {
     bb_log(LOG_ERR, "Could not create socket! Error: %s\n", strerror(errno));
     return -1;
   }
   //set to nonblocking if requested
-  if (nonblock == 1){
+  if (nonblock == 1) {
     int flags = fcntl(sock, F_GETFL, 0);
     flags |= O_NONBLOCK;
     fcntl(sock, F_SETFL, flags);
@@ -195,16 +214,16 @@ int socketServer(char * address, int nonblock){
   addr.sun_family = AF_UNIX;
   strcpy(addr.sun_path, address);
   //bind the socket
-  int ret = bind(sock, (struct sockaddr*)&addr, sizeof(addr));
-  if (ret == 0){
-    ret = listen(sock, 100);//start listening, backlog of 100 allowed
+  int ret = bind(sock, (struct sockaddr*) & addr, sizeof (addr));
+  if (ret == 0) {
+    ret = listen(sock, 100); //start listening, backlog of 100 allowed
     //allow reading and writing for group and self
     chmod(address, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
-    if (ret != 0){
+    if (ret != 0) {
       bb_log(LOG_ERR, "Listen failed! Error: %s\n", strerror(errno));
       socketClose(&sock);
     }
-  }else{
+  } else {
     bb_log(LOG_ERR, "Binding failed! Error: %s\n", strerror(errno));
     socketClose(&sock);
   }
@@ -216,19 +235,22 @@ int socketServer(char * address, int nonblock){
 /// If the Socket::Server is nonblocking, it might return a Socket::Connection that is not connected, so check for this.
 /// \param nonblock Whether the newly connected socket should be nonblocking. Default is false (blocking).
 /// \returns A valid socket or -1.
-int socketAccept(int * sock, int nonblock){
-  if (*sock < 0){return -1;}
+
+int socketAccept(int * sock, int nonblock) {
+  if (*sock < 0) {
+    return -1;
+  }
   int r = accept(*sock, 0, 0);
   //set the socket to be nonblocking, if requested.
   //we could do this through accept4 with a flag, but that call is non-standard...
-  if ((r >= 0) && (nonblock == 1)){
+  if ((r >= 0) && (nonblock == 1)) {
     int flags = fcntl(r, F_GETFL, 0);
     flags |= O_NONBLOCK;
     fcntl(r, F_SETFL, flags);
   }
 
-  if (r < 0){
-    if ((errno != EWOULDBLOCK) && (errno != EAGAIN) && (errno != EINTR)){
+  if (r < 0) {
+    if ((errno != EWOULDBLOCK) && (errno != EAGAIN) && (errno != EINTR)) {
       bb_log(LOG_ERR, "Error during accept - closing server socket: %s\n", strerror(errno));
       socketClose(sock);
     }

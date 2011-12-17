@@ -23,7 +23,7 @@
  */
 
 #include "bbconfig.h"
-#include "bblog.h"
+#include "bblogger.h"
 
 static struct bb_key_value {
   char key[BUFFER_SIZE];
@@ -35,12 +35,12 @@ static struct bb_key_value {
  *
  * @param line String to be broken into a key-value pair
  */
-struct bb_key_value bb_get_key_value(const char* line){
+struct bb_key_value bb_get_key_value(const char* line) {
   struct bb_key_value kvpair;
   if (EOF == sscanf(line, "%[^=]=%[^\n]", kvpair.key, kvpair.value)) {
     int err_val = errno;
     printf("Error parsing configuration file: %s\n", strerror(err_val));
-  } 
+  }
   return kvpair;
 }
 
@@ -70,16 +70,17 @@ void stripws(char* str) {
  */
 static int read_configuration() {
   /* Hardcoded standard configuration */
-  bb_s_config {
-    .x_display=":8";
-    .x_conf_file="etc/bumblebee/xorg.conf.nouveau";
-    .ld_path="";
-    .socket_path="var/run/bumblebee.socket";
-    .pm_enabled=0;
-    .stop_on_exit=0;
+  bb_s_config
+  {
+    .x_display = ":8";
+    .x_conf_file = "etc/bumblebee/xorg.conf.nouveau";
+    .ld_path = "";
+    .socket_path = "var/run/bumblebee.socket";
+    .pm_enabled = 0;
+    .stop_on_exit = 0;
   }
   FILE *cf = fopen(CONFIG_FILE, "r");
-  if (cf==(NULL)) { /* An error ocurred */
+  if (cf == (NULL)) { /* An error ocurred */
     int err_num = errno;
     assert(cf == NULL);
     switch (err_num) {
@@ -94,7 +95,7 @@ static int read_configuration() {
       case ENOSR:
       case ENOTDIR:
         bb_log(LOG_ERR, "Error in config file: %s", strerror(err_num));
-      }
+    }
   } else {
     char line[BUFFER_SIZE];
     while (fgets(line, sizeof line, cf) != NULL) {
@@ -103,17 +104,17 @@ static int read_configuration() {
       if ((line[0] != '#') && (line[0] != '\n')) {
         /* Parse configuration based on the run mode */
         struct kvp = bb_get_key_value(line);
-        if (strcmp(kvp.key, "VGL_DISPLAY")){
-        
-        } else if (strcmp(kvp.key, "STOP_SERVICE_ON_EXIT")){
+        if (strcmp(kvp.key, "VGL_DISPLAY")) {
 
-        } else if (strcmp(kvp.key, "X_CONFFILE")){
+        } else if (strcmp(kvp.key, "STOP_SERVICE_ON_EXIT")) {
 
-        } else if (strcmp(kvp.key, "VGL_COMPRESS")){
+        } else if (strcmp(kvp.key, "X_CONFFILE")) {
 
-        } else if (strcmp(kvp.key, "ECO_MODE")){
+        } else if (strcmp(kvp.key, "VGL_COMPRESS")) {
 
-        } else if (strcmp(kvp.key, "FALLBACK_START")){
+        } else if (strcmp(kvp.key, "ECO_MODE")) {
+
+        } else if (strcmp(kvp.key, "FALLBACK_START")) {
 
         }
       }

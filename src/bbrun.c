@@ -33,7 +33,8 @@
 int handler_set = 0;
 
 /// Socket list structure for use in main_loop.
-struct pidlist{
+
+struct pidlist {
   pid_t PID;
   struct pidlist * next;
 };
@@ -42,46 +43,56 @@ struct pidlist * pidlist_start = 0; ///Begin of the linked-list of PIDs, if any.
 
 /// Adds a pid_t to the linked list of PIDs.
 /// Creates the list if it is still null.
-static void pidlist_add(pid_t newpid){
+
+static void pidlist_add(pid_t newpid) {
   struct pidlist * curr = 0;
   curr = pidlist_start;
   //no list? create one.
-  if (curr == 0){
-    curr = malloc(sizeof(struct pidlist));
+  if (curr == 0) {
+    curr = malloc(sizeof (struct pidlist));
     curr->next = 0;
     curr->PID = newpid;
     pidlist_start = curr;
     return;
   }
   //find the last item in the list
-  while ((curr != 0) && (curr->next != 0)){curr = curr->next;}
+  while ((curr != 0) && (curr->next != 0)) {
+    curr = curr->next;
+  }
   //curr now holds the last item, curr->next is null
-  curr->next = malloc(sizeof(struct pidlist));
-  curr = curr->next;//move to new element
+  curr->next = malloc(sizeof (struct pidlist));
+  curr = curr->next; //move to new element
   curr->next = 0;
   curr->PID = newpid;
 }//pidlist_add
 
 /// Removes a pid_t from the linked list of PIDs.
 /// Makes list null if empty.
-static void pidlist_remove(pid_t rempid){
+
+static void pidlist_remove(pid_t rempid) {
   struct pidlist * curr = 0;
   struct pidlist * prev = 0;
   curr = pidlist_start;
   //no list? cancel.
-  if (curr == 0){return;}
+  if (curr == 0) {
+    return;
+  }
   //find the item in the list
-  while (curr != 0){
-    if (curr->PID == rempid){
-      if (prev != 0){prev->next = curr->next;}
-      if (curr == pidlist_start){pidlist_start = curr->next;}
+  while (curr != 0) {
+    if (curr->PID == rempid) {
+      if (prev != 0) {
+        prev->next = curr->next;
+      }
+      if (curr == pidlist_start) {
+        pidlist_start = curr->next;
+      }
       free(curr);
-      if (prev != 0){
+      if (prev != 0) {
         curr = prev->next;
-      }else{
+      } else {
         curr = 0;
       }
-      continue;//just in case it was added twice for some reason
+      continue; //just in case it was added twice for some reason
     }
     //go to the next item
     prev = curr;
@@ -91,29 +102,36 @@ static void pidlist_remove(pid_t rempid){
 
 /// Finds a pid_t in the linked list of PIDs.
 /// Returns 0 if not found, 1 otherwise.
-static int pidlist_find(pid_t findpid){
+
+static int pidlist_find(pid_t findpid) {
   struct pidlist * curr = 0;
   curr = pidlist_start;
   //no list? cancel.
-  if (curr == 0){return 0;}
+  if (curr == 0) {
+    return 0;
+  }
   //find the item in the list
-  while (curr != 0){
-    if (curr->PID == findpid){return 1;}
+  while (curr != 0) {
+    if (curr->PID == findpid) {
+      return 1;
+    }
     curr = curr->next;
   }
   return 0;
 }//pidlist_find
 
-static void childsig_handler(int signum){
-  if (signum != SIGCHLD){return;}
+static void childsig_handler(int signum) {
+  if (signum != SIGCHLD) {
+    return;
+  }
   pid_t ret = wait(0);
   bb_log(LOG_DEBUG, "Process with PID %i terminated.\n", ret);
   pidlist_remove(ret);
 }//childsig_handler
 
-static void check_handler(void){
+static void check_handler(void) {
   // Set handler for this child process if not already
-  if (handler_set == 0){
+  if (handler_set == 0) {
     struct sigaction new_action;
     new_action.sa_handler = childsig_handler;
     sigemptyset(&new_action.sa_mask);
@@ -134,15 +152,15 @@ pid_t bb_run_fork(char** argv) {
   check_handler();
   // Fork and attempt to run given application
   pid_t ret = fork();
-  if (ret == 0){
+  if (ret == 0) {
     // Fork went ok, child process replace
     bb_run_exec(argv);
-  }else{
-    if (ret > 0){
+  } else {
+    if (ret > 0) {
       // Fork went ok, parent process continues
       bb_log(LOG_INFO, "Process %s started, PID %i.\n", argv[0], ret);
       pidlist_add(ret);
-    }else{
+    } else {
       // Fork failed
       bb_log(LOG_ERR, "Process %s could not be started. fork() failed.\n", argv[0]);
       return 0;
@@ -161,17 +179,19 @@ void bb_run_fork_wait(char** argv) {
   check_handler();
   // Fork and attempt to run given application
   pid_t ret = fork();
-  if (ret == 0){
+  if (ret == 0) {
     // Fork went ok, child process replace
     bb_run_exec(argv);
-  }else{
-    if (ret > 0){
+  } else {
+    if (ret > 0) {
       // Fork went ok, parent process continues
       bb_log(LOG_INFO, "Process %s started, PID %i.\n", argv[0], ret);
       pidlist_add(ret);
       //sleep until process finishes
-      while (bb_is_running(ret)){usleep(1000000);}
-    }else{
+      while (bb_is_running(ret)) {
+        usleep(1000000);
+      }
+    } else {
       // Fork failed
       bb_log(LOG_ERR, "Process %s could not be started. fork() failed.\n", argv[0]);
       return;
@@ -181,30 +201,38 @@ void bb_run_fork_wait(char** argv) {
 }
 
 /// Returns 1 if a process is currently running, 0 otherwise.
-int bb_is_running(pid_t proc){
+
+int bb_is_running(pid_t proc) {
   return pidlist_find(proc);
 }
 
 /// Stops the running process, if any.
-void bb_stop(pid_t proc){
-  if (bb_is_running(proc)){kill(proc, SIGTERM);}
+
+void bb_stop(pid_t proc) {
+  if (bb_is_running(proc)) {
+    kill(proc, SIGTERM);
+  }
 }
 
 /// Stops all the running processes, if any.
-void bb_stop_all(void){
+
+void bb_stop_all(void) {
   struct pidlist * curr = 0;
   curr = pidlist_start;
   //no list? cancel.
-  if (curr == 0){return;}
+  if (curr == 0) {
+    return;
+  }
   //kill the whole list
-  while (curr != 0){
+  while (curr != 0) {
     kill(curr->PID, SIGTERM);
     curr = curr->next;
   }
 }
 
 /// Attempts to run the given application, replacing the current process
-void bb_run_exec(char ** argv){
+
+void bb_run_exec(char ** argv) {
   execvp(argv[0], argv);
   bb_log(LOG_ERR, "Error running \"%s\": %s\n", argv[0], strerror(errno));
   exit(42);

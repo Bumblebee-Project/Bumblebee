@@ -29,13 +29,13 @@
  * Initialize log capabilities. Return 0 on success
  */
 int bb_init_log(void) {
-    /*  Open Logggin mechanism based on configuration */
-    if (bb_status.is_daemonized) {
-        openlog(DAEMON_NAME, LOG_PID, LOG_DAEMON);
-    } else {
-    }
-    /*  Should end with no error by now */
-    return 0;
+  /*  Open Logggin mechanism based on configuration */
+  if (bb_status.is_daemonized) {
+    openlog(DAEMON_NAME, LOG_PID, LOG_DAEMON);
+  } else {
+  }
+  /*  Should end with no error by now */
+  return 0;
 }
 
 /**
@@ -45,41 +45,49 @@ int bb_init_log(void) {
 void bb_log(int priority, char* msg_format, ...) {
   switch (priority) {
     case LOG_ERR:
-      if (bb_status.verbosity < VERB_ERR){return;}
+      if (bb_status.verbosity < VERB_ERR) {
+        return;
+      }
       break;
     case LOG_DEBUG:
-      if (bb_status.verbosity < VERB_DEBUG){return;}
+      if (bb_status.verbosity < VERB_DEBUG) {
+        return;
+      }
       break;
     case LOG_WARNING:
-      if (bb_status.verbosity < VERB_WARN){return;}
+      if (bb_status.verbosity < VERB_WARN) {
+        return;
+      }
       break;
     default:
-      if (bb_status.verbosity < VERB_INFO){return;}
+      if (bb_status.verbosity < VERB_INFO) {
+        return;
+      }
       break;
   }
 
   va_list args;
   va_start(args, msg_format);
   if (bb_status.is_daemonized) {
-      vsyslog(priority, msg_format, args);
+    vsyslog(priority, msg_format, args);
   } else {
-      char* fullmsg_fmt = malloc(BUFFER_SIZE);
-      switch (priority) {
-          case LOG_ERR:
-              fullmsg_fmt = strcpy(fullmsg_fmt, "[ERROR]");
-              break;
-          case LOG_DEBUG:
-              fullmsg_fmt = strcpy(fullmsg_fmt, "[DEBUG]");
-              break;
-          case LOG_WARNING:
-              fullmsg_fmt = strcpy(fullmsg_fmt, "[WARN]");
-              break;
-          default:
-              fullmsg_fmt = strcpy(fullmsg_fmt, "[INFO]");
-      }
-      fullmsg_fmt = strcat(fullmsg_fmt, msg_format);
-      vfprintf(stderr, fullmsg_fmt, args);
-      free(fullmsg_fmt);
+    char* fullmsg_fmt = malloc(BUFFER_SIZE);
+    switch (priority) {
+      case LOG_ERR:
+        fullmsg_fmt = strcpy(fullmsg_fmt, "[ERROR]");
+        break;
+      case LOG_DEBUG:
+        fullmsg_fmt = strcpy(fullmsg_fmt, "[DEBUG]");
+        break;
+      case LOG_WARNING:
+        fullmsg_fmt = strcpy(fullmsg_fmt, "[WARN]");
+        break;
+      default:
+        fullmsg_fmt = strcpy(fullmsg_fmt, "[INFO]");
+    }
+    fullmsg_fmt = strcat(fullmsg_fmt, msg_format);
+    vfprintf(stderr, fullmsg_fmt, args);
+    free(fullmsg_fmt);
   }
   va_end(args);
 }
@@ -88,9 +96,7 @@ void bb_log(int priority, char* msg_format, ...) {
  * Close logging mechanism
  */
 void bb_closelog(void) {
-    if (bb_status.is_daemonized) {
-        closelog();
-    } else {
-    }
+  if (bb_status.is_daemonized) {
+    closelog();
+  }
 }
-
