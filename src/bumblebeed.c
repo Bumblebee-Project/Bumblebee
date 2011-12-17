@@ -45,23 +45,16 @@
 static void print_usage(int exit_val) {
     // Print help message and exit with exit code
     printf("%s version %s\n\n", bb_config.program_name, TOSTRING(VERSION));
-    printf("Usage: %s [options] -- [application to run] [application options]\n", bb_config.program_name);
+    printf("Usage: %s [options]\n", bb_config.program_name);
     printf("  Options:\n");
     printf("      -d\tRun as daemon.\n");
     printf("      -c\tBe quit.\n");
     printf("      -v\tBe verbose.\n");
     printf("      -V\tBe VERY verbose.\n");
-    printf("      -r\tRun application, do not start listening.\n");
-    printf("      -s\tPrint current status, do not start listening.\n");
     printf("      -x [PATH]\txorg.conf file to use.\n");
     printf("      -X #\tX display number to use.\n");
-    printf("      -l [PATH]\tLD driver path to use.\n");
     printf("      -u [PATH]\tUnix socket to use.\n");
-    printf("      -m [METHOD]\tConnection method to use for VirtualGL.\n");
     printf("      -h\tShow this help screen.\n");
-    printf("\n");
-    printf("When called as optirun, -r is assumed unless -d is set.\n");
-    printf("If -r is set but no application is given, -s is assumed.\n");
     printf("\n");
     exit(exit_val);
 }
@@ -317,23 +310,16 @@ int main(int argc, char* argv[]) {
     snprintf(bb_config.ldpath, BUFFER_SIZE, "/usr/lib64/nvidia-current");
     snprintf(bb_config.vglmethod, BUFFER_SIZE, "proxy");
     snprintf(bb_config.socketpath, BUFFER_SIZE, "/var/run/bumblebee.socket");
-    bb_config.runmode = BB_RUN_DAEMON;
-
-    int path_pfx_len = strlen(bb_config.program_name) - strlen("optirun");
-    if (path_pfx_len >= 0 && (path_pfx_len == 0 || *(bb_config.program_name + path_pfx_len - 1) == '/') && strcmp(bb_config.program_name + path_pfx_len, "optirun") == 0){
-      bb_config.runmode = BB_RUN_APP;
-    }
 
     /* Parse the options, set flags as necessary */
     int c;
-    while( (c = getopt(argc, argv, "+dcrvVm:x:X:l:u:h|help")) != -1) {
+    while( (c = getopt(argc, argv, "+dcvVx:X:u:h|help")) != -1) {
         switch(c){
             case 'h'://help
                 print_usage(EXIT_SUCCESS);
                 break;
             case 'd'://daemonize
                 bb_config.is_daemonized = 1;
-                bb_config.runmode = BB_RUN_DAEMON;
                 break;
             case 'c'://clean run (no output)
                 bb_config.verbosity = VERB_NONE;
@@ -344,39 +330,20 @@ int main(int argc, char* argv[]) {
             case 'V'://VERY verbose (debug mode)
                 bb_config.verbosity = VERB_DEBUG;
                 break;
-            case 'r'://run application
-                bb_config.runmode = BB_RUN_APP;
-                break;
-            case 's'://show status
-                bb_config.runmode = BB_RUN_STATUS;
-                break;
             case 'x'://xorg.conf path
                 snprintf(bb_config.xconf, BUFFER_SIZE, "%s", optarg);
                 break;
             case 'X'://X display number
                 snprintf(bb_config.xdisplay, BUFFER_SIZE, "%s", optarg);
                 break;
-            case 'l'://LD driver path
-                snprintf(bb_config.ldpath, BUFFER_SIZE, "%s", optarg);
-                break;
             case 'u'://Unix socket to use
                 snprintf(bb_config.socketpath, BUFFER_SIZE, "%s", optarg);
-                break;
-            case 'm'://vglclient method
-                snprintf(bb_config.vglmethod, BUFFER_SIZE, "%s", optarg);
                 break;
             default:
                 // Unrecognized option
                 print_usage(EXIT_FAILURE);
                 break;
         }
-    }
-
-    /* change runmode to status if no application given to run
-     * and current runmode is run application.
-     */
-    if ((bb_config.runmode == BB_RUN_APP) && (optind >= argc)){
-      bb_config.runmode = BB_RUN_STATUS;
     }
 
     /* Init log Mechanism */
@@ -394,90 +361,14 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    if (bb_config.runmode == BB_RUN_DAEMON){
-      //check bbswitch availability, warn if not availble
-      if (bbswitch_status() < 0){
-        bb_log(LOG_WARNING, "bbswitch could not be accessed. Turning the dedicated card on/off will not be possible!\n");
-      }
-      /* Initialize communication socket, enter main loop */
-      bb_config.bb_socket = socketServer(bb_config.socketpath, SOCK_NOBLOCK);
-      main_loop();
-      stop_secondary();//stop X and/or card if needed
-    }else{
-      /* Connect to listening daemon */
-      bb_config.bb_socket = socketConnect(bb_config.socketpath, SOCK_NOBLOCK);
-      if (bb_config.bb_socket < 0){
-        bb_log(LOG_ERR, "Could not connect to bumblebee daemon - is it running?\n");
-        bb_closelog();
-        return EXIT_FAILURE;
-      }
-      char buffer[BUFFER_SIZE];
-      int r;
-
-      /* Request status */
-      if (bb_config.runmode == BB_RUN_STATUS){
-        r = snprintf(buffer, BUFFER_SIZE, "Status?");
-        socketWrite(&bb_config.bb_socket, buffer, r);
-        while (bb_config.bb_socket != -1){
-          r = socketRead(&bb_config.bb_socket, buffer, BUFFER_SIZE);
-          if (r > 0){
-            printf("Bumblebee status: %*s\n", r, buffer);
-            socketClose(&bb_config.bb_socket);
-          }
-        }
-      }
-
-      /* Run given application */
-      if (bb_config.runmode == BB_RUN_APP){
-        r = snprintf(buffer, BUFFER_SIZE, "Checking availability...");
-        socketWrite(&bb_config.bb_socket, buffer, r);
-        while (bb_config.bb_socket != -1){
-          r = socketRead(&bb_config.bb_socket, buffer, BUFFER_SIZE);
-          if (r > 0){
-            bb_log(LOG_INFO, "Response: %*s\n", r, buffer);
-            switch (buffer[0]){
-              case 'N': //No, run normally.
-                socketClose(&bb_config.bb_socket);
-                bb_log(LOG_WARNING, "Running application normally.\n");
-                bb_run_exec(argv + optind);
-                break;
-              case 'Y': //Yes, run through vglrun
-                bb_log(LOG_INFO, "Running application through vglrun.\n");
-                //run vglclient if any method other than proxy is used
-                if (strncmp(bb_config.vglmethod, "proxy", BUFFER_SIZE) != 0){
-                  char * vglclient_args[] = {
-                    "vglclient",
-                    "-detach",
-                    0
-                  };
-                  bb_run_fork(vglclient_args);
-                }
-                char ** vglrun_args = malloc(sizeof(char *) * (9 + argc - optind));
-                vglrun_args[0] = "vglrun";
-                vglrun_args[1] = "-c";
-                vglrun_args[2] = bb_config.vglmethod;
-                vglrun_args[3] = "-d";
-                vglrun_args[4] = bb_config.xdisplay;
-                vglrun_args[5] = "-ld";
-                vglrun_args[6] = bb_config.ldpath;
-                vglrun_args[7] = "--";
-                for (r = 0; r < argc - optind; r++){
-                  vglrun_args[8+r] = argv[optind + r];
-                }
-                vglrun_args[8+r] = 0;
-                bb_run_fork_wait(vglrun_args);
-                socketClose(&bb_config.bb_socket);
-                break;
-              default: //Something went wrong - output and exit.
-                bb_log(LOG_ERR, "Problem: %*s\n", r, buffer);
-                socketClose(&bb_config.bb_socket);
-                break;
-            }
-          }
-        }
-      }
+    //check bbswitch availability, warn if not availble
+    if (bbswitch_status() < 0){
+      bb_log(LOG_WARNING, "bbswitch could not be accessed. Turning the dedicated card on/off will not be possible!\n");
     }
-
+    /* Initialize communication socket, enter main loop */
+    bb_config.bb_socket = socketServer(bb_config.socketpath, SOCK_NOBLOCK);
+    main_loop();
+    stop_secondary();//stop X and/or card if needed
     bb_closelog();
     bb_stop_all();//stop any started processes that are left
     return (EXIT_SUCCESS);
