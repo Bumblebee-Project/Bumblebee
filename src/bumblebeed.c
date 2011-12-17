@@ -344,8 +344,9 @@ int main(int argc, char* argv[]) {
             case 'u'://Unix socket to use
                 snprintf(bb_config.socketpath, BUFFER_SIZE, "%s", optarg);
                 break;
-            case 'g': //group name to use
-                printf("group name changing is still not supported. Using default");
+            case 'g'://group name to use
+                snprintf(bb_config.gidname, BUFFER_SIZE, "%s", optarg);
+                break;
             default:
                 // Unrecognized option
                 print_usage(EXIT_FAILURE);
