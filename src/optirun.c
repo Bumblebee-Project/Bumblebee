@@ -46,9 +46,8 @@ static void print_usage(int exit_val) {
   printf("%s version %s\n\n", bb_status.program_name, TOSTRING(GITVERSION));
   printf("Usage: %s [options] -- [application to run] [application options]\n", bb_status.program_name);
   printf("  Options:\n");
-  printf("      -c\tBe quiet.\n");
-  printf("      -v\tBe verbose.\n");
-  printf("      -V\tBe VERY verbose.\n");
+  printf("      -q\tBe quiet.\n");
+  printf("      -v\tBe verbose (twice for extra verbosity)\n");
   printf("      -X #\tX display number to use.\n");
   printf("      -l [PATH]\tLD driver path to use.\n");
   printf("      -u [PATH]\tUnix socket to use.\n");
@@ -107,14 +106,16 @@ int main(int argc, char* argv[]) {
       case 'h'://help
         print_usage(EXIT_SUCCESS);
         break;
-      case 'c'://clean run (no output)
+      case 'q'://quiet mode
         bb_status.verbosity = VERB_NONE;
         break;
       case 'v'://verbose
-        bb_status.verbosity = VERB_INFO;
-        break;
-      case 'V'://VERY verbose (debug mode)
-        bb_status.verbosity = VERB_DEBUG;
+        // -v -v is very verbose
+        if (bb_status.verbosity == VERB_INFO) {
+          bb_status.verbosity = VERB_DEBUG;
+        } else {
+          bb_status.verbosity = VERB_INFO;
+        }
         break;
       case 'X'://X display number
         snprintf(bb_config.xdisplay, BUFFER_SIZE, "%s", optarg);
