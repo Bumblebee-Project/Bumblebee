@@ -30,7 +30,7 @@
 
 /// Returns 0 if card is off, 1 if card is on, -1 if bbswitch not active.
 /// In other words: 0 means off, anything else means on.
-int bbswitch_status(){
+int bbswitch_status(void){
   char buffer[BBS_BUFFER];
   int i, r;
   FILE * bbs = fopen("/proc/acpi/bbswitch", "r");
@@ -49,7 +49,7 @@ int bbswitch_status(){
 }//bbswitch_status
 
 /// Turns card on if not already on.
-void bbswitch_on(){
+void bbswitch_on(void){
   int r;
   r = bbswitch_status();
   if (r != 0){
@@ -75,7 +75,7 @@ void bbswitch_on(){
 }//bbswitch_on
 
 /// Turns card off if not already off.
-void bbswitch_off(){
+void bbswitch_off(void){
   int r;
   r = bbswitch_status();
   if (r != 1){

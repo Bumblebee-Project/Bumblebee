@@ -25,10 +25,10 @@
 
 /// Returns 0 if card is off, 1 if card is on, -1 if bbswitch not active.
 /// In other words: 0 means off, anything else means on.
-int bbswitch_status();
+int bbswitch_status(void);
 
 /// Turns card on if not already on.
-void bbswitch_on();
+void bbswitch_on(void);
 
 /// Turns card off if not already on.
-void bbswitch_off();
+void bbswitch_off(void);

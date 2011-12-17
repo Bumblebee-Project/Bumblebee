@@ -23,7 +23,7 @@
 #pragma once
 
 /// Start the X server by fork-exec, turn card on if needed.
-void start_secondary();
+void start_secondary(void);
 
 /// Kill the second X server if any, turn card off if requested.
-void stop_secondary();
+void stop_secondary(void);

@@ -37,7 +37,7 @@ int bb_is_running(pid_t proc);
 void bb_stop(pid_t proc);
 
 /// Stops all the running processes, if any.
-void bb_stop_all();
+void bb_stop_all(void);
 
 /// Attempts to run the given application, replacing the current process
 void bb_run_exec(char ** argv);
