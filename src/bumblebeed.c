@@ -63,7 +63,7 @@ static void print_usage(int exit_val) {
  * Load sane, hardcoded defaults. Can be overriden later by configuration
  * file parsing.
  */
-void bb_load_default_config(void) {
+static void bb_load_default_config(void) {
   /* Configuration part of the structure */
   snprintf(bb_config.xdisplay, BUFFER_SIZE, ":8");
   snprintf(bb_config.xconf, BUFFER_SIZE, "/etc/bumblebee/xorg.conf.nouveau");
