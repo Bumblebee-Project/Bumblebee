@@ -368,6 +368,7 @@ int main(int argc, char* argv[]) {
     /* Initialize communication socket, enter main loop */
     bb_config.bb_socket = socketServer(bb_config.socketpath, SOCK_NOBLOCK);
     main_loop();
+    unlink(bb_config.socketpath);
     stop_secondary();//stop X and/or card if needed
     bb_closelog();
     bb_stop_all();//stop any started processes that are left
