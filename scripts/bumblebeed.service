@@ -1,0 +1,13 @@
+[Unit]
+Description=Bumblebee C Daemon
+
+[Service]
+Type=simple
+CPUSchedulingPolicy=idle
+ExecStart=/usr/local/bin/bumblebeed
+Restart=always
+RestartSec=60
+
+[Install]
+WantedBy=graphical.target
+
