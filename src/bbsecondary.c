@@ -27,7 +27,33 @@
 #include "bblogger.h"
 #include "bbglobals.h"
 #include <X11/Xlib.h>
+#include <stdio.h>
+#include <string.h>
 #include <time.h>
+
+
+/// Returns 1 if the named module (or a module containing the
+/// string in its name) is loaded, 0 otherwise.
+/// Returns negative upon error.
+/// Works by checking /proc/modules
+static int module_is_loaded(char * mod){
+  char buffer[BUFFER_SIZE];
+  char * r = buffer;
+  FILE * bbs = fopen("/proc/modules", "r");
+  if (bbs == 0){return -1;}//error opening, return -1
+  while (r != 0){
+    r = fgets(buffer, BUFFER_SIZE - 1, bbs);
+    if (strstr(buffer, mod)){
+      //found module, return 1
+      fclose(bbs);
+      return 1;
+    }
+  }
+  //not found, return 0
+  fclose(bbs);
+  return 0;
+}
+
 
 /**
  *  Start the X server by fork-exec, turn card on if needed.
@@ -39,15 +65,18 @@ void start_secondary(void) {
     bb_log(LOG_INFO, "Switching dedicated card ON\n");
     bbswitch_on();
     /// \todo Support nouveau as well
-    bb_log(LOG_INFO, "Loading nvidia module\n");
-    char * mod_argv[] = {
-      "modprobe",
-      "nvidia",
-      NULL
-    };
-    bb_run_fork_wait(mod_argv);
+    if (bbswitch_status() != 0){//only load module if card is on
+      bb_log(LOG_INFO, "Loading nvidia module\n");
+      char * mod_argv[] = {
+        "modprobe",
+        "nvidia",
+        NULL
+      };
+      bb_run_fork_wait(mod_argv);
+    }
   }
-  if (bbswitch_status() != 0) {
+  //only start X if card on and either nvidia or nouveau is loaded
+  if (bbswitch_status() != 0 && (module_is_loaded("nvidia") || module_is_loaded("nouveau"))) {
     bb_log(LOG_INFO, "Starting X server on display %s.\n", bb_config.xdisplay);
     char * x_argv[] = {
       "X",
@@ -90,9 +119,10 @@ void start_secondary(void) {
  * Kill the second X server if any, turn card off if requested.
  */
 void stop_secondary(void) {
-  if (bb_is_running(bb_status.x_pid)) {
+  while (bb_is_running(bb_status.x_pid)) {
     bb_log(LOG_INFO, "Stopping X server\n");
     bb_stop(bb_status.x_pid);
+    usleep(5000000);//sleep for max 5 seconds, less if X is done earlier
   }
   if (bbswitch_status() == 1) {
     /// \todo Support nouveau as well
@@ -103,7 +133,10 @@ void stop_secondary(void) {
       NULL
     };
     bb_run_fork_wait(mod_argv);
-    bb_log(LOG_INFO, "Switching dedicated card OFF\n");
-    bbswitch_off();
+    //only turn card off if driver is unloaded
+    if (!(module_is_loaded("nvidia") && !module_is_loaded("nouveau"))){
+      bb_log(LOG_INFO, "Switching dedicated card OFF\n");
+      bbswitch_off();
+    }
   }
 }
