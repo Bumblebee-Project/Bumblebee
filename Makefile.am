@@ -1,7 +1,5 @@
 # -*- Makefile -*-
 
-AUTOMAKE_OPTIONS = subdir-objects
-
 AM_CPPFLAGS = ${regular_CPPFLAGS} ${libX11_CFLAGS} \
 		-DCONFIG_FILE='"$(sysconfdir)/bumblebee/bumblebee.conf"' \
 		-DCONF_XORG='"$(sysconfdir)/bumblebee/xorg.conf.DRIVER"'
