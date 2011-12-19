@@ -24,18 +24,25 @@
 
 #include "bbconfig.h"
 #include "bblogger.h"
+#include "config.h"
+#include <errno.h>
+#include <ctype.h>
+#include <assert.h>
 
-static struct bb_key_value {
+struct bb_status_struct bb_status;
+struct bb_config_struct bb_config;
+
+struct bb_key_value {
   char key[BUFFER_SIZE];
   char value[BUFFER_SIZE];
-}
+};
 
 /** 
  * Takes a line and returns a key-value pair
  *
  * @param line String to be broken into a key-value pair
  */
-struct bb_key_value bb_get_key_value(const char* line) {
+static struct bb_key_value bb_get_key_value(const char* line) {
   struct bb_key_value kvpair;
   if (EOF == sscanf(line, "%[^=]=%[^\n]", kvpair.key, kvpair.value)) {
     int err_val = errno;
@@ -49,7 +56,7 @@ struct bb_key_value bb_get_key_value(const char* line) {
  *
  * @param str String to be cleared of whitespaces
  */
-void stripws(char* str) {
+static void stripws(char* str) {
   char *orig = str;
   char *stripped = str;
   orig = str;
@@ -68,17 +75,15 @@ void stripws(char* str) {
  *
  *  @return 0 on success. 
  */
-static int read_configuration() {
-  /* Hardcoded standard configuration */
-  bb_s_config
-  {
-    .x_display = ":8";
-    .x_conf_file = "etc/bumblebee/xorg.conf.nouveau";
-    .ld_path = "";
-    .socket_path = "var/run/bumblebee.socket";
-    .pm_enabled = 0;
-    .stop_on_exit = 0;
-  }
+int read_configuration() {
+  /* standard configuration */
+  snprintf(bb_config.x_display, BUFFER_SIZE, CONF_XDISP);
+  snprintf(bb_config.x_conf_file, BUFFER_SIZE, CONF_XORG);
+  snprintf(bb_config.ld_path, BUFFER_SIZE, CONF_XORG);
+  snprintf(bb_config.socket_path, BUFFER_SIZE, CONF_XORG);
+  bb_config.pm_enabled = CONF_PMENABLE;
+  bb_config.stop_on_exit = CONF_STOPONEXIT;
+
   FILE *cf = fopen(CONFIG_FILE, "r");
   if (cf == (NULL)) { /* An error ocurred */
     int err_num = errno;
@@ -103,7 +108,7 @@ static int read_configuration() {
       /* Ignore empty lines and comments */
       if ((line[0] != '#') && (line[0] != '\n')) {
         /* Parse configuration based on the run mode */
-        struct kvp = bb_get_key_value(line);
+        struct bb_key_value kvp = bb_get_key_value(line);
         if (strcmp(kvp.key, "VGL_DISPLAY")) {
 
         } else if (strcmp(kvp.key, "STOP_SERVICE_ON_EXIT")) {

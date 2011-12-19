@@ -24,7 +24,7 @@
  */
 
 #include "config.h"
-#include "bbglobals.h"
+#include "bbconfig.h"
 #include "bbsocket.h"
 #include "bblogger.h"
 #include "bbrun.h"
@@ -43,7 +43,7 @@
  */
 static void print_usage(int exit_val) {
   // Print help message and exit with exit code
-  printf("%s version %s\n\n", bb_status.program_name, TOSTRING(GITVERSION));
+  printf("%s version %s\n\n", bb_status.program_name, GITVERSION);
   printf("Usage: %s [options] -- [application to run] [application options]\n", bb_status.program_name);
   printf("  Options:\n");
   printf("      -q\tBe quiet.\n");
@@ -71,7 +71,7 @@ static void handle_signal(int sig) {
     case SIGQUIT:
     case SIGTERM:
       bb_log(LOG_WARNING, "Received %s signal.\n", strsignal(sig));
-      socketClose(&bb_config.bb_socket); //closing the socket terminates the server
+      socketClose(&bb_status.bb_socket); //closing the socket terminates the server
       break;
     default:
       bb_log(LOG_WARNING, "Unhandled signal %s\n", strsignal(sig));
@@ -92,12 +92,8 @@ int main(int argc, char* argv[]) {
   bb_status.is_daemonized = 0;
   bb_status.verbosity = VERB_WARN;
   bb_status.errors[0] = 0; //no errors, yet :-)
-  snprintf(bb_config.xdisplay, BUFFER_SIZE, ":8");
-  snprintf(bb_config.xconf, BUFFER_SIZE, "/etc/bumblebee/xorg.conf.nouveau");
-  snprintf(bb_config.ldpath, BUFFER_SIZE, "/usr/lib64/nvidia-current");
-  snprintf(bb_status.vglmethod, BUFFER_SIZE, "proxy");
-  snprintf(bb_config.socketpath, BUFFER_SIZE, "/var/run/bumblebee.socket");
   bb_status.runmode = BB_RUN_APP;
+  read_configuration();
 
   /* Parse the options, set flags as necessary */
   int c;
@@ -118,16 +114,16 @@ int main(int argc, char* argv[]) {
         }
         break;
       case 'X'://X display number
-        snprintf(bb_config.xdisplay, BUFFER_SIZE, "%s", optarg);
+        snprintf(bb_config.x_display, BUFFER_SIZE, "%s", optarg);
         break;
       case 'l'://LD driver path
-        snprintf(bb_config.ldpath, BUFFER_SIZE, "%s", optarg);
+        snprintf(bb_config.ld_path, BUFFER_SIZE, "%s", optarg);
         break;
       case 'u'://Unix socket to use
-        snprintf(bb_config.socketpath, BUFFER_SIZE, "%s", optarg);
+        snprintf(bb_config.socket_path, BUFFER_SIZE, "%s", optarg);
         break;
       case 'm'://vglclient method
-        snprintf(bb_status.vglmethod, BUFFER_SIZE, "%s", optarg);
+        snprintf(bb_config.vgl_compress, BUFFER_SIZE, "%s", optarg);
         break;
       default:
         // Unrecognized option
@@ -148,11 +144,11 @@ int main(int argc, char* argv[]) {
     fprintf(stderr, "Unexpected error, could not initialize log.\n");
     return 1;
   }
-  bb_log(LOG_DEBUG, "%s version %s starting...\n", bb_status.program_name, TOSTRING(GITVERSION));
+  bb_log(LOG_DEBUG, "%s version %s starting...\n", bb_status.program_name, GITVERSION);
 
   /* Connect to listening daemon */
-  bb_config.bb_socket = socketConnect(bb_config.socketpath, SOCK_NOBLOCK);
-  if (bb_config.bb_socket < 0) {
+  bb_status.bb_socket = socketConnect(bb_config.socket_path, SOCK_NOBLOCK);
+  if (bb_status.bb_socket < 0) {
     bb_log(LOG_ERR, "Could not connect to bumblebee daemon - is it running?\n");
     bb_closelog();
     return EXIT_FAILURE;
@@ -163,12 +159,12 @@ int main(int argc, char* argv[]) {
   /* Request status */
   if (bb_status.runmode == BB_RUN_STATUS) {
     r = snprintf(buffer, BUFFER_SIZE, "Status?");
-    socketWrite(&bb_config.bb_socket, buffer, r);
-    while (bb_config.bb_socket != -1) {
-      r = socketRead(&bb_config.bb_socket, buffer, BUFFER_SIZE);
+    socketWrite(&bb_status.bb_socket, buffer, r);
+    while (bb_status.bb_socket != -1) {
+      r = socketRead(&bb_status.bb_socket, buffer, BUFFER_SIZE);
       if (r > 0) {
         printf("Bumblebee status: %*s\n", r, buffer);
-        socketClose(&bb_config.bb_socket);
+        socketClose(&bb_status.bb_socket);
       }
     }
   }
@@ -176,21 +172,21 @@ int main(int argc, char* argv[]) {
   /* Run given application */
   if (bb_status.runmode == BB_RUN_APP) {
     r = snprintf(buffer, BUFFER_SIZE, "Checking availability...");
-    socketWrite(&bb_config.bb_socket, buffer, r);
-    while (bb_config.bb_socket != -1) {
-      r = socketRead(&bb_config.bb_socket, buffer, BUFFER_SIZE);
+    socketWrite(&bb_status.bb_socket, buffer, r);
+    while (bb_status.bb_socket != -1) {
+      r = socketRead(&bb_status.bb_socket, buffer, BUFFER_SIZE);
       if (r > 0) {
         bb_log(LOG_INFO, "Response: %*s\n", r, buffer);
         switch (buffer[0]) {
           case 'N': //No, run normally.
-            socketClose(&bb_config.bb_socket);
+            socketClose(&bb_status.bb_socket);
             bb_log(LOG_WARNING, "Running application normally.\n");
             bb_run_exec(argv + optind);
             break;
           case 'Y': //Yes, run through vglrun
             bb_log(LOG_INFO, "Running application through vglrun.\n");
             //run vglclient if any method other than proxy is used
-            if (strncmp(bb_status.vglmethod, "proxy", BUFFER_SIZE) != 0) {
+            if (strncmp(bb_config.vgl_compress, "proxy", BUFFER_SIZE) != 0) {
               char * vglclient_args[] = {
                 "vglclient",
                 "-detach",
@@ -201,22 +197,22 @@ int main(int argc, char* argv[]) {
             char ** vglrun_args = malloc(sizeof (char *) * (9 + argc - optind));
             vglrun_args[0] = "vglrun";
             vglrun_args[1] = "-c";
-            vglrun_args[2] = bb_status.vglmethod;
+            vglrun_args[2] = bb_config.vgl_compress;
             vglrun_args[3] = "-d";
-            vglrun_args[4] = bb_config.xdisplay;
+            vglrun_args[4] = bb_config.x_display;
             vglrun_args[5] = "-ld";
-            vglrun_args[6] = bb_config.ldpath;
+            vglrun_args[6] = bb_config.ld_path;
             vglrun_args[7] = "--";
             for (r = 0; r < argc - optind; r++) {
               vglrun_args[8 + r] = argv[optind + r];
             }
             vglrun_args[8 + r] = 0;
             bb_run_fork_wait(vglrun_args);
-            socketClose(&bb_config.bb_socket);
+            socketClose(&bb_status.bb_socket);
             break;
           default: //Something went wrong - output and exit.
             bb_log(LOG_ERR, "Problem: %*s\n", r, buffer);
-            socketClose(&bb_config.bb_socket);
+            socketClose(&bb_status.bb_socket);
             break;
         }
       }

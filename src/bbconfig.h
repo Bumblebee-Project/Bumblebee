@@ -22,12 +22,27 @@
  * bbconfig.h: Bumblebee configuration file handler
  */
 
-#include "bbglobals.h"
+#include <unistd.h> //for pid_t
 
-/* TODO: TRANSFER MACROS TO CONFIGURATION STRUCT*/
-#define DAEMON_NAME "bumblebee"
-#define DEFAULT_BB_GROUP "bumblebee"
-#define CONFIG_FILE "/etc/bumblebee/bumblebee.conf"
+/* Daemon states */
+#define BB_DAEMON 1
+#define BB_NODEAMON 0
+
+/* Verbosity levels */
+#define VERB_NONE 0
+#define VERB_ERR 1
+#define VERB_WARN 2
+#define VERB_INFO 3
+#define VERB_DEBUG 4
+#define VERB_ALL 4
+
+/* Running modes */
+#define BB_RUN_DAEMON 0
+#define BB_RUN_APP 1
+#define BB_RUN_STATUS 2
+
+/* String buffer size */
+#define BUFFER_SIZE 256
 
 /* Structure containing the status of the application */
 struct bb_status_struct {
@@ -36,27 +51,25 @@ struct bb_status_struct {
     int bb_socket; /// The socket file descriptor of the application.
     unsigned int appcount; /// Count applications using the X server.
     char errors[BUFFER_SIZE]; /// Error message if any. First byte is 0 otherwise.
+    int is_daemonized; /// Whether the application is daemonized or not.
     int runmode; /// Running mode.
-}
+    pid_t x_pid;
+};
 
-/* Structure containing the server configuration. Only valid if running 
- * as daemon/server */
-struct bb_server_config_struct {
+/* Structure containing the configuration. */
+struct bb_config_struct {
     char x_display[BUFFER_SIZE]; /// X display number to use.
     char x_conf_file[BUFFER_SIZE]; /// Path to the X configuration file to use.
     char ld_path[BUFFER_SIZE]; /// LD_LIBRARY_PATH to launch applications.
     char socket_path[BUFFER_SIZE]; /// Path to the server socket.
-    int pm_enabled; /// Wether power management is enabled.
-    int stop_on_exit; /// Wether to stop the X server on last optirun instance exit.
-}
-
-/* Structure containing the client configuration. Only valid when running 
- * as cleint */
-struct bb_client_config_struct {
-    char* vgl_compress;
-}
+    char gid_name[BUFFER_SIZE]; /// Group name for setgid.
+    int pm_enabled; /// Whether power management is enabled.
+    int stop_on_exit; /// Whether to stop the X server on last optirun instance exit.
+    char* vgl_compress; /// VGL transport method
+};
 
 extern struct bb_status_struct bb_status;
-extern struct bb_server_config_struct bb_s_config;
-extern struct bb_client_config_struct bb_c_config;
+extern struct bb_config_struct bb_config;
 
+/// Read the configuration file
+int read_configuration( void );

@@ -24,7 +24,7 @@
  */
 
 #include "config.h"
-#include "bbglobals.h"
+#include "bbconfig.h"
 #include "bbsocket.h"
 #include "bblogger.h"
 #include "bbsecondary.h"
@@ -45,7 +45,7 @@
  */
 static void print_usage(int exit_val) {
   // Print help message and exit with exit code
-  printf("%s version %s\n\n", bb_status.program_name, TOSTRING(GITVERSION));
+  printf("%s version %s\n\n", bb_status.program_name, GITVERSION);
   printf("Usage: %s [options]\n", bb_status.program_name);
   printf("  Options:\n");
   printf("      -d\tRun as daemon.\n");
@@ -60,30 +60,17 @@ static void print_usage(int exit_val) {
 }
 
 /**
- * Load sane, hardcoded defaults. Can be overriden later by configuration
- * file parsing.
- */
-static void bb_load_default_config(void) {
-  /* Configuration part of the structure */
-  snprintf(bb_config.xdisplay, BUFFER_SIZE, ":8");
-  snprintf(bb_config.xconf, BUFFER_SIZE, "/etc/bumblebee/xorg.conf.nouveau");
-  snprintf(bb_config.ldpath, BUFFER_SIZE, "/usr/lib64/nvidia-current");
-  snprintf(bb_config.socketpath, BUFFER_SIZE, "/var/run/bumblebee.socket");
-  snprintf(bb_config.gidname, BUFFER_SIZE, "bumblebee");
-}
-
-/**
  * Change GID and umask of the daemon
  */
 static int bb_chgid(void) {
   /* Change the Group ID of bumblebee */
   struct group *gp;
   errno = 0;
-  gp = getgrnam(bb_config.gidname);
+  gp = getgrnam(bb_config.gid_name);
   if (gp == NULL) {
     int error_num = errno;
     bb_log(LOG_ERR, "%s\n", strerror(error_num));
-    bb_log(LOG_ERR, "There is no \"%s\" group\n", bb_config.gidname);
+    bb_log(LOG_ERR, "There is no \"%s\" group\n", bb_config.gid_name);
     exit(EXIT_FAILURE);
   }
   if (setgid(gp->gr_gid) != 0) {
@@ -151,7 +138,7 @@ static void handle_signal(int sig) {
     case SIGQUIT:
     case SIGTERM:
       bb_log(LOG_WARNING, "Received %s signal.\n", strsignal(sig));
-      socketClose(&bb_config.bb_socket); //closing the socket terminates the server
+      socketClose(&bb_status.bb_socket); //closing the socket terminates the server
       break;
     default:
       bb_log(LOG_WARNING, "Unhandled signal %s\n", strsignal(sig));
@@ -178,12 +165,12 @@ static void handle_socket(struct clientsocket * C) {
     switch (buffer[0]) {
       case 'S'://status
         if (bb_status.errors[0] != 0) {
-          r = snprintf(buffer, BUFFER_SIZE, "Error (%s): %s\n", TOSTRING(GITVERSION), bb_status.errors);
+          r = snprintf(buffer, BUFFER_SIZE, "Error (%s): %s\n", GITVERSION, bb_status.errors);
         } else {
           if (bb_is_running(bb_status.x_pid)) {
-            r = snprintf(buffer, BUFFER_SIZE, "Ready (%s). X is PID %i, %i applications using bumblebeed.\n", TOSTRING(GITVERSION), bb_status.x_pid, bb_status.appcount);
+            r = snprintf(buffer, BUFFER_SIZE, "Ready (%s). X is PID %i, %i applications using bumblebeed.\n", GITVERSION, bb_status.x_pid, bb_status.appcount);
           } else {
-            r = snprintf(buffer, BUFFER_SIZE, "Ready (%s). X inactive.\n", TOSTRING(GITVERSION));
+            r = snprintf(buffer, BUFFER_SIZE, "Ready (%s). X inactive.\n", GITVERSION);
           }
         }
         socketWrite(&C->sock, buffer, r); //we assume the write is fully successful.
@@ -233,7 +220,7 @@ static void main_loop(void) {
 
   bb_log(LOG_INFO, "Started main loop\n");
   /* Listen for Optirun conections and act accordingly */
-  while (bb_config.bb_socket != -1) {
+  while (bb_status.bb_socket != -1) {
     usleep(100000); //sleep 100ms to prevent 100% CPU time usage
 
     //every five seconds
@@ -246,9 +233,9 @@ static void main_loop(void) {
     }
 
     /* Accept a connection. */
-    optirun_socket_fd = socketAccept(&bb_config.bb_socket, SOCK_NOBLOCK);
+    optirun_socket_fd = socketAccept(&bb_status.bb_socket, SOCK_NOBLOCK);
     if (optirun_socket_fd >= 0) {
-      bb_log(LOG_INFO, "Accepted new connection\n", optirun_socket_fd, bb_status.appcount);
+      bb_log(LOG_DEBUG, "Accepted new connection\n", optirun_socket_fd, bb_status.appcount);
 
       /* add to list of sockets */
       curr = malloc(sizeof (struct clientsocket));
@@ -330,18 +317,17 @@ int main(int argc, char* argv[]) {
   signal(SIGQUIT, handle_signal);
 
   /* Initializing configuration */
-  bb_load_default_config();
+  read_configuration();
 
   /* Initialize status */
   bb_status.program_name = argv[0];
   bb_status.is_daemonized = 0;
   bb_status.verbosity = VERB_WARN;
   bb_status.errors[0] = 0; //no errors, yet :-)
-  snprintf(bb_status.vglmethod, BUFFER_SIZE, "proxy");
 
   /* Parse the options, set flags as necessary */
   int c;
-  while ((c = getopt(argc, argv, "+dcvVx:g:X:u:h|help")) != -1) {
+  while ((c = getopt(argc, argv, "+dqvx:g:X:u:h|help")) != -1) {
     switch (c) {
       case 'h'://help
         print_usage(EXIT_SUCCESS);
@@ -352,25 +338,20 @@ int main(int argc, char* argv[]) {
       case 'q'://quiet mode
         bb_status.verbosity = VERB_NONE;
         break;
-      case 'v'://verbose
-        // -v -v is very verbose
-        if (bb_status.verbosity == VERB_INFO) {
-          bb_status.verbosity = VERB_DEBUG;
-        } else {
-          bb_status.verbosity = VERB_INFO;
-        }
+      case 'v'://increase verbosity level by one
+        bb_status.verbosity++;
         break;
       case 'x'://xorg.conf path
-        snprintf(bb_config.xconf, BUFFER_SIZE, "%s", optarg);
+        snprintf(bb_config.x_conf_file, BUFFER_SIZE, "%s", optarg);
         break;
       case 'X'://X display number
-        snprintf(bb_config.xdisplay, BUFFER_SIZE, "%s", optarg);
+        snprintf(bb_config.x_display, BUFFER_SIZE, "%s", optarg);
         break;
       case 'u'://Unix socket to use
-        snprintf(bb_config.socketpath, BUFFER_SIZE, "%s", optarg);
+        snprintf(bb_config.socket_path, BUFFER_SIZE, "%s", optarg);
         break;
       case 'g'://group name to use
-        snprintf(bb_config.gidname, BUFFER_SIZE, "%s", optarg);
+        snprintf(bb_config.gid_name, BUFFER_SIZE, "%s", optarg);
         break;
       default:
         // Unrecognized option
@@ -387,7 +368,7 @@ int main(int argc, char* argv[]) {
     fprintf(stderr, "Unexpected error, could not initialize log.\n");
     return 1;
   }
-  bb_log(LOG_DEBUG, "%s version %s starting...\n", bb_status.program_name, TOSTRING(GITVERSION));
+  bb_log(LOG_DEBUG, "%s version %s starting...\n", bb_status.program_name, GITVERSION);
 
   /* Daemonized if daemon flag is activated */
   if (bb_status.is_daemonized) {
@@ -402,9 +383,9 @@ int main(int argc, char* argv[]) {
     bb_log(LOG_WARNING, "bbswitch could not be accessed. Turning the dedicated card on/off will not be possible!\n");
   }
   /* Initialize communication socket, enter main loop */
-  bb_config.bb_socket = socketServer(bb_config.socketpath, SOCK_NOBLOCK);
+  bb_status.bb_socket = socketServer(bb_config.socket_path, SOCK_NOBLOCK);
   main_loop();
-  unlink(bb_config.socketpath);
+  unlink(bb_config.socket_path);
   stop_secondary(); //stop X and/or card if needed
   bb_closelog();
   bb_stop_all(); //stop any started processes that are left

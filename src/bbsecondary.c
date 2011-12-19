@@ -25,7 +25,7 @@
 #include "bbswitch.h"
 #include "bbrun.h"
 #include "bblogger.h"
-#include "bbglobals.h"
+#include "bbconfig.h"
 #include <X11/Xlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -104,14 +104,14 @@ void start_secondary(void) {
   }
 
   //no problems, start X
-  bb_log(LOG_INFO, "Starting X server on display %s.\n", bb_config.xdisplay);
+  bb_log(LOG_INFO, "Starting X server on display %s.\n", bb_config.x_display);
   char * x_argv[] = {
     "X",
-    "-config", bb_config.xconf,
+    "-config", bb_config.x_conf_file,
     "-sharevts",
     "-nolisten", "tcp",
     "-noreset",
-    bb_config.xdisplay,
+    bb_config.x_display,
     NULL
   };
   bb_status.x_pid = bb_run_fork(x_argv);
@@ -120,7 +120,7 @@ void start_secondary(void) {
   Display * xdisp = 0;
   //wait for X to become available for a maximum of 10 seconds
   while ((time(0) - xtimer <= 10) && bb_is_running(bb_status.x_pid)) {
-    xdisp = XOpenDisplay(bb_config.xdisplay);
+    xdisp = XOpenDisplay(bb_config.x_display);
     if (xdisp != 0) {
       break;
     }
