@@ -30,6 +30,7 @@
 #include <ctype.h>
 #include <assert.h>
 #include <unistd.h>
+#include <getopt.h>
 
 struct bb_status_struct bb_status;
 struct bb_config_struct bb_config;
@@ -137,14 +138,28 @@ static void print_usage(int exit_val) {
 /// Read the commandline parameters
 static void read_cmdline_config( int argc, char ** argv ){
   /* Parse the options, set flags as necessary */
-  int c;
+  int opt = 0;
   optind = 0;
-  while ((c = getopt(argc, argv, "+dqvx:g:X:u:l:m:c:h|help")) != -1) {
-    switch (c) {
-      case 'h'://help
-        print_usage(EXIT_SUCCESS);
-        break;
-      case 'd'://daemonize
+  static const char *optString = "+Dqvx:d:s:g:l:c:C:Vh?";
+  static const struct option longOpts[] = {
+    {"daemon",0,0,'D'},
+    {"quiet",0,0,'q'},
+    {"silent",0,0,'q'},
+    {"verbose",0,0,'v'},
+    {"xconf",1,0,'x'},
+    {"display",1,0,'d'},
+    {"socket",1,0,'s'},
+    {"group",1,0,'g'},
+    {"ldpath",1,0,'l'},
+    {"vgl-compress",1,0,'c'},
+    {"config",1,0,'C'},
+    {"help",1,0,'h'},
+    {"silent",0,0,'q'},
+    {"version",0,0,'V'}
+  };
+  while ((opt = getopt_long(argc, argv, optString, longOpts, 0)) != -1){
+    switch (opt){
+      case 'D'://daemonize
         bb_status.runmode = BB_RUN_DAEMON;
         break;
       case 'q'://quiet mode
@@ -156,10 +171,10 @@ static void read_cmdline_config( int argc, char ** argv ){
       case 'x'://xorg.conf path
         snprintf(bb_config.x_conf_file, BUFFER_SIZE, "%s", optarg);
         break;
-      case 'X'://X display number
+      case 'd'://X display number
         snprintf(bb_config.x_display, BUFFER_SIZE, "%s", optarg);
         break;
-      case 'u'://Unix socket to use
+      case 's'://Unix socket to use
         snprintf(bb_config.socket_path, BUFFER_SIZE, "%s", optarg);
         break;
       case 'g'://group name to use
@@ -168,19 +183,21 @@ static void read_cmdline_config( int argc, char ** argv ){
       case 'l'://LD driver path
         snprintf(bb_config.ld_path, BUFFER_SIZE, "%s", optarg);
         break;
-      case 'm'://vglclient method
+      case 'c'://vglclient method
         snprintf(bb_config.vgl_compress, BUFFER_SIZE, "%s", optarg);
         break;
-      case 'c'://config file
+      case 'C'://config file
         snprintf(bb_config.bb_conf_file, BUFFER_SIZE, "%s", optarg);
         break;
+      case 'V'://print version
+        printf("Version: %s\n", GITVERSION);
+        exit(EXIT_SUCCESS);
+        break;
       default:
-        // Unrecognized option
         print_usage(EXIT_FAILURE);
         break;
     }
   }
-  
 }
 
 /// Read commandline parameters and config file.
