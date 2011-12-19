@@ -40,7 +40,7 @@ struct bb_key_value {
   char value[BUFFER_SIZE];
 };
 
-/** 
+/**
  * Takes a line and returns a key-value pair
  *
  * @param line String to be broken into a key-value pair
@@ -156,7 +156,8 @@ static void read_cmdline_config( int argc, char ** argv ){
     {"config",1,0,'C'},
     {"help",1,0,'h'},
     {"silent",0,0,'q'},
-    {"version",0,0,'V'}
+    {"version",0,0,'V'},
+    {0, 0, 0, 0}
   };
   while ((opt = getopt_long(argc, argv, optString, longOpts, 0)) != -1){
     switch (opt){
@@ -238,7 +239,7 @@ void init_config( int argc, char ** argv ){
   bb_config.pm_enabled = CONF_PMENABLE;
   bb_config.stop_on_exit = CONF_STOPONEXIT;
   snprintf(bb_config.vgl_compress, BUFFER_SIZE, CONF_VGLCOMPRESS);
-  
+
 
   // parse commandline configuration (for config file, if changed)
   read_cmdline_config(argc, argv);
