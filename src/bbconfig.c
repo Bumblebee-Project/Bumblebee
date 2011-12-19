@@ -193,11 +193,11 @@ void init_config( int argc, char ** argv ){
   int lastslash = 0;
   //find the last slash in the program path
   while (argv[0][i] != 0){
-    if (argv[0][i] == '/'){lastslash = i;}
+    if (argv[0][i] == '/'){lastslash = i+1;}
     ++i;
   }
   //set program name
-  snprintf(bb_status.program_name, BUFFER_SIZE, "%s", argv[0]+lastslash+1);
+  snprintf(bb_status.program_name, BUFFER_SIZE, "%s", argv[0]+lastslash);
   bb_status.verbosity = VERB_WARN;
   bb_status.bb_socket = -1;
   bb_status.appcount = 0;
