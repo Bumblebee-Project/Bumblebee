@@ -49,7 +49,7 @@ static struct bb_key_value bb_get_key_value(const char* line) {
   struct bb_key_value kvpair;
   if (EOF == sscanf(line, "%[^=]=%[^\n]", kvpair.key, kvpair.value)) {
     int err_val = errno;
-    printf("Error parsing configuration file: %s\n", strerror(err_val));
+    bb_log(LOG_ERR, "Error parsing configuration file: %s\n", strerror(err_val));
   }
   return kvpair;
 }
@@ -79,13 +79,13 @@ static void stripws(char* str) {
  *  @return 0 on success.
  */
 static int read_configuration( void ) {
+  bb_log(LOG_DEBUG, "Reading configuration file: %s\n",bb_config.bb_conf_file);
   FILE *cf = fopen(bb_config.bb_conf_file, "r");
   if (cf == 0) { /* An error ocurred */
     bb_log(LOG_ERR, "Error in config file: %s\n", strerror(errno));
     bb_log(LOG_INFO, "Using default configuration");
     return 1;
   }
-  bb_log(LOG_DEBUG, "Reading configuration file\n");
   char line[BUFFER_SIZE];
   while (fgets(line, sizeof line, cf) != NULL) {
     stripws(line);
@@ -95,16 +95,16 @@ static int read_configuration( void ) {
       struct bb_key_value kvp = bb_get_key_value(line);
       if (strcmp(kvp.key, "VGL_DISPLAY") == 0) {
         snprintf(bb_config.x_display, BUFFER_SIZE, "%s", kvp.value);
-        bb_log(LOG_DEBUG, "value set: %s = %s\n", kvp.key, kvp.value);
+        bb_log(LOG_DEBUG, "value set: x_display = %s\n", bb_config.x_display);
       } else if (strcmp(kvp.key, "STOP_SERVICE_ON_EXIT") == 0) {
         bb_config.stop_on_exit = atoi(kvp.value);
-        bb_log(LOG_DEBUG, "value set: %s = %s\n", kvp.key, kvp.value);
+        bb_log(LOG_DEBUG, "value set: stop_on_exit = %d\n", bb_config.stop_on_exit);
       } else if (strcmp(kvp.key, "X_CONFFILE") == 0) {
         snprintf(bb_config.x_conf_file, BUFFER_SIZE, "%s", kvp.value);
-        bb_log(LOG_DEBUG, "value set: %s = %s\n", kvp.key, kvp.value);
+        bb_log(LOG_DEBUG, "value set: x_conf_file = %s\n", bb_config.x_conf_file);
       } else if (strcmp(kvp.key, "VGL_COMPRESS") == 0) {
         snprintf(bb_config.vgl_compress, BUFFER_SIZE, "%s", kvp.value);
-        bb_log(LOG_DEBUG, "value set: %s = %s\n", kvp.key, kvp.value);
+        bb_log(LOG_DEBUG, "value set: vgl_compress = %s\n", bb_config.vgl_compress);
       } else if (strcmp(kvp.key, "ECO_MODE") == 0) {
       } else if (strcmp(kvp.key, "FALLBACK_START") == 0) {
       }
