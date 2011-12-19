@@ -75,12 +75,13 @@ static void stripws(char* str) {
 /**
  *  Read the configuration file.
  *
- *  @return 0 on success. 
+ *  @return 0 on success.
  */
 static int read_configuration( void ) {
   FILE *cf = fopen(bb_config.bb_conf_file, "r");
   if (cf == 0) { /* An error ocurred */
     bb_log(LOG_ERR, "Error in config file: %s\n", strerror(errno));
+    bb_log(LOG_INFO, "Using default configuration");
     return 1;
   }
 
