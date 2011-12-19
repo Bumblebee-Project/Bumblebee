@@ -38,26 +38,6 @@
 #include <signal.h>
 #include <time.h>
 
-/**
- *  Print a little note on usage
- */
-static void print_usage(int exit_val) {
-  // Print help message and exit with exit code
-  printf("%s version %s\n\n", bb_status.program_name, GITVERSION);
-  printf("Usage: %s [options] -- [application to run] [application options]\n", bb_status.program_name);
-  printf("  Options:\n");
-  printf("      -q\tBe quiet.\n");
-  printf("      -v\tBe verbose (twice for extra verbosity)\n");
-  printf("      -X #\tX display number to use.\n");
-  printf("      -l [PATH]\tLD driver path to use.\n");
-  printf("      -u [PATH]\tUnix socket to use.\n");
-  printf("      -m [METHOD]\tConnection method to use for VirtualGL.\n");
-  printf("      -h\tShow this help screen.\n");
-  printf("\n");
-  printf("If no application is given, current status is instead shown.\n");
-  printf("\n");
-  exit(exit_val);
-}
 
 /**
  *  Handle recieved signals - except SIGCHLD, which is handled in bbrun.c
@@ -88,62 +68,16 @@ int main(int argc, char* argv[]) {
   signal(SIGQUIT, handle_signal);
 
   /* Initializing configuration */
-  bb_status.program_name = argv[0];
-  bb_status.is_daemonized = 0;
-  bb_status.verbosity = VERB_WARN;
-  bb_status.errors[0] = 0; //no errors, yet :-)
-  bb_status.runmode = BB_RUN_APP;
-  read_configuration();
-
-  /* Parse the options, set flags as necessary */
-  int c;
-  while ((c = getopt(argc, argv, "+cvVm:X:l:u:h|help")) != -1) {
-    switch (c) {
-      case 'h'://help
-        print_usage(EXIT_SUCCESS);
-        break;
-      case 'q'://quiet mode
-        bb_status.verbosity = VERB_NONE;
-        break;
-      case 'v'://verbose
-        // -v -v is very verbose
-        if (bb_status.verbosity == VERB_INFO) {
-          bb_status.verbosity = VERB_DEBUG;
-        } else {
-          bb_status.verbosity = VERB_INFO;
-        }
-        break;
-      case 'X'://X display number
-        snprintf(bb_config.x_display, BUFFER_SIZE, "%s", optarg);
-        break;
-      case 'l'://LD driver path
-        snprintf(bb_config.ld_path, BUFFER_SIZE, "%s", optarg);
-        break;
-      case 'u'://Unix socket to use
-        snprintf(bb_config.socket_path, BUFFER_SIZE, "%s", optarg);
-        break;
-      case 'm'://vglclient method
-        snprintf(bb_config.vgl_compress, BUFFER_SIZE, "%s", optarg);
-        break;
-      default:
-        // Unrecognized option
-        print_usage(EXIT_FAILURE);
-        break;
-    }
-  }
-
-  /* change runmode to status if no application given to run
-   * and current runmode is run application.
-   */
-  if ((bb_status.runmode == BB_RUN_APP) && (optind >= argc)) {
+  init_config(argc, argv);
+  
+  /* set runmode depending on leftover arguments */
+  if (optind >= argc) {
+    bb_status.runmode = BB_RUN_APP;
+  } else {
     bb_status.runmode = BB_RUN_STATUS;
   }
 
-  /* Init log Mechanism */
-  if (bb_init_log()) {
-    fprintf(stderr, "Unexpected error, could not initialize log.\n");
-    return 1;
-  }
+  bb_init_log();
   bb_log(LOG_DEBUG, "%s version %s starting...\n", bb_status.program_name, GITVERSION);
 
   /* Connect to listening daemon */

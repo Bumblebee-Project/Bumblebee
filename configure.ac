@@ -13,15 +13,16 @@ AC_DEFINE_UNQUOTED(GITVERSION, "`git describe --tags`", "git version number")
 # default configuration
 AC_DEFINE(CONF_XDISP, ":8", "X screen number")
 AC_DEFINE(CONF_XORG, "/etc/bumblebee/xorg.conf.nvidia", "xorg.conf path")
+AC_DEFINE(CONFIG_FILE, "/etc/bumblebee/bumblebeed.conf", "socket path")
 AC_DEFINE(CONF_LDPATH, "/usr/lib64/nvidia-current", "ld path")
 AC_DEFINE(CONF_SOCKPATH, "/var/run/bumblebee.socket", "socket path")
+AC_DEFINE(CONF_GID, "bumblebee", "group to use when setting GID")
 AC_DEFINE(CONF_PMENABLE, 1, "enable power management")
 AC_DEFINE(CONF_STOPONEXIT, 1, "stop secondary X on exit of last optirun executable")
+AC_DEFINE(CONF_VGLCOMPRESS, "proxy", "vglclient transport method")
 
 # non-config related compile-time defines
-AC_DEFINE(CONFIG_FILE, "/etc/bumblebee/bumblebeed.conf", "socket path")
 AC_DEFINE(DAEMON_NAME, "bumblebeed", "daemon name")
-AC_DEFINE(DEFAULT_BB_GROUP, "bumblebee", "group to use when setting GID")
 
 AM_INIT_AUTOMAKE([1.10.2 -Wall foreign subdir-objects
 	tar-pax no-dist-gzip dist-xz])

@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2011, The Bumblebee Project
  * Author: Joaquín Ignacio Aramendía samsagax@gmail.com
+ * Author: Jaron Viëtor AKA "Thulinma" <jaron@vietors.com>
  *
  * This file is part of Bumblebee.
  *
@@ -37,9 +38,10 @@
 #define VERB_ALL 4
 
 /* Running modes */
-#define BB_RUN_DAEMON 0
-#define BB_RUN_APP 1
-#define BB_RUN_STATUS 2
+#define BB_RUN_SERVER 0
+#define BB_RUN_DAEMON 1
+#define BB_RUN_APP 2
+#define BB_RUN_STATUS 4
 
 /* String buffer size */
 #define BUFFER_SIZE 256
@@ -51,7 +53,6 @@ struct bb_status_struct {
     int bb_socket; /// The socket file descriptor of the application.
     unsigned int appcount; /// Count applications using the X server.
     char errors[BUFFER_SIZE]; /// Error message if any. First byte is 0 otherwise.
-    int is_daemonized; /// Whether the application is daemonized or not.
     int runmode; /// Running mode.
     pid_t x_pid;
 };
@@ -59,7 +60,8 @@ struct bb_status_struct {
 /* Structure containing the configuration. */
 struct bb_config_struct {
     char x_display[BUFFER_SIZE]; /// X display number to use.
-    char x_conf_file[BUFFER_SIZE]; /// Path to the X configuration file to use.
+    char x_conf_file[BUFFER_SIZE]; /// Path to the X configuration file.
+    char bb_conf_file[BUFFER_SIZE]; /// Path to the bumblebeed configuration file.
     char ld_path[BUFFER_SIZE]; /// LD_LIBRARY_PATH to launch applications.
     char socket_path[BUFFER_SIZE]; /// Path to the server socket.
     char gid_name[BUFFER_SIZE]; /// Group name for setgid.
@@ -71,5 +73,5 @@ struct bb_config_struct {
 extern struct bb_status_struct bb_status;
 extern struct bb_config_struct bb_config;
 
-/// Read the configuration file
-int read_configuration( void );
+/// Read commandline parameters and config file.
+void init_config( int argc, char ** argv );

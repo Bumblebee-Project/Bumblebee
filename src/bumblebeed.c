@@ -35,29 +35,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <unistd.h>
 #include <grp.h>
 #include <signal.h>
 #include <time.h>
-
-/**
- *  Print a little note on usage
- */
-static void print_usage(int exit_val) {
-  // Print help message and exit with exit code
-  printf("%s version %s\n\n", bb_status.program_name, GITVERSION);
-  printf("Usage: %s [options]\n", bb_status.program_name);
-  printf("  Options:\n");
-  printf("      -d\tRun as daemon.\n");
-  printf("      -q\tBe quiet.\n");
-  printf("      -v\tBe verbose (twice for extra verbosity)\n");
-  printf("      -x [PATH]\txorg.conf file to use.\n");
-  printf("      -X #\tX display number to use.\n");
-  printf("      -u [PATH]\tUnix socket to use.\n");
-  printf("      -h\tShow this help screen.\n");
-  printf("\n");
-  exit(exit_val);
-}
 
 /**
  * Change GID and umask of the daemon
@@ -85,18 +65,14 @@ static int bb_chgid(void) {
 /**
  *  Fork to the background, and exit parent.
  */
-static int daemonize(void) {
-
-  /* Daemon flag, should be reset to zero if fail to daemonize */
-  bb_status.is_daemonized = 1;
-
+static void daemonize(void) {
   /* Fork off the parent process */
   pid_t bb_pid = fork();
   if (bb_pid < 0) {
-    bb_status.is_daemonized = 0;
     bb_log(LOG_ERR, "Could not fork to background\n");
     exit(EXIT_FAILURE);
   }
+
   /* If we got a good PID, then we can exit the parent process. */
   if (bb_pid > 0) {
     exit(EXIT_SUCCESS);
@@ -105,16 +81,12 @@ static int daemonize(void) {
   /* Create a new SID for the child process */
   pid_t bb_sid = setsid();
   if (bb_sid < 0) {
-    /* Log the failure */
-    bb_status.is_daemonized = 0;
     bb_log(LOG_ERR, "Could not set SID: %s\n", strerror(errno));
     exit(EXIT_FAILURE);
   }
 
   /* Change the current working directory */
   if ((chdir("/")) < 0) {
-    /* Log the failure */
-    bb_status.is_daemonized = 0;
     bb_log(LOG_ERR, "Could not change to root directory: %s\n", strerror(errno));
     exit(EXIT_FAILURE);
   }
@@ -123,7 +95,6 @@ static int daemonize(void) {
   close(STDIN_FILENO);
   close(STDOUT_FILENO);
   close(STDERR_FILENO);
-  return !bb_status.is_daemonized;
 }
 
 /**
@@ -309,7 +280,6 @@ static void main_loop(void) {
 }
 
 int main(int argc, char* argv[]) {
-
   /* Setup signal handling before anything else */
   signal(SIGHUP, handle_signal);
   signal(SIGTERM, handle_signal);
@@ -317,65 +287,19 @@ int main(int argc, char* argv[]) {
   signal(SIGQUIT, handle_signal);
 
   /* Initializing configuration */
-  read_configuration();
-
-  /* Initialize status */
-  bb_status.program_name = argv[0];
-  bb_status.is_daemonized = 0;
-  bb_status.verbosity = VERB_WARN;
-  bb_status.errors[0] = 0; //no errors, yet :-)
-
-  /* Parse the options, set flags as necessary */
-  int c;
-  while ((c = getopt(argc, argv, "+dqvx:g:X:u:h|help")) != -1) {
-    switch (c) {
-      case 'h'://help
-        print_usage(EXIT_SUCCESS);
-        break;
-      case 'd'://daemonize
-        bb_status.is_daemonized = 1;
-        break;
-      case 'q'://quiet mode
-        bb_status.verbosity = VERB_NONE;
-        break;
-      case 'v'://increase verbosity level by one
-        bb_status.verbosity++;
-        break;
-      case 'x'://xorg.conf path
-        snprintf(bb_config.x_conf_file, BUFFER_SIZE, "%s", optarg);
-        break;
-      case 'X'://X display number
-        snprintf(bb_config.x_display, BUFFER_SIZE, "%s", optarg);
-        break;
-      case 'u'://Unix socket to use
-        snprintf(bb_config.socket_path, BUFFER_SIZE, "%s", optarg);
-        break;
-      case 'g'://group name to use
-        snprintf(bb_config.gid_name, BUFFER_SIZE, "%s", optarg);
-        break;
-      default:
-        // Unrecognized option
-        print_usage(EXIT_FAILURE);
-        break;
-    }
-  }
+  init_config(argc, argv);
 
   /* Change GID and mask according to configuration */
-  bb_chgid();
-
-  /* Init log Mechanism */
-  if (bb_init_log()) {
-    fprintf(stderr, "Unexpected error, could not initialize log.\n");
-    return 1;
+  if ((bb_config.gid_name > 0) && (bb_config.gid_name[0] > 0)){
+    bb_chgid();
   }
+
+  bb_init_log();
   bb_log(LOG_DEBUG, "%s version %s starting...\n", bb_status.program_name, GITVERSION);
 
   /* Daemonized if daemon flag is activated */
-  if (bb_status.is_daemonized) {
-    if (daemonize()) {
-      bb_log(LOG_ERR, "Error: Bumblebee could not be daemonized\n");
-      exit(EXIT_FAILURE);
-    }
+  if (bb_status.runmode == BB_RUN_DAEMON) {
+    daemonize();
   }
 
   //check bbswitch availability, warn if not availble
