@@ -29,6 +29,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <errno.h>
+#include <stdlib.h>
 
 int handler_set = 0;
 
@@ -167,7 +168,35 @@ pid_t bb_run_fork(char** argv) {
     }
   }
   return ret;
+}
 
+/**
+ * Forks and runs the given application, using an LD_LIBRARY_PATH.
+ * More suitable for configurable arguments to pass
+ *
+ * @param argv The arguments values, the first one is the application path or name
+ * @return The new process PID
+ */
+pid_t bb_run_fork_ld(char** argv, char * ldpath) {
+  check_handler();
+  // Fork and attempt to run given application
+  pid_t ret = fork();
+  if (ret == 0) {
+    // Fork went ok, set environment
+    setenv("LD_LIBRARY_PATH", ldpath, 1);
+    bb_run_exec(argv);
+  } else {
+    if (ret > 0) {
+      // Fork went ok, parent process continues
+      bb_log(LOG_INFO, "Process %s started, PID %i.\n", argv[0], ret);
+      pidlist_add(ret);
+    } else {
+      // Fork failed
+      bb_log(LOG_ERR, "Process %s could not be started. fork() failed.\n", argv[0]);
+      return 0;
+    }
+  }
+  return ret;
 }
 
 /**

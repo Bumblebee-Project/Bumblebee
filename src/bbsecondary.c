@@ -114,7 +114,7 @@ void start_secondary(void) {
     bb_config.x_display,
     NULL
   };
-  bb_status.x_pid = bb_run_fork(x_argv);
+  bb_status.x_pid = bb_run_fork_ld(x_argv, bb_config.ld_path);
 
   time_t xtimer = time(0);
   Display * xdisp = 0;
