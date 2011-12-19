@@ -22,7 +22,6 @@
  */
 
 #include "bbsecondary.h"
-#include "bbswitch.h"
 #include "bbrun.h"
 #include "bblogger.h"
 #include "bbconfig.h"
@@ -30,6 +29,94 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+
+#define BBS_BUFFER 100
+
+/// Returns 0 if card is off, 1 if card is on, -1 if bbswitch not active.
+/// In other words: 0 means off, anything else means on.
+static int bbswitch_status(void) {
+  char buffer[BBS_BUFFER];
+  int i, r;
+  FILE * bbs = fopen("/proc/acpi/bbswitch", "r");
+  if (bbs == 0) {
+    return -1;
+  }
+  for (i = 0; i < BBS_BUFFER; ++i) {
+    buffer[i] = 0;
+  }
+  r = fread(buffer, 1, BBS_BUFFER - 1, bbs);
+  fclose(bbs);
+  for (i = 0; (i < BBS_BUFFER) && (i < r); ++i) {
+    if (buffer[i] == ' ') {//find the space
+      if (buffer[i + 2] == 'F') {
+        return 0;
+      }//OFF
+      if (buffer[i + 2] == 'N') {
+        return 1;
+      }//ON
+    }
+    if (buffer[i] == 0) {
+      return -1;
+    }//end of string, stop search
+  }
+  return -1; //space not found - assume bbswitch isn't working
+}//bbswitch_status
+
+/// Turns card on if not already on.
+static void bbswitch_on(void) {
+  int r;
+  r = bbswitch_status();
+  if (r != 0) {
+    if (r == 1) {
+      bb_log(LOG_INFO, "Card already on, not turning dedicated card on.\n");
+    } else {
+      bb_log(LOG_WARNING, "bbswitch unavailable, not turning dedicated card on.\n");
+    }
+    return;
+  }
+  FILE * bbs = fopen("/proc/acpi/bbswitch", "w");
+  if (bbs == 0) {
+    bb_log(LOG_ERR, "Could not access bbswitch module.\n");
+    return;
+  }
+  r = fwrite("ON\n", 1, 4, bbs);
+  fclose(bbs);
+  if (r < 2) {
+    bb_log(LOG_WARNING, "bbswitch isn't listening to us!\n");
+  }
+  r = bbswitch_status();
+  if (r != 1) {
+    bb_log(LOG_ERR, "Failed to turn dedicated card on!\n");
+  }
+}//bbswitch_on
+
+/// Turns card off if not already off.
+static void bbswitch_off(void) {
+  int r;
+  r = bbswitch_status();
+  if (r != 1) {
+    if (r == 0) {
+      bb_log(LOG_INFO, "Card already off, not turning dedicated card off.\n");
+    } else {
+      bb_log(LOG_WARNING, "bbswitch unavailable, not turning dedicated card off.\n");
+    }
+    return;
+  }
+  FILE * bbs = fopen("/proc/acpi/bbswitch", "w");
+  if (bbs == 0) {
+    bb_log(LOG_ERR, "Could not access bbswitch module.\n");
+    return;
+  }
+  r = fwrite("OFF\n", 1, 5, bbs);
+  fclose(bbs);
+  if (r < 3) {
+    bb_log(LOG_WARNING, "bbswitch isn't listening to us!\n");
+  }
+  r = bbswitch_status();
+  if (r != 0) {
+    bb_log(LOG_ERR, "Failed to turn dedicated card off!\n");
+  }
+}//bbswitch_off
 
 
 /// Returns 1 if the named module (or a module containing the
@@ -86,12 +173,13 @@ void start_secondary(void) {
     return;
   }
 
-  /// \todo Support nouveau as well
+  /// \todo Add vga_switcheroo support
+
   if (!is_driver_loaded()) {//only load if not already loaded
-    bb_log(LOG_INFO, "Loading nvidia module\n");
+    bb_log(LOG_INFO, "Loading %s module\n", bb_config.driver);
     char * mod_argv[] = {
       "modprobe",
-      "nvidia",
+      bb_config.driver,
       NULL
     };
     bb_run_fork_wait(mod_argv);
@@ -159,13 +247,12 @@ void stop_secondary(void) {
 
   //if card is on and can be switched, switch it off
   if (bbswitch_status() == 1) {
-    //unload nvidia driver first, if loaded
-    /// \todo Support nouveau as well
-    if (module_is_loaded("nvidia")) {
-      bb_log(LOG_INFO, "Unloading nvidia module\n");
+    //unload driver first, if loaded
+    if (module_is_loaded(bb_config.driver)) {
+      bb_log(LOG_INFO, "Unloading %s module\n", bb_config.driver);
       char * mod_argv[] = {
         "rmmod",
-        "nvidia",
+        bb_config.driver,
         NULL
       };
       bb_run_fork_wait(mod_argv);
@@ -178,5 +265,42 @@ void stop_secondary(void) {
     } else {
       bb_log(LOG_DEBUG, "Delaying card OFF - drivers are still loaded\n");
     }
+    return; //do not continue if bbswitch is in use
   }
+  /// \todo Add vga_switcheroo support
 }//stop_secondary
+
+/// Returns 0 if card is off, 1 if card is on, -1 if not-switchable.
+int status_secondary(void){
+  int bbstatus = bbswitch_status();
+  if (bbstatus >= 0){return bbstatus;}
+  /// \todo Add vga_switcheroo support
+  return -1;
+}
+
+/// Checks what methods are available and what drivers are installed.
+/// Sets sane defaults for the current environment, also prints
+/// debug messages including the found hardware/software.
+/// Will print warning message if no switching method is found.
+void check_secondary(void){
+  //check installed drivers
+  bb_config.driver[0] = 0;
+  if (module_is_loaded("nvidia")) {
+    snprintf(bb_config.driver, BUFFER_SIZE, "nvidia");
+    bb_log(LOG_DEBUG, "Detected nvidia driver\n");
+  }
+  if (module_is_loaded("nouveau")) {
+    snprintf(bb_config.driver, BUFFER_SIZE, "nouveau");
+    bb_log(LOG_DEBUG, "Detected nouveau driver\n");
+  }
+  if (bb_config.driver[0] == 0){
+    bb_log(LOG_WARNING, "No driver autodetected. Using configured value instead.\n");
+  }
+  
+  //check switch availability, warn if not availble
+  if (bbswitch_status() < 0) {
+    bb_log(LOG_WARNING, "bbswitch could not be accessed. Turning the dedicated card on/off will not be possible!\n");
+  }
+  /// \todo Add vga_switcheroo support
+  
+}
