@@ -67,7 +67,8 @@ struct bb_config_struct {
     char gid_name[BUFFER_SIZE]; /// Group name for setgid.
     int pm_enabled; /// Whether power management is enabled.
     int stop_on_exit; /// Whether to stop the X server on last optirun instance exit.
-    char vgl_compress[BUFFER_SIZE]; /// VGL transport method
+    char vgl_compress[BUFFER_SIZE]; /// VGL transport method.
+    char driver[BUFFER_SIZE]; /// Driver to use (nvidia or nouveau).
 };
 
 extern struct bb_status_struct bb_status;

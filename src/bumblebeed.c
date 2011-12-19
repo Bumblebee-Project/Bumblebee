@@ -28,7 +28,6 @@
 #include "bbsocket.h"
 #include "bblogger.h"
 #include "bbsecondary.h"
-#include "bbswitch.h"
 #include "bbrun.h"
 #include <assert.h>
 #include <sys/types.h>
@@ -198,7 +197,7 @@ static void main_loop(void) {
     if (time(0) - lastcheck > 5) {
       lastcheck = time(0);
       //stop X / card if there is no need to keep it running
-      if ((bb_status.appcount == 0) && (bb_is_running(bb_status.x_pid) || (bbswitch_status() > 0))) {
+      if ((bb_status.appcount == 0) && (bb_is_running(bb_status.x_pid) || (status_secondary() > 0))) {
         stop_secondary();
       }
     }
@@ -286,7 +285,9 @@ int main(int argc, char* argv[]) {
   signal(SIGINT, handle_signal);
   signal(SIGQUIT, handle_signal);
 
-  /* Initializing configuration */
+  bb_init_log();
+
+  check_secondary();
   init_config(argc, argv);
 
   /* Change GID and mask according to configuration */
@@ -294,7 +295,6 @@ int main(int argc, char* argv[]) {
     bb_chgid();
   }
 
-  bb_init_log();
   bb_log(LOG_DEBUG, "%s version %s starting...\n", bb_status.program_name, GITVERSION);
 
   /* Daemonized if daemon flag is activated */
@@ -302,10 +302,6 @@ int main(int argc, char* argv[]) {
     daemonize();
   }
 
-  //check bbswitch availability, warn if not availble
-  if (bbswitch_status() < 0) {
-    bb_log(LOG_WARNING, "bbswitch could not be accessed. Turning the dedicated card on/off will not be possible!\n");
-  }
   /* Initialize communication socket, enter main loop */
   bb_status.bb_socket = socketServer(bb_config.socket_path, SOCK_NOBLOCK);
   main_loop();

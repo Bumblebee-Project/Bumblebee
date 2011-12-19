@@ -259,7 +259,6 @@ void init_config( int argc, char ** argv ){
 
   /* standard configuration */
   snprintf(bb_config.x_display, BUFFER_SIZE, CONF_XDISP);
-  snprintf(bb_config.x_conf_file, BUFFER_SIZE, CONF_XORG);
   snprintf(bb_config.bb_conf_file, BUFFER_SIZE, CONFIG_FILE);
   snprintf(bb_config.ld_path, BUFFER_SIZE, CONF_LDPATH);
   snprintf(bb_config.socket_path, BUFFER_SIZE, CONF_SOCKPATH);
@@ -267,7 +266,10 @@ void init_config( int argc, char ** argv ){
   bb_config.pm_enabled = CONF_PMENABLE;
   bb_config.stop_on_exit = CONF_STOPONEXIT;
   snprintf(bb_config.vgl_compress, BUFFER_SIZE, CONF_VGLCOMPRESS);
-
+  if (bb_config.driver[0] == 0){
+    snprintf(bb_config.driver, BUFFER_SIZE, CONF_DRIVER);
+  }
+  snprintf(bb_config.x_conf_file, BUFFER_SIZE, CONF_XORG, bb_config.driver);
 
   // parse commandline configuration (for config file, if changed)
   read_cmdline_config(argc, argv);
@@ -275,4 +277,17 @@ void init_config( int argc, char ** argv ){
   read_configuration();
   // parse commandline configuration again (so config file params are overwritten)
   read_cmdline_config(argc, argv);
+
+  //print configuration as debug messages
+  bb_log(LOG_DEBUG, "Active configuration:\n");
+  bb_log(LOG_DEBUG, " X display: %s\n", bb_config.x_display);
+  bb_log(LOG_DEBUG, " xorg.conf file: %s\n", bb_config.x_conf_file);
+  bb_log(LOG_DEBUG, " bumblebeed config file: %s\n", bb_config.bb_conf_file);
+  bb_log(LOG_DEBUG, " LD_LIBRARY_PATH: %s\n", bb_config.ld_path);
+  bb_log(LOG_DEBUG, " Socket path: %s\n", bb_config.socket_path);
+  bb_log(LOG_DEBUG, " GID name: %s\n", bb_config.gid_name);
+  bb_log(LOG_DEBUG, " Power management: %i\n", bb_config.pm_enabled);
+  bb_log(LOG_DEBUG, " Stop X on exit: %i\n", bb_config.stop_on_exit);
+  bb_log(LOG_DEBUG, " VGL Compression: %s\n", bb_config.vgl_compress);
+  bb_log(LOG_DEBUG, " Driver: %s\n", bb_config.driver);
 }
