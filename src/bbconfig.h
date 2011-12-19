@@ -48,7 +48,7 @@
 
 /* Structure containing the status of the application */
 struct bb_status_struct {
-    char* program_name; /// How this application was called.
+    char program_name[BUFFER_SIZE]; /// How this application was called.
     int verbosity; ///Verbosity level of messages.
     int bb_socket; /// The socket file descriptor of the application.
     unsigned int appcount; /// Count applications using the X server.
@@ -67,7 +67,7 @@ struct bb_config_struct {
     char gid_name[BUFFER_SIZE]; /// Group name for setgid.
     int pm_enabled; /// Whether power management is enabled.
     int stop_on_exit; /// Whether to stop the X server on last optirun instance exit.
-    char* vgl_compress; /// VGL transport method
+    char vgl_compress[BUFFER_SIZE]; /// VGL transport method
 };
 
 extern struct bb_status_struct bb_status;

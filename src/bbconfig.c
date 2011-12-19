@@ -78,45 +78,31 @@ static void stripws(char* str) {
  *  @return 0 on success. 
  */
 static int read_configuration( void ) {
-
   FILE *cf = fopen(bb_config.bb_conf_file, "r");
-  if (cf == (NULL)) { /* An error ocurred */
-    int err_num = errno;
-    assert(cf == NULL);
-    switch (err_num) {
-      case EACCES:
-      case EINVAL:
-      case EIO:
-      case EISDIR:
-      case ELOOP:
-      case EMFILE:
-      case ENAMETOOLONG:
-      case ENFILE:
-      case ENOSR:
-      case ENOTDIR:
-        bb_log(LOG_ERR, "Error in config file: %s", strerror(err_num));
-    }
-  } else {
-    char line[BUFFER_SIZE];
-    while (fgets(line, sizeof line, cf) != NULL) {
-      stripws(line);
-      /* Ignore empty lines and comments */
-      if ((line[0] != '#') && (line[0] != '\n')) {
-        /* Parse configuration based on the run mode */
-        struct bb_key_value kvp = bb_get_key_value(line);
-        if (strcmp(kvp.key, "VGL_DISPLAY")) {
+  if (cf == 0) { /* An error ocurred */
+    bb_log(LOG_ERR, "Error in config file: %s\n", strerror(errno));
+    return 1;
+  }
 
-        } else if (strcmp(kvp.key, "STOP_SERVICE_ON_EXIT")) {
+  char line[BUFFER_SIZE];
+  while (fgets(line, sizeof line, cf) != NULL) {
+    stripws(line);
+    /* Ignore empty lines and comments */
+    if ((line[0] != '#') && (line[0] != '\n')) {
+      /* Parse configuration based on the run mode */
+      struct bb_key_value kvp = bb_get_key_value(line);
+      if (strcmp(kvp.key, "VGL_DISPLAY")) {
 
-        } else if (strcmp(kvp.key, "X_CONFFILE")) {
+      } else if (strcmp(kvp.key, "STOP_SERVICE_ON_EXIT")) {
 
-        } else if (strcmp(kvp.key, "VGL_COMPRESS")) {
+      } else if (strcmp(kvp.key, "X_CONFFILE")) {
 
-        } else if (strcmp(kvp.key, "ECO_MODE")) {
+      } else if (strcmp(kvp.key, "VGL_COMPRESS")) {
 
-        } else if (strcmp(kvp.key, "FALLBACK_START")) {
+      } else if (strcmp(kvp.key, "ECO_MODE")) {
 
-        }
+      } else if (strcmp(kvp.key, "FALLBACK_START")) {
+
       }
     }
   }
