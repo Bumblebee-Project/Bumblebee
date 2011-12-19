@@ -94,17 +94,15 @@ static int read_configuration( void ) {
       /* Parse configuration based on the run mode */
       struct bb_key_value kvp = bb_get_key_value(line);
       if (strcmp(kvp.key, "VGL_DISPLAY")) {
-
+        snprintf(bb_config.x_display, BUFFER_SIZE, "%s", kvp.value);
       } else if (strcmp(kvp.key, "STOP_SERVICE_ON_EXIT")) {
-
+        bb_config.stop_on_exit = atoi(kvp.value);
       } else if (strcmp(kvp.key, "X_CONFFILE")) {
-
+        snprintf(bb_config.x_conf_file BUFFER_SIZE, "%s", kvp.value);
       } else if (strcmp(kvp.key, "VGL_COMPRESS")) {
-
+        snprintf(bb_config.vgl_compress, BUFFER_SIZE, "%s", kvp.value);
       } else if (strcmp(kvp.key, "ECO_MODE")) {
-
       } else if (strcmp(kvp.key, "FALLBACK_START")) {
-
       }
     }
   }
