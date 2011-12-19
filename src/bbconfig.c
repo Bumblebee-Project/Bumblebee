@@ -53,6 +53,29 @@ static struct bb_key_value bb_get_key_value(const char* line) {
   }
   return kvpair;
 }
+/**
+ * Strips leading whitespaces from a string
+ *
+ * @param str String to be cleared of leading whitespaces
+ */
+static void strip_lead_trail_ws(char* str) {
+  char *end;
+  // Remove leading spaces
+  while (isspace(*str)) {
+    str++;
+  }
+  if (*str == 0) {
+    return str;
+  }
+  // Remove trailing spaces
+  end = str + strlen(str) -1;
+  while ((end > str) && (isspace(*end))) {
+    end--;
+  }
+  // Add null terminator to end
+  *(end+1) = 0;
+  return str;
+}
 
 /**
  * Strips all whitespaces from a string
@@ -88,7 +111,7 @@ static int read_configuration( void ) {
   }
   char line[BUFFER_SIZE];
   while (fgets(line, sizeof line, cf) != NULL) {
-    stripws(line);
+    strip_lead_trail_ws(line);
     /* Ignore empty lines and comments */
     if ((line[0] != '#') && (line[0] != '\n')) {
       /* Parse configuration based on the run mode */
