@@ -72,9 +72,9 @@ int main(int argc, char* argv[]) {
   
   /* set runmode depending on leftover arguments */
   if (optind >= argc) {
-    bb_status.runmode = BB_RUN_APP;
-  } else {
     bb_status.runmode = BB_RUN_STATUS;
+  } else {
+    bb_status.runmode = BB_RUN_APP;
   }
 
   bb_init_log();

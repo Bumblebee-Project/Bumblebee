@@ -138,6 +138,7 @@ static void print_usage(int exit_val) {
 static void read_cmdline_config( int argc, char ** argv ){
   /* Parse the options, set flags as necessary */
   int c;
+  optind = 0;
   while ((c = getopt(argc, argv, "+dqvx:g:X:u:l:m:c:h|help")) != -1) {
     switch (c) {
       case 'h'://help
