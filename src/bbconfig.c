@@ -122,18 +122,35 @@ static void print_usage(int exit_val) {
   printf("%s version %s\n\n", bb_status.program_name, GITVERSION);
   printf("Usage: %s [options] [--] [application to run] [application options]\n", bb_status.program_name);
   printf("  Options:\n");
-  //client-only options
-  printf("      -m [METHOD]\tConnection method to use for VirtualGL.\n");
-  //server-only options
-  printf("      -d\tRun as daemon.\n");
-  printf("      -x [PATH]\txorg.conf file to use.\n");
+  if (strncmp(bb_status.program_name, "optirun", 8) == 0) {
+    //client-only options
+    printf("  -c [METHOD]\tConnection method to use for VirtualGL.\n");
+    printf("  --vgl-compress [METHOD]\tConnection method to use for VirtualGL.\n");
+  } else {
+    //server-only options
+    printf("  -D\tRun as daemon.\n");
+    printf("  --daemon\tRun as daemon.\n");
+    printf("  -x [PATH]\txorg.conf file to use.\n");
+    printf("  --xconf [PATH]\txorg.conf file to use.\n");
+    printf("  -g [GROUPNAME]\tName of group to change to.\n");
+    printf("  --group [GROUPNAME]\tName of group to change to.\n");
+  }
   //common options
-  printf("      -q\tBe quiet (sets verbosity to zero)\n");
-  printf("      -v\tBe more verbose (can be used multiple times)\n");
-  printf("      -X #\tX display number to use.\n");
-  printf("      -l [PATH]\tLD driver path to use.\n");
-  printf("      -u [PATH]\tUnix socket to use.\n");
-  printf("      -h\tShow this help screen.\n");
+  printf("  -q\tBe quiet (sets verbosity to zero)\n");
+  printf("  --quiet\tBe quiet (sets verbosity to zero)\n");
+  printf("  --silent\tBe quiet (sets verbosity to zero)\n");
+  printf("  -v\tBe more verbose (can be used multiple times)\n");
+  printf("  --verbose\tBe more verbose (can be used multiple times)\n");
+  printf("  -d #\tX display number to use.\n");
+  printf("  --display #\tX display number to use.\n");
+  printf("  -C [PATH]\tConfiguration file to use.\n");
+  printf("  --config [PATH]\tConfiguration file to use.\n");
+  printf("  -l [PATH]\tLD driver path to use.\n");
+  printf("  --ldpath [PATH]\tLD driver path to use.\n");
+  printf("  -s [PATH]\tUnix socket to use.\n");
+  printf("  --socket [PATH]\tUnix socket to use.\n");
+  printf("  -h\tShow this help screen.\n");
+  printf("  --help\tShow this help screen.\n");
   printf("\n");
   exit(exit_val);
 }
