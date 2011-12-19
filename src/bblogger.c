@@ -86,7 +86,7 @@ void bb_log(int priority, char* msg_format, ...) {
       default:
         fullmsg_fmt = strcpy(fullmsg_fmt, "[INFO]");
     }
-    fullmsg_fmt = strcat(fullmsg_fmt, msg_format);
+    fullmsg_fmt = strncat(fullmsg_fmt, msg_format, BUFFER_SIZE);
     vfprintf(stderr, fullmsg_fmt, args);
     free(fullmsg_fmt);
   }
