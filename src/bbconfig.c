@@ -116,20 +116,27 @@ static int read_configuration( void ) {
     if ((line[0] != '#') && (line[0] != '\n')) {
       /* Parse configuration based on the run mode */
       struct bb_key_value kvp = bb_get_key_value(line);
-      if (strcmp(kvp.key, "VGL_DISPLAY") == 0) {
+      if (strncmp(kvp.key, "VGL_DISPLAY", 11) == 0) {
         snprintf(bb_config.x_display, BUFFER_SIZE, "%s", kvp.value);
         bb_log(LOG_DEBUG, "value set: x_display = %s\n", bb_config.x_display);
-      } else if (strcmp(kvp.key, "STOP_SERVICE_ON_EXIT") == 0) {
+      } else if (strncmp(kvp.key, "STOP_SERVICE_ON_EXIT", 20) == 0) {
         bb_config.stop_on_exit = atoi(kvp.value);
         bb_log(LOG_DEBUG, "value set: stop_on_exit = %d\n", bb_config.stop_on_exit);
-      } else if (strcmp(kvp.key, "X_CONFFILE") == 0) {
+      } else if (strncmp(kvp.key, "X_CONFFILE", 10) == 0) {
         snprintf(bb_config.x_conf_file, BUFFER_SIZE, "%s", kvp.value);
         bb_log(LOG_DEBUG, "value set: x_conf_file = %s\n", bb_config.x_conf_file);
-      } else if (strcmp(kvp.key, "VGL_COMPRESS") == 0) {
+      } else if (strncmp(kvp.key, "VGL_COMPRESS", 12) == 0) {
         snprintf(bb_config.vgl_compress, BUFFER_SIZE, "%s", kvp.value);
         bb_log(LOG_DEBUG, "value set: vgl_compress = %s\n", bb_config.vgl_compress);
-      } else if (strcmp(kvp.key, "ECO_MODE") == 0) {
-      } else if (strcmp(kvp.key, "FALLBACK_START") == 0) {
+      } else if (strncmp(kvp.key, "ENABLE_POWER_MANAGEMENT", 23) == 0) {
+        bb_config.pm_enabled = atoi(kvp.value);
+        bb_log(LOG_DEBUG, "value set: pm_enabled = %d\n", bb_config.pm_enabled);
+      } else if (strncmp(kvp.key, "FALLBACK_START", 14) == 0) {
+        bb_config.fallback_start = atoi(kvp.value);
+        bb_log(LOG_DEBUG, "value set: fallback_start = %d\n", bb_config.fallback_start);
+      } else if (strncmp(kvp.key, "BUMBLEBEE_GROUP", 15) == 0) {
+        snprintf(bb_config.gid_name, BUFFER_SIZE, "%s", kvp.value);
+        bb_log(LOG_DEBUG, "value set: gid_name = %s\n", bb_config.gid_name);
       }
     }
   }
