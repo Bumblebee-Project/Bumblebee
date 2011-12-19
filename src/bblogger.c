@@ -72,7 +72,7 @@ void bb_log(int priority, char* msg_format, ...) {
   if (bb_status.runmode == BB_RUN_DAEMON) {
     vsyslog(priority, msg_format, args);
   } else {
-    char* fullmsg_fmt = malloc(BUFFER_SIZE);
+    char* fullmsg_fmt = malloc(BUFFER_SIZE + 8);
     switch (priority) {
       case LOG_ERR:
         fullmsg_fmt = strcpy(fullmsg_fmt, "[ERROR]");
