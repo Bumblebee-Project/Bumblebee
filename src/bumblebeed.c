@@ -297,6 +297,7 @@ int main(int argc, char* argv[]) {
 
   /* Initialize communication socket, enter main loop */
   bb_status.bb_socket = socketServer(bb_config.socket_path, SOCK_NOBLOCK);
+  stop_secondary();//turn off card, nobody is connected right now.
   main_loop();
   unlink(bb_config.socket_path);
   bb_status.runmode = BB_RUN_EXIT;//make sure all methods understand we are shutting down
