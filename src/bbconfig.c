@@ -65,7 +65,7 @@ static void strip_lead_trail_ws(char* str) {
     str++;
   }
   if (*str == 0) {
-    return str;
+    return;
   }
   // Remove trailing spaces
   end = str + strlen(str) -1;
@@ -74,7 +74,6 @@ static void strip_lead_trail_ws(char* str) {
   }
   // Add null terminator to end
   *(end+1) = 0;
-  return str;
 }
 
 /**
@@ -139,10 +138,10 @@ static int read_configuration( void ) {
         bb_log(LOG_DEBUG, "value set: gid_name = %s\n", bb_config.gid_name);
       } else if (strncmp(kvp.key, "DRIVER", 15) == 0) {
         snprintf(bb_config.driver, BUFFER_SIZE, "%s", kvp.value);
-        bb_log(LOG_DEBUG, "value set: driver = %s\n", bb_config.gid_name);
+        bb_log(LOG_DEBUG, "value set: driver = %s\n", bb_config.driver);
       } else if (strncmp(kvp.key, "LD_LIBRARY_PATH", 15) == 0) {
         snprintf(bb_config.ld_path, BUFFER_SIZE, "%s", kvp.value);
-        bb_log(LOG_DEBUG, "value set: ld_path = %s\n", bb_config.gid_name);
+        bb_log(LOG_DEBUG, "value set: ld_path = %s\n", bb_config.ld_path);
       }
     }
   }
@@ -281,7 +280,7 @@ void init_config( int argc, char ** argv ){
     ++i;
   }
   //set program name
-  snprintf(bb_status.program_name, BUFFER_SIZE, "%s", argv[0]+lastslash);
+  strncpy(bb_status.program_name, argv[0]+lastslash, BUFFER_SIZE);
   bb_status.verbosity = VERB_WARN;
   bb_status.bb_socket = -1;
   bb_status.appcount = 0;
@@ -294,18 +293,18 @@ void init_config( int argc, char ** argv ){
   }
 
   /* standard configuration */
-  snprintf(bb_config.x_display, BUFFER_SIZE, CONF_XDISP);
-  snprintf(bb_config.bb_conf_file, BUFFER_SIZE, CONFIG_FILE);
-  snprintf(bb_config.ld_path, BUFFER_SIZE, CONF_LDPATH);
-  snprintf(bb_config.socket_path, BUFFER_SIZE, CONF_SOCKPATH);
-  snprintf(bb_config.gid_name, BUFFER_SIZE, CONF_GID);
+  strncpy(bb_config.x_display, CONF_XDISP, BUFFER_SIZE);
+  strncpy(bb_config.bb_conf_file, CONFIG_FILE, BUFFER_SIZE);
+  strncpy(bb_config.ld_path, CONF_LDPATH, BUFFER_SIZE);
+  strncpy(bb_config.socket_path, CONF_SOCKPATH, BUFFER_SIZE);
+  strncpy(bb_config.gid_name, CONF_GID, BUFFER_SIZE);
+  strncpy(bb_config.x_conf_file, CONF_XORG, BUFFER_SIZE);
   bb_config.pm_enabled = CONF_PMENABLE;
   bb_config.stop_on_exit = CONF_STOPONEXIT;
-  snprintf(bb_config.vgl_compress, BUFFER_SIZE, CONF_VGLCOMPRESS);
-  if (bb_config.driver[0] == 0){
-    snprintf(bb_config.driver, BUFFER_SIZE, CONF_DRIVER);
+  strncpy(bb_config.vgl_compress, CONF_VGLCOMPRESS, BUFFER_SIZE);
+  if (bb_config.driver[0] == 0){//only set driver if not autodetected
+    strncpy(bb_config.driver, CONF_DRIVER, BUFFER_SIZE);
   }
-  snprintf(bb_config.x_conf_file, BUFFER_SIZE, CONF_XORG, bb_config.driver);
 
   // parse commandline configuration (for config file, if changed)
   read_cmdline_config(argc, argv);
@@ -313,6 +312,13 @@ void init_config( int argc, char ** argv ){
   read_configuration();
   // parse commandline configuration again (so config file params are overwritten)
   read_cmdline_config(argc, argv);
+
+  //check xorg.conf for %s, replace it by driver name
+  char tmpstr[BUFFER_SIZE];
+  while (strstr(bb_config.x_conf_file, "%s") != 0) {
+    strncpy(tmpstr, bb_config.x_conf_file, BUFFER_SIZE);
+    snprintf(bb_config.x_conf_file, BUFFER_SIZE, tmpstr, bb_config.driver);
+  }
 
   //print configuration as debug messages
   bb_log(LOG_DEBUG, "Active configuration:\n");
