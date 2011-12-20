@@ -233,6 +233,7 @@ static int module_is_loaded(char * mod) {
 static int is_driver_loaded() {
   if (module_is_loaded("nvidia") == 1) {return 1;}
   if (module_is_loaded("nouveau") == 1) {return 1;}
+  if (module_is_loaded(bb_config.driver) == 1) {return 1;}
   return 0;
 }//is_driver_loaded
 
