@@ -39,6 +39,7 @@ static int bbswitch_status(void) {
   int i, r;
   FILE * bbs = fopen("/proc/acpi/bbswitch", "r");
   if (bbs == 0) {
+    bb_log(LOG_DEBUG, "Couldn't open bbswitch FIFO file, bbswitch not active");
     return -1;
   }
   for (i = 0; i < BBS_BUFFER; ++i) {
@@ -49,9 +50,11 @@ static int bbswitch_status(void) {
   for (i = 0; (i < BBS_BUFFER) && (i < r); ++i) {
     if (buffer[i] == ' ') {//find the space
       if (buffer[i + 2] == 'F') {
+        bb_log(LOG_DEBUG, "The discrete card is OFF [bbswitch]");
         return 0;
       }//OFF
       if (buffer[i + 2] == 'N') {
+        bb_log(LOG_DEBUG, "The discrete card is ON [bbswitch]");
         return 1;
       }//ON
     }
@@ -68,9 +71,9 @@ static void bbswitch_on(void) {
   r = bbswitch_status();
   if (r != 0) {
     if (r == 1) {
-      bb_log(LOG_INFO, "Card already on, not turning dedicated card on.\n");
+      bb_log(LOG_INFO, "Card already on, not switching it on [bbswitch]\n");
     } else {
-      bb_log(LOG_WARNING, "bbswitch unavailable, not turning dedicated card on.\n");
+      bb_log(LOG_WARNING, "bbswitch unavailable, not turning dedicated card on\n");
     }
     return;
   }
@@ -96,7 +99,7 @@ static void bbswitch_off(void) {
   r = bbswitch_status();
   if (r != 1) {
     if (r == 0) {
-      bb_log(LOG_INFO, "Card already off, not turning dedicated card off.\n");
+      bb_log(LOG_INFO, "Card already off, not switching it off [bbswitch]\n");
     } else {
       bb_log(LOG_WARNING, "bbswitch unavailable, not turning dedicated card off.\n");
     }
@@ -132,8 +135,10 @@ static switcheroo_status(void) {
     if (buffer[2] == 'D'){//found the DIS line
       fclose(bbs);
       if (buffer[8] == 'P'){
+        bb_log(LOG_DEBUG, "The discrete card is ON [vga_switcheroo]");
         return 1;//Pwr
       } else {
+        bb_log(LOG_DEBUG, "The discrete card is OFF [vga_switcheroo]");
         return 0;//Off
       }
     }
@@ -148,7 +153,7 @@ static void switcheroo_on(void) {
   r = switcheroo_status();
   if (r != 0) {
     if (r == 1) {
-      bb_log(LOG_INFO, "Card already on, not turning dedicated card on.\n");
+      bb_log(LOG_INFO, "Card already on, not it on [vga_switcheroo]\n");
     } else {
       bb_log(LOG_WARNING, "vga_switcheroo unavailable, not turning dedicated card on.\n");
     }
@@ -176,7 +181,7 @@ static void switcheroo_off(void) {
   r = switcheroo_status();
   if (r != 1) {
     if (r == 0) {
-      bb_log(LOG_INFO, "Card already off, not turning dedicated card off.\n");
+      bb_log(LOG_INFO, "Card already off, not turning it off [vga_switcheroo]\n");
     } else {
       bb_log(LOG_WARNING, "vga_switcheroo unavailable, not turning dedicated card off.\n");
     }
@@ -206,7 +211,10 @@ static int module_is_loaded(char * mod) {
   char buffer[BUFFER_SIZE];
   char * r = buffer;
   FILE * bbs = fopen("/proc/modules", "r");
-  if (bbs == 0){return -1;}//error opening, return -1
+  if (bbs == 0) {//error opening, return -1
+    bb_log(LOG_DEBUG,"Couldn't open /proc/modules");
+    return -1;
+  }
   while (r != 0) {
     r = fgets(buffer, BUFFER_SIZE - 1, bbs);
     if (strstr(buffer, mod)){
@@ -413,5 +421,5 @@ void check_secondary(void){
     bb_log(LOG_INFO, "vga_switcheroo detected and will be used.\n");
     return;
   }
-  bb_log(LOG_WARNING, "No switching method available. The dedicated card will always be switched on.\n");
+  bb_log(LOG_WARNING, "No switching method available. The dedicated card will always be on.\n");
 }
