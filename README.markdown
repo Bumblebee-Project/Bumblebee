@@ -27,4 +27,22 @@ Usage
 
     sudo ./bumblebeed --daemon
     ./optirun -- <application>
-    For more information, try --help on either of the two binaries.
+    
+For more information, try --help on either of the two binaries.
+
+Installing System-wide and Packaging
+-------------------------------------
+
+You can build the binaries and set the system wide paths at configure time
+
+    autoreconf -fi
+    ./configure --prefix=/usr --sysconfdir=/etc
+    make
+
+After building the binaries they can be installed using make:
+
+    sudo make install
+
+For packagers you need to add DESTDIR=$pkgdir
+
+    make install DESTDIR=$pkgdir
