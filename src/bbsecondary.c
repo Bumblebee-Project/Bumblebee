@@ -337,7 +337,7 @@ void start_secondary(void) {
 /// Retries up to 10 times or until successful.
 static void unload_module( char * module_name) {
   int i = 0;
-  while (module_is_loaded(module_name) == 0) {
+  while (module_is_loaded(module_name) == 1) {
     if (i > 0) {
       if (i > 10) {
         bb_log(LOG_ERR, "Could not unload module %s - giving up\n");
