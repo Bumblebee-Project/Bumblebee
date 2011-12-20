@@ -39,7 +39,6 @@ static int bbswitch_status(void) {
   int i, r;
   FILE * bbs = fopen("/proc/acpi/bbswitch", "r");
   if (bbs == 0) {
-    bb_log(LOG_DEBUG, "Couldn't open bbswitch FIFO file, bbswitch not active\n");
     return -1;
   }
   for (i = 0; i < BBS_BUFFER; ++i) {
@@ -50,11 +49,9 @@ static int bbswitch_status(void) {
   for (i = 0; (i < BBS_BUFFER) && (i < r); ++i) {
     if (buffer[i] == ' ') {//find the space
       if (buffer[i + 2] == 'F') {
-        bb_log(LOG_DEBUG, "The discrete card is OFF [bbswitch]\n");
         return 0;
       }//OFF
       if (buffer[i + 2] == 'N') {
-        bb_log(LOG_DEBUG, "The discrete card is ON [bbswitch]\n");
         return 1;
       }//ON
     }
@@ -135,10 +132,8 @@ static int switcheroo_status(void) {
     if (buffer[2] == 'D'){//found the DIS line
       fclose(bbs);
       if (buffer[8] == 'P'){
-        bb_log(LOG_DEBUG, "The discrete card is ON [vga_switcheroo]\n");
         return 1;//Pwr
       } else {
-        bb_log(LOG_DEBUG, "The discrete card is OFF [vga_switcheroo]\n");
         return 0;//Off
       }
     }
