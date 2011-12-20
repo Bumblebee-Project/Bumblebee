@@ -283,6 +283,11 @@ void start_secondary(void) {
     return;
   }
 
+  //if runmode is BB_RUN_EXIT, do not start X, we are shutting down.
+  if (bb_status.runmode == BB_RUN_EXIT) {
+    return;
+  }
+
   //no problems, start X if not started yet
   if (!bb_is_running(bb_status.x_pid)) {
     bb_log(LOG_INFO, "Starting X server on display %s.\n", bb_config.x_display);

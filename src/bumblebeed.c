@@ -305,6 +305,7 @@ int main(int argc, char* argv[]) {
   bb_status.bb_socket = socketServer(bb_config.socket_path, SOCK_NOBLOCK);
   main_loop();
   unlink(bb_config.socket_path);
+  bb_status.runmode = BB_RUN_EXIT;//make sure all methods understand we are shutting down
   if (bb_config.card_shutdown_state) {
     //if shutdown state = 1, turn on card
     start_secondary();

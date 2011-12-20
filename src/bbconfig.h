@@ -42,6 +42,7 @@
 #define BB_RUN_DAEMON 1
 #define BB_RUN_APP 2
 #define BB_RUN_STATUS 4
+#define BB_RUN_EXIT 99
 
 /* String buffer size */
 #define BUFFER_SIZE 256
