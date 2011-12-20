@@ -12,4 +12,4 @@ bumblebeed_SOURCES = src/bbconfig.c src/bblogger.c src/bbrun.c src/bbsocket.c sr
 bumblebeed_LDADD = ${libX11_LIBS}
 
 bumblebeedconfdir=$(sysconfdir)/bumblebee
-bumblebeedconf_DATA = bumblebee.conf xorg.conf.nouveau
+bumblebeedconf_DATA = conf/bumblebee.conf conf/xorg.conf.nouveau
