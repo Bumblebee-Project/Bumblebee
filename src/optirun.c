@@ -105,6 +105,7 @@ int main(int argc, char* argv[]) {
 
   /* Run given application */
   if (bb_status.runmode == BB_RUN_APP) {
+    int ranapp = 0;
     r = snprintf(buffer, BUFFER_SIZE, "Checking availability...");
     socketWrite(&bb_status.bb_socket, buffer, r);
     while (bb_status.bb_socket != -1) {
@@ -114,15 +115,13 @@ int main(int argc, char* argv[]) {
         switch (buffer[0]) {
           case 'N': //No, run normally.
             socketClose(&bb_status.bb_socket);
-            if (bb_config.fallback_start){
-              bb_log(LOG_WARNING, "Running application normally.\n");
-              bb_run_exec(argv + optind);
-            } else {
+            if (!bb_config.fallback_start){
               bb_log(LOG_ERR, "Cannot access secondary GPU. Aborting.\n");
             }
             break;
           case 'Y': //Yes, run through vglrun
             bb_log(LOG_INFO, "Running application through vglrun.\n");
+            ranapp = 1;
             //run vglclient if any method other than proxy is used
             if (strncmp(bb_config.vgl_compress, "proxy", BUFFER_SIZE) != 0) {
               char * vglclient_args[] = {
@@ -154,6 +153,10 @@ int main(int argc, char* argv[]) {
             break;
         }
       }
+    }
+    if (!ranapp && bb_config.fallback_start) {
+      bb_log(LOG_WARNING, "Running application normally.\n");
+      bb_run_exec(argv + optind);
     }
   }
 
