@@ -118,6 +118,85 @@ static void bbswitch_off(void) {
   }
 }//bbswitch_off
 
+/// Returns 0 if card is off, 1 if card is on, -1 if bbswitch not active.
+/// In other words: 0 means off, anything else means on.
+static switcheroo_status(void) {
+  char buffer[BBS_BUFFER];
+  char * r = buffer;
+  FILE * bbs = fopen("/sys/kernel/debug/vgaswitcheroo/switch", "r");
+  if (bbs == 0) {
+    return -1;
+  }
+  while (r != 0){
+    r = fgets(buffer, BBS_BUFFER, bbs);
+    if (buffer[2] == 'D'){//found the DIS line
+      fclose(bbs);
+      if (buffer[8] == 'P'){
+        return 1;//Pwr
+      } else {
+        return 0;//Off
+      }
+    }
+  }
+  fclose(bbs);
+  return -1; //DIS line not found - assume switcheroo isn't working
+}//switcheroo_status
+
+/// Turns card on if not already on.
+static void switcheroo_on(void) {
+  int r;
+  r = switcheroo_status();
+  if (r != 0) {
+    if (r == 1) {
+      bb_log(LOG_INFO, "Card already on, not turning dedicated card on.\n");
+    } else {
+      bb_log(LOG_WARNING, "vga_switcheroo unavailable, not turning dedicated card on.\n");
+    }
+    return;
+  }
+  FILE * bbs = fopen("/sys/kernel/debug/vgaswitcheroo/switch", "w");
+  if (bbs == 0) {
+    bb_log(LOG_ERR, "Could not access vga_switcheroo.\n");
+    return;
+  }
+  r = fwrite("ON\n", 1, 4, bbs);
+  fclose(bbs);
+  if (r < 2) {
+    bb_log(LOG_WARNING, "vga_switcheroo isn't listening to us!\n");
+  }
+  r = switcheroo_status();
+  if (r != 1) {
+    bb_log(LOG_ERR, "Failed to turn dedicated card on!\n");
+  }
+}//switcheroo_on
+
+/// Turns card off if not already off.
+static void switcheroo_off(void) {
+  int r;
+  r = switcheroo_status();
+  if (r != 1) {
+    if (r == 0) {
+      bb_log(LOG_INFO, "Card already off, not turning dedicated card off.\n");
+    } else {
+      bb_log(LOG_WARNING, "vga_switcheroo unavailable, not turning dedicated card off.\n");
+    }
+    return;
+  }
+  FILE * bbs = fopen("/sys/kernel/debug/vgaswitcheroo/switch", "w");
+  if (bbs == 0) {
+    bb_log(LOG_ERR, "Could not access vga_switcheroo.\n");
+    return;
+  }
+  r = fwrite("OFF\n", 1, 5, bbs);
+  fclose(bbs);
+  if (r < 2) {
+    bb_log(LOG_WARNING, "vga_switcheroo isn't listening to us!\n");
+  }
+  r = switcheroo_status();
+  if (r != 0) {
+    bb_log(LOG_ERR, "Failed to turn dedicated card off!\n");
+  }
+}//switcheroo_off
 
 /// Returns 1 if the named module (or a module containing the
 /// string in its name) is loaded, 0 otherwise.
@@ -161,19 +240,28 @@ static void set_secondary_error(char * msg) {
 /// If after this method finishes X is running, it was successfull.
 /// If it somehow fails, X should not be running after this method finishes.
 void start_secondary(void) {
-  //if card can be switch and is off, turn it on
-  if (bbswitch_status() == 0) {
-    bb_log(LOG_INFO, "Switching dedicated card ON\n");
+  int r;
+  //if card can be switched by bbswitch and is off, turn it on
+  r = bbswitch_status();
+  if (r == 0) {
+    bb_log(LOG_INFO, "Switching dedicated card ON [bbswitch]\n");
     bbswitch_on();
+    // if card switch failed, cancel and set error
+    if (bbswitch_status() == 0) {
+      set_secondary_error("Could not switch dedicated card on [bbswitch]");
+      return;
+    }
   }
-
-  // if card switch failed, cancel and set error
-  if (bbswitch_status() == 0) {
-    set_secondary_error("Could not switch dedicated card on");
-    return;
+  //no bbswitch support? attempt vga_switcheroo
+  if ((r == -1) && (switcheroo_status() == 0)) {
+    bb_log(LOG_INFO, "Switching dedicated card ON [vga_switcheroo]\n");
+    switcheroo_on();
+    // if card switch failed, cancel and set error
+    if (switcheroo_status() == 0) {
+      set_secondary_error("Could not switch dedicated card on [vga_switcheroo]");
+      return;
+    }
   }
-
-  /// \todo Add vga_switcheroo support
 
   if (!is_driver_loaded()) {//only load if not already loaded
     bb_log(LOG_INFO, "Loading %s module\n", bb_config.driver);
@@ -260,21 +348,32 @@ void stop_secondary(void) {
 
     //only turn card off if no drivers are loaded
     if (!is_driver_loaded()) {
-      bb_log(LOG_INFO, "Switching dedicated card OFF\n");
+      bb_log(LOG_INFO, "Switching dedicated card OFF [bbswitch]\n");
       bbswitch_off();
     } else {
       bb_log(LOG_DEBUG, "Delaying card OFF - drivers are still loaded\n");
     }
-    return; //do not continue if bbswitch is in use
+    return; //do not continue if bbswitch is used
   }
-  /// \todo Add vga_switcheroo support
+  if (bbswitch_status() >= 0) {
+    return; //do not continue if bbswitch is available at all
+  }
+
+  //no bbswitch - attempt vga_switcheroo
+  if (switcheroo_status() == 1) {
+    //no need to unload driver first, vga_switcheroo should
+    //not be available if the driver is not compatible.
+    bb_log(LOG_INFO, "Switching dedicated card OFF [vga_switcheroo]\n");
+    switcheroo_off();
+  }
 }//stop_secondary
 
 /// Returns 0 if card is off, 1 if card is on, -1 if not-switchable.
 int status_secondary(void){
   int bbstatus = bbswitch_status();
   if (bbstatus >= 0){return bbstatus;}
-  /// \todo Add vga_switcheroo support
+  int bbstatus = switcheroo_status();
+  if (bbstatus >= 0){return bbstatus;}
   return -1;
 }
 
@@ -298,9 +397,15 @@ void check_secondary(void){
   }
   
   //check switch availability, warn if not availble
-  if (bbswitch_status() < 0) {
-    bb_log(LOG_WARNING, "bbswitch could not be accessed. Turning the dedicated card on/off will not be possible!\n");
+  int bbstatus = bbswitch_status();
+  if (bbstatus >= 0){
+    bb_log(LOG_INFO, "bbswitch detected and will be used.\n");
+    return;
   }
-  /// \todo Add vga_switcheroo support
-  
+  int bbstatus = switcheroo_status();
+  if (bbstatus >= 0){
+    bb_log(LOG_INFO, "vga_switcheroo detected and will be used.\n");
+    return;
+  }
+  bb_log(LOG_WARNING, "No switching method available. The dedicated card will always be switched on.\n");
 }
