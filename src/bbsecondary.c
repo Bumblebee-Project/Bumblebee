@@ -372,7 +372,7 @@ void stop_secondary(void) {
 int status_secondary(void){
   int bbstatus = bbswitch_status();
   if (bbstatus >= 0){return bbstatus;}
-  int bbstatus = switcheroo_status();
+  bbstatus = switcheroo_status();
   if (bbstatus >= 0){return bbstatus;}
   return -1;
 }
@@ -402,7 +402,7 @@ void check_secondary(void){
     bb_log(LOG_INFO, "bbswitch detected and will be used.\n");
     return;
   }
-  int bbstatus = switcheroo_status();
+  bbstatus = switcheroo_status();
   if (bbstatus >= 0){
     bb_log(LOG_INFO, "vga_switcheroo detected and will be used.\n");
     return;
