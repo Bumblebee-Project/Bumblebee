@@ -334,38 +334,46 @@ void start_secondary(void) {
 }//start_secondary
 
 /// Unloads a module if loaded.
+/// Retries up to 10 times or until successful.
 static void unload_module( char * module_name) {
-  if (module_is_loaded(module_name) == 0) {return;}
-  bb_log(LOG_INFO, "Unloading %s module\n", module_name);
-  char * mod_argv[] = {
-    "rmmod",
-    module_name,
-    NULL
-  };
-  bb_run_fork_wait(mod_argv);
-}
+  int i = 0;
+  while (module_is_loaded(module_name) == 0) {
+    if (i > 0) {
+      if (i > 10) {
+        bb_log(LOG_ERR, "Could not unload module %s - giving up\n");
+        return;
+      }
+      usleep(1000000);//make sure we sleep for a second or so
+    }
+    bb_log(LOG_INFO, "Unloading %s module\n", module_name);
+    char * mod_argv[] = {
+      "rmmod",
+      module_name,
+      NULL
+    };
+    bb_run_fork_wait(mod_argv);
+    ++i;
+  }
+}//unload module
 
 /// Kill the second X server if any, turn card off if requested.
 void stop_secondary() {
-  // make repeated attempts to kill X
-  /// \todo Perhaps switch to a different signal after a few tries? At least put a timeout in...
-  while (bb_is_running(bb_status.x_pid)) {
+  // kill X if it is running
+  if (bb_is_running(bb_status.x_pid)) {
     bb_log(LOG_INFO, "Stopping X server\n");
-    bb_stop(bb_status.x_pid);
-    //usleep returns if interrupted by a signal (child process death)
-    usleep(5000000);//sleep for max 5 seconds
+    bb_stop_wait(bb_status.x_pid);
   }
 
-  if (!bb_config.pm_enabled) {
-    return;//do not switch card off if pm_enabled is false
+  if (!bb_config.pm_enabled && (bb_status.runmode != BB_RUN_EXIT)) {
+    return;//do not switch card off if pm_enabled is false, unless exiting.
   }
 
   //if card is on and can be switched, switch it off
   if (bbswitch_status() == 1) {
     //unload driver(s) first, if loaded
     unload_module(bb_config.driver);//check manually given driver
-    unload_module("nvidia");//also check nvidia driver when unloading through bbswitch
-    unload_module("nouveau");//also check nouveau driver when unloading through bbswitch
+    unload_module("nvidia");//always check nvidia driver when unloading through bbswitch
+    unload_module("nouveau");//always check nouveau driver when unloading through bbswitch
 
     //only turn card off if no drivers are loaded
     if (!is_driver_loaded()) {
@@ -377,7 +385,7 @@ void stop_secondary() {
     return; //do not continue if bbswitch is used
   }
   if (bbswitch_status() >= 0) {
-    return; //do not continue if bbswitch is available at all
+    return; //do not continue if bbswitch is used
   }
 
   //no bbswitch - attempt vga_switcheroo
