@@ -137,6 +137,12 @@ static int read_configuration( void ) {
       } else if (strncmp(kvp.key, "BUMBLEBEE_GROUP", 15) == 0) {
         snprintf(bb_config.gid_name, BUFFER_SIZE, "%s", kvp.value);
         bb_log(LOG_DEBUG, "value set: gid_name = %s\n", bb_config.gid_name);
+      } else if (strncmp(kvp.key, "DRIVER", 15) == 0) {
+        snprintf(bb_config.driver, BUFFER_SIZE, "%s", kvp.value);
+        bb_log(LOG_DEBUG, "value set: driver = %s\n", bb_config.gid_name);
+      } else if (strncmp(kvp.key, "LD_LIBRARY_PATH", 15) == 0) {
+        snprintf(bb_config.ld_path, BUFFER_SIZE, "%s", kvp.value);
+        bb_log(LOG_DEBUG, "value set: ld_path = %s\n", bb_config.gid_name);
       }
     }
   }
