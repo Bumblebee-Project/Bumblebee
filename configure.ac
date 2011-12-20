@@ -22,6 +22,7 @@ AC_DEFINE(CONF_STOPONEXIT, 1, "stop secondary X on exit of last optirun executab
 AC_DEFINE(CONF_FALLBACKSTART, 1, "make optirun start applications normally if secondary is unavailable")
 AC_DEFINE(CONF_VGLCOMPRESS, "proxy", "vglclient transport method")
 AC_DEFINE(CONF_DRIVER, "nouveau", "nvidia driver to use")
+AC_DEFINE(CONF_SHUTDOWNSTATE, 1, "state of card when shutting off daemon")
 
 # non-config related compile-time defines
 AC_DEFINE(DAEMON_NAME, "bumblebeed", "daemon name")

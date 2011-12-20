@@ -197,9 +197,8 @@ static void main_loop(void) {
     if (time(0) - lastcheck > 5) {
       lastcheck = time(0);
       //stop X / card if there is no need to keep it running
-      //request card switching
       if ((bb_status.appcount == 0) && (bb_config.stop_on_exit) && (bb_is_running(bb_status.x_pid) || (status_secondary() > 0))) {
-        stop_secondary(1);
+        stop_secondary();
       }
     }
 
@@ -307,7 +306,14 @@ int main(int argc, char* argv[]) {
   bb_status.bb_socket = socketServer(bb_config.socket_path, SOCK_NOBLOCK);
   main_loop();
   unlink(bb_config.socket_path);
-  stop_secondary(0); //stop X and/or, don't request card switch
+  if (bb_config.card_shutdown_state) {
+    //if shutdown state = 1, turn on card
+    start_secondary();
+  } else {
+    //if shutdown state = 0, turn off card regardless of pm_enabled setting
+    bb_config.pm_enabled = 1;
+    stop_secondary();
+  }
   bb_closelog();
   bb_stop_all(); //stop any started processes that are left
   return (EXIT_SUCCESS);

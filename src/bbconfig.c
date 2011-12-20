@@ -130,18 +130,21 @@ static int read_configuration( void ) {
       } else if (strncmp(kvp.key, "ENABLE_POWER_MANAGEMENT", 23) == 0) {
         bb_config.pm_enabled = atoi(kvp.value);
         bb_log(LOG_DEBUG, "value set: pm_enabled = %d\n", bb_config.pm_enabled);
-      } else if (strncmp(kvp.key, "FALLBACK_START", 14) == 0) {
+      } else if (strncmp(kvp.key, "FALLBACK_START", 15) == 0) {
         bb_config.fallback_start = atoi(kvp.value);
         bb_log(LOG_DEBUG, "value set: fallback_start = %d\n", bb_config.fallback_start);
-      } else if (strncmp(kvp.key, "BUMBLEBEE_GROUP", 15) == 0) {
+      } else if (strncmp(kvp.key, "BUMBLEBEE_GROUP", 16) == 0) {
         snprintf(bb_config.gid_name, BUFFER_SIZE, "%s", kvp.value);
         bb_log(LOG_DEBUG, "value set: gid_name = %s\n", bb_config.gid_name);
-      } else if (strncmp(kvp.key, "DRIVER", 15) == 0) {
+      } else if (strncmp(kvp.key, "DRIVER", 7) == 0) {
         snprintf(bb_config.driver, BUFFER_SIZE, "%s", kvp.value);
         bb_log(LOG_DEBUG, "value set: driver = %s\n", bb_config.driver);
-      } else if (strncmp(kvp.key, "LD_LIBRARY_PATH", 15) == 0) {
+      } else if (strncmp(kvp.key, "LD_LIBRARY_PATH", 16) == 0) {
         snprintf(bb_config.ld_path, BUFFER_SIZE, "%s", kvp.value);
         bb_log(LOG_DEBUG, "value set: ld_path = %s\n", bb_config.ld_path);
+      } else if (strncmp(kvp.key, "CARD_SHUTDOWN_STATE", 20) == 0) {
+        bb_config.card_shutdown_state = atoi(kvp.value);
+        bb_log(LOG_DEBUG, "value set: card_shutdown_state = %d\n", bb_config.card_shutdown_state);
       }
     }
   }
@@ -302,6 +305,7 @@ void init_config( int argc, char ** argv ){
   bb_config.pm_enabled = CONF_PMENABLE;
   bb_config.stop_on_exit = CONF_STOPONEXIT;
   bb_config.fallback_start = CONF_FALLBACKSTART;
+  bb_config.card_shutdown_state = CONF_SHUTDOWNSTATE;
   strncpy(bb_config.vgl_compress, CONF_VGLCOMPRESS, BUFFER_SIZE);
   if (bb_config.driver[0] == 0){//only set driver if not autodetected
     strncpy(bb_config.driver, CONF_DRIVER, BUFFER_SIZE);
@@ -333,4 +337,5 @@ void init_config( int argc, char ** argv ){
   bb_log(LOG_DEBUG, " Stop X on exit: %i\n", bb_config.stop_on_exit);
   bb_log(LOG_DEBUG, " VGL Compression: %s\n", bb_config.vgl_compress);
   bb_log(LOG_DEBUG, " Driver: %s\n", bb_config.driver);
+  bb_log(LOG_DEBUG, " Card shutdown state: %i\n", bb_config.card_shutdown_state);
 }

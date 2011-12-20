@@ -333,7 +333,7 @@ void start_secondary(void) {
 }//start_secondary
 
 /// Kill the second X server if any, turn card off if requested.
-void stop_secondary(int switch_card) {
+void stop_secondary() {
   // make repeated attempts to kill X
   /// \todo Perhaps switch to a different signal after a few tries? At least put a timeout in...
   while (bb_is_running(bb_status.x_pid)) {
@@ -343,7 +343,7 @@ void stop_secondary(int switch_card) {
     usleep(5000000);//sleep for max 5 seconds
   }
 
-  if (!(bb_config.pm_enabled && switch_card)) {
+  if (!bb_config.pm_enabled) {
     return;//do not switch card off if pm_enabled is false
   }
 
