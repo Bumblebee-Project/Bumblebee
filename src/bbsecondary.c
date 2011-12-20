@@ -123,7 +123,7 @@ static void bbswitch_off(void) {
 
 /// Returns 0 if card is off, 1 if card is on, -1 if bbswitch not active.
 /// In other words: 0 means off, anything else means on.
-static switcheroo_status(void) {
+static int switcheroo_status(void) {
   char buffer[BBS_BUFFER];
   char * r = buffer;
   FILE * bbs = fopen("/sys/kernel/debug/vgaswitcheroo/switch", "r");
@@ -230,7 +230,7 @@ static int module_is_loaded(char * mod) {
 
 /// Checks if either nvidia or nouveau is currently loaded.
 /// Returns 1 if yes, 0 otherwise (not loaded / error occured).
-static int is_driver_loaded() {
+static int is_driver_loaded(void) {
   if (module_is_loaded("nvidia") == 1) {return 1;}
   if (module_is_loaded("nouveau") == 1) {return 1;}
   if (module_is_loaded(bb_config.driver) == 1) {return 1;}
@@ -333,6 +333,18 @@ void start_secondary(void) {
   }
 }//start_secondary
 
+/// Unloads a module if loaded.
+static void unload_module( char * module_name) {
+  if (module_is_loaded(module_name) == 0) {return;}
+  bb_log(LOG_INFO, "Unloading %s module\n", module_name);
+  char * mod_argv[] = {
+    "rmmod",
+    module_name,
+    NULL
+  };
+  bb_run_fork_wait(mod_argv);
+}
+
 /// Kill the second X server if any, turn card off if requested.
 void stop_secondary() {
   // make repeated attempts to kill X
@@ -350,16 +362,10 @@ void stop_secondary() {
 
   //if card is on and can be switched, switch it off
   if (bbswitch_status() == 1) {
-    //unload driver first, if loaded
-    if (module_is_loaded(bb_config.driver)) {
-      bb_log(LOG_INFO, "Unloading %s module\n", bb_config.driver);
-      char * mod_argv[] = {
-        "rmmod",
-        bb_config.driver,
-        NULL
-      };
-      bb_run_fork_wait(mod_argv);
-    }
+    //unload driver(s) first, if loaded
+    unload_module(bb_config.driver);//check manually given driver
+    unload_module("nvidia");//also check nvidia driver when unloading through bbswitch
+    unload_module("nouveau");//also check nouveau driver when unloading through bbswitch
 
     //only turn card off if no drivers are loaded
     if (!is_driver_loaded()) {
