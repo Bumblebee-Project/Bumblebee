@@ -114,8 +114,12 @@ int main(int argc, char* argv[]) {
         switch (buffer[0]) {
           case 'N': //No, run normally.
             socketClose(&bb_status.bb_socket);
-            bb_log(LOG_WARNING, "Running application normally.\n");
-            bb_run_exec(argv + optind);
+            if (bb_config.fallback_start){
+              bb_log(LOG_WARNING, "Running application normally.\n");
+              bb_run_exec(argv + optind);
+            } else {
+              bb_log(LOG_ERR, "Cannot access secondary GPU. Aborting.\n");
+            }
             break;
           case 'Y': //Yes, run through vglrun
             bb_log(LOG_INFO, "Running application through vglrun.\n");

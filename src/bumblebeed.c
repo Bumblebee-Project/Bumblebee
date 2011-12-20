@@ -197,7 +197,7 @@ static void main_loop(void) {
     if (time(0) - lastcheck > 5) {
       lastcheck = time(0);
       //stop X / card if there is no need to keep it running
-      if ((bb_status.appcount == 0) && (bb_is_running(bb_status.x_pid) || (status_secondary() > 0))) {
+      if ((bb_status.appcount == 0) && (bb_config.stop_on_exit) && (bb_is_running(bb_status.x_pid) || (status_secondary() > 0))) {
         stop_secondary();
       }
     }
@@ -291,7 +291,7 @@ int main(int argc, char* argv[]) {
   init_config(argc, argv);
 
   /* Change GID and mask according to configuration */
-  if ((bb_config.gid_name > 0) && (bb_config.gid_name[0] > 0)){
+  if ((bb_config.gid_name != 0) && (bb_config.gid_name[0] != 0)){
     bb_chgid();
   }
 

@@ -279,22 +279,24 @@ void start_secondary(void) {
     return;
   }
 
-  //no problems, start X
-  bb_log(LOG_INFO, "Starting X server on display %s.\n", bb_config.x_display);
-  char * x_argv[] = {
-    "X",
-    "-config", bb_config.x_conf_file,
-    "-sharevts",
-    "-nolisten", "tcp",
-    "-noreset",
-    bb_config.x_display,
-    NULL
-  };
-  bb_status.x_pid = bb_run_fork_ld(x_argv, bb_config.ld_path);
+  //no problems, start X if not started yet
+  if (!bb_is_running(bb_status.x_pid)) {
+    bb_log(LOG_INFO, "Starting X server on display %s.\n", bb_config.x_display);
+    char * x_argv[] = {
+      "X",
+      "-config", bb_config.x_conf_file,
+      "-sharevts",
+      "-nolisten", "tcp",
+      "-noreset",
+      bb_config.x_display,
+      NULL
+    };
+    bb_status.x_pid = bb_run_fork_ld(x_argv, bb_config.ld_path);
+  }
 
+  //check if X is available, for maximum 10 seconds.
   time_t xtimer = time(0);
   Display * xdisp = 0;
-  //wait for X to become available for a maximum of 10 seconds
   while ((time(0) - xtimer <= 10) && bb_is_running(bb_status.x_pid)) {
     xdisp = XOpenDisplay(bb_config.x_display);
     if (xdisp != 0) {
@@ -331,6 +333,10 @@ void stop_secondary(void) {
     bb_stop(bb_status.x_pid);
     //usleep returns if interrupted by a signal (child process death)
     usleep(5000000);//sleep for max 5 seconds
+  }
+
+  if (!bb_config.pm_enabled) {
+    return;//do not switch card off if pm_enabled is false
   }
 
   //if card is on and can be switched, switch it off

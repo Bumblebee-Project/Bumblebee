@@ -301,6 +301,7 @@ void init_config( int argc, char ** argv ){
   strncpy(bb_config.x_conf_file, CONF_XORG, BUFFER_SIZE);
   bb_config.pm_enabled = CONF_PMENABLE;
   bb_config.stop_on_exit = CONF_STOPONEXIT;
+  bb_config.fallback_start = CONF_FALLBACKSTART;
   strncpy(bb_config.vgl_compress, CONF_VGLCOMPRESS, BUFFER_SIZE);
   if (bb_config.driver[0] == 0){//only set driver if not autodetected
     strncpy(bb_config.driver, CONF_DRIVER, BUFFER_SIZE);

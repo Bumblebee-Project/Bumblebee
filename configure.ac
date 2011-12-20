@@ -19,6 +19,7 @@ AC_DEFINE(CONF_SOCKPATH, "/var/run/bumblebee.socket", "socket path")
 AC_DEFINE(CONF_GID, "bumblebee", "group to use when setting GID")
 AC_DEFINE(CONF_PMENABLE, 1, "enable power management")
 AC_DEFINE(CONF_STOPONEXIT, 1, "stop secondary X on exit of last optirun executable")
+AC_DEFINE(CONF_FALLBACKSTART, 1, "make optirun start applications normally if secondary is unavailable")
 AC_DEFINE(CONF_VGLCOMPRESS, "proxy", "vglclient transport method")
 AC_DEFINE(CONF_DRIVER, "nouveau", "nvidia driver to use")
 
