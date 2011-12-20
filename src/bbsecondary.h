@@ -26,7 +26,7 @@
 void start_secondary(void);
 
 /// Kill the second X server if any, turn card off if requested.
-void stop_secondary(void);
+void stop_secondary(int request_switch);
 
 /// Checks what methods are available and what drivers are installed.
 void check_secondary(void);

@@ -325,7 +325,7 @@ void start_secondary(void) {
 }//start_secondary
 
 /// Kill the second X server if any, turn card off if requested.
-void stop_secondary(void) {
+void stop_secondary(int switch_card) {
   // make repeated attempts to kill X
   /// \todo Perhaps switch to a different signal after a few tries? At least put a timeout in...
   while (bb_is_running(bb_status.x_pid)) {
@@ -335,7 +335,7 @@ void stop_secondary(void) {
     usleep(5000000);//sleep for max 5 seconds
   }
 
-  if (!bb_config.pm_enabled) {
+  if (!(bb_config.pm_enabled && switch_card)) {
     return;//do not switch card off if pm_enabled is false
   }
 
@@ -401,7 +401,7 @@ void check_secondary(void){
   if (bb_config.driver[0] == 0){
     bb_log(LOG_WARNING, "No driver autodetected. Using configured value instead.\n");
   }
-  
+
   //check switch availability, warn if not availble
   int bbstatus = bbswitch_status();
   if (bbstatus >= 0){
