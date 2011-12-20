@@ -5,10 +5,7 @@ AC_PREREQ([2.68])
 AC_INIT([bumblebeed], [bleeding-edge], [https://github.com/Bumblebee-Project/bumblebeed])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_SRCDIR([src/bbsocket.c])
-AC_CONFIG_HEADERS([config.h])
-
-# version number
-AC_DEFINE_UNQUOTED(GITVERSION, "`git describe --tags`", "git version number")
+#AC_CONFIG_HEADERS([config.h])
 
 # default configuration
 AC_DEFINE(CONF_XDISP, ":8", "X screen number")

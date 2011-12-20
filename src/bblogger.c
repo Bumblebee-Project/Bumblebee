@@ -24,7 +24,6 @@
 
 #include "bblogger.h"
 #include "bbconfig.h"
-#include "config.h"
 
 /**
  * Initialize log capabilities. Return 0 on success

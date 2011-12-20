@@ -3,7 +3,7 @@
 AUTOMAKE_OPTIONS = subdir-objects
 
 AM_CPPFLAGS = ${regular_CPPFLAGS} ${libX11_CFLAGS}
-AM_CFLAGS = ${regular_CFLAGS} -Wextra -funsigned-char
+AM_CFLAGS = ${regular_CFLAGS} -Wextra -funsigned-char -DGITVERSION="\"`git describe --tags`\""
 
 bin_PROGRAMS = bumblebeed optirun
 
