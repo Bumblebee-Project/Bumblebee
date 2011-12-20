@@ -1,0 +1,16 @@
+Section "ServerLayout"
+    Identifier     "Layout0"
+    Screen         "Screen0"
+    Option         "AutoAddDevices" "false"
+EndSection
+
+Section "Device"
+    Identifier     "Device0"
+    Driver         "nouveau"
+    BusID "PCI:01:00:0"
+EndSection
+
+Section "Screen"
+    Identifier     "Screen0"
+    Device         "Device0"
+EndSection
