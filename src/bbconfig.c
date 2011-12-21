@@ -120,7 +120,7 @@ static int read_configuration( void ) {
       } else if (strncmp(kvp.key, "DRIVER", 7) == 0) {
         snprintf(bb_config.driver, BUFFER_SIZE, "%s", kvp.value);
         bb_log(LOG_DEBUG, "value set: driver = %s\n", bb_config.driver);
-      } else if (strncmp(kvp.key, "LD_LIBRARY_PATH", 16) == 0) {
+      } else if (strncmp(kvp.key, "NV_LIBRARY_PATH", 16) == 0) {
         snprintf(bb_config.ld_path, BUFFER_SIZE, "%s", kvp.value);
         bb_log(LOG_DEBUG, "value set: ld_path = %s\n", bb_config.ld_path);
       } else if (strncmp(kvp.key, "CARD_SHUTDOWN_STATE", 20) == 0) {
