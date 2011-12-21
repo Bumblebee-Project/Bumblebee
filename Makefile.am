@@ -2,7 +2,8 @@
 
 AUTOMAKE_OPTIONS = subdir-objects
 
-AM_CPPFLAGS = ${regular_CPPFLAGS} ${libX11_CFLAGS}
+AM_CPPFLAGS = ${regular_CPPFLAGS} ${libX11_CFLAGS} \
+		-DCONFIG_FILE='"$(sysconfdir)/bumblebee.conf"' \
 AM_CFLAGS = ${regular_CFLAGS} -Wextra -funsigned-char
 
 bin_PROGRAMS = bumblebeed optirun

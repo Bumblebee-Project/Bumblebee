@@ -13,7 +13,6 @@ AC_DEFINE_UNQUOTED(GITVERSION, "`git describe --tags`", "git version number")
 # default configuration
 AC_DEFINE(CONF_XDISP, ":8", "X screen number")
 AC_DEFINE(CONF_XORG, "/etc/bumblebee/xorg.conf.%s", "xorg.conf path, %s will be replaced by used driver")
-AC_DEFINE(CONFIG_FILE, "/etc/bumblebee/bumblebeed.conf", "configuration file path")
 AC_DEFINE(CONF_LDPATH, "/usr/lib64/nvidia-current", "ld path")
 AC_DEFINE(CONF_SOCKPATH, "/var/run/bumblebee.socket", "socket path")
 AC_DEFINE(CONF_GID, "bumblebee", "group to use when setting GID")
