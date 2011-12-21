@@ -3,8 +3,8 @@
 AUTOMAKE_OPTIONS = subdir-objects
 
 AM_CPPFLAGS = ${regular_CPPFLAGS} ${libX11_CFLAGS} \
-		-DCONFIG_FILE='"$(sysconfdir)/bumblebee.conf"' \
-		-DCONF_XORG='"$(sysconfdir)/xorg.conf.%s"'
+		-DCONFIG_FILE='"$(sysconfdir)/bumblebee/bumblebee.conf"' \
+		-DCONF_XORG='"$(sysconfdir)/bumblebee/xorg.conf.%s"'
 AM_CFLAGS = ${regular_CFLAGS} -Wextra -funsigned-char -DGITVERSION="\"`git describe --tags`\""
 
 bin_PROGRAMS = bumblebeed optirun
