@@ -52,10 +52,11 @@ static struct bb_key_value bb_get_key_value(const char* line) {
   }
   return kvpair;
 }
+
 /**
- * Strips leading whitespaces from a string
+ * Strips leading and trailing whitespaces from a string
  *
- * @param str String to be cleared of leading whitespaces
+ * @param str String to be cleared of leading and trailing whitespaces
  */
 static void strip_lead_trail_ws(char* str) {
   char *end;
@@ -73,25 +74,6 @@ static void strip_lead_trail_ws(char* str) {
   }
   // Add null terminator to end
   *(end+1) = 0;
-}
-
-/**
- * Strips all whitespaces from a string
- *
- * @param str String to be cleared of whitespaces
- */
-static void stripws(char* str) {
-  char *orig = str;
-  char *stripped = str;
-  orig = str;
-  while (*orig != 0) {
-    if (isspace(*orig)) {
-      ++orig;
-    } else {
-      *stripped++ = *orig++;
-    }
-  }
-  str = stripped;
 }
 
 /**
