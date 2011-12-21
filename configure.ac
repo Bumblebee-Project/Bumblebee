@@ -9,7 +9,6 @@ AC_CONFIG_SRCDIR([src/bbsocket.c])
 
 # default configuration
 AC_DEFINE(CONF_XDISP, ":8", "X screen number")
-AC_DEFINE(CONF_XORG, "/etc/bumblebee/xorg.conf.%s", "xorg.conf path, %s will be replaced by used driver")
 AC_DEFINE(CONF_LDPATH, "/usr/lib64/nvidia-current", "ld path")
 AC_DEFINE(CONF_SOCKPATH, "/var/run/bumblebee.socket", "socket path")
 AC_DEFINE(CONF_GID, "bumblebee", "group to use when setting GID")
