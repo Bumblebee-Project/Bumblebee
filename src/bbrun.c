@@ -236,26 +236,36 @@ int bb_is_running(pid_t proc) {
 }
 
 /// Stops the running process, if any.
-
 void bb_stop(pid_t proc) {
   if (bb_is_running(proc)) {
     kill(proc, SIGTERM);
   }
 }
 
-/// Stops all the running processes, if any.
-
-void bb_stop_all(void) {
-  struct pidlist * curr = 0;
-  curr = pidlist_start;
-  //no list? cancel.
-  if (curr == 0) {
-    return;
+/// Stops the running process, if any.
+/// Does not return until successful.
+/// Is always successful, eventually.
+void bb_stop_wait(pid_t proc) {
+  int i = 0;
+  while (bb_is_running(proc)) {
+    ++i;
+    //the first 10 attempts, use SIGTERM
+    if (i < 10) {
+      kill(proc, SIGTERM);
+    } else {
+      //after that, use SIGKILL
+      kill(proc, SIGKILL);
+    }
+    usleep(1000000);//sleep up to a second, waiting for process
   }
-  //kill the whole list
-  while (curr != 0) {
-    kill(curr->PID, SIGTERM);
-    curr = curr->next;
+}
+
+/// Stops all the running processes, if any.
+void bb_stop_all(void) {
+  //kill the first item on the list and wait
+  //until list is completely empty
+  while (pidlist_start > 0) {
+    bb_stop_wait(pidlist_start->PID);
   }
 }
 

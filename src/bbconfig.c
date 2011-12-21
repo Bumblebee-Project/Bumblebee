@@ -25,7 +25,6 @@
 
 #include "bbconfig.h"
 #include "bblogger.h"
-#include "config.h"
 #include <errno.h>
 #include <ctype.h>
 #include <assert.h>

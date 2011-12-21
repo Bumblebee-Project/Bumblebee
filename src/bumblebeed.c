@@ -23,7 +23,6 @@
  * C-coded version of the Bumblebee daemon and optirun.
  */
 
-#include "config.h"
 #include "bbconfig.h"
 #include "bbsocket.h"
 #include "bblogger.h"
@@ -186,21 +185,11 @@ static void main_loop(void) {
   struct clientsocket * last = 0; //pointer to the last socket
   struct clientsocket * curr = 0; //current pointer to a socket
   struct clientsocket * prev = 0; //previous pointer to a socket
-  time_t lastcheck = 0;
 
   bb_log(LOG_INFO, "Started main loop\n");
   /* Listen for Optirun conections and act accordingly */
   while (bb_status.bb_socket != -1) {
     usleep(100000); //sleep 100ms to prevent 100% CPU time usage
-
-    //every five seconds
-    if (time(0) - lastcheck > 5) {
-      lastcheck = time(0);
-      //stop X / card if there is no need to keep it running
-      if ((bb_status.appcount == 0) && (bb_config.stop_on_exit) && (bb_is_running(bb_status.x_pid) || (status_secondary() > 0))) {
-        stop_secondary();
-      }
-    }
 
     /* Accept a connection. */
     optirun_socket_fd = socketAccept(&bb_status.bb_socket, SOCK_NOBLOCK);
@@ -229,6 +218,10 @@ static void main_loop(void) {
         //remove from list
         if (curr->inuse > 0) {
           bb_status.appcount--;
+          //stop X / card if there is no need to keep it running
+          if ((bb_status.appcount == 0) && (bb_config.stop_on_exit)) {
+            stop_secondary();
+          }
         }
         if (last == curr) {
           last = prev;
@@ -304,14 +297,15 @@ int main(int argc, char* argv[]) {
 
   /* Initialize communication socket, enter main loop */
   bb_status.bb_socket = socketServer(bb_config.socket_path, SOCK_NOBLOCK);
+  stop_secondary();//turn off card, nobody is connected right now.
   main_loop();
   unlink(bb_config.socket_path);
+  bb_status.runmode = BB_RUN_EXIT;//make sure all methods understand we are shutting down
   if (bb_config.card_shutdown_state) {
     //if shutdown state = 1, turn on card
     start_secondary();
   } else {
-    //if shutdown state = 0, turn off card regardless of pm_enabled setting
-    bb_config.pm_enabled = 1;
+    //if shutdown state = 0, turn off card
     stop_secondary();
   }
   bb_closelog();

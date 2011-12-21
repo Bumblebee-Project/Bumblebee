@@ -39,6 +39,9 @@ int bb_is_running(pid_t proc);
 /// Stops the running process, if any.
 void bb_stop(pid_t proc);
 
+/// Stops the running process, if any.
+void bb_stop_wait(pid_t proc);
+
 /// Stops all the running processes, if any.
 void bb_stop_all(void);
 
