@@ -425,16 +425,14 @@ int status_secondary(void) {
 /// Will print warning message if no switching method is found.
 void check_secondary(void) {
   //check installed drivers
-  bb_config.driver[0] = 0;
   if (module_is_loaded("nvidia")) {
     snprintf(bb_config.driver, BUFFER_SIZE, "nvidia");
     bb_log(LOG_DEBUG, "Detected nvidia driver\n");
-  }
-  if (module_is_loaded("nouveau")) {
+  } else if (module_is_loaded("nouveau")) {
     snprintf(bb_config.driver, BUFFER_SIZE, "nouveau");
     bb_log(LOG_DEBUG, "Detected nouveau driver\n");
-  }
-  if (bb_config.driver[0] == 0) {
+  } else {
+    bb_config.driver[0] = 0;
     bb_log(LOG_WARNING, "No driver autodetected. Using configured value instead.\n");
   }
 
