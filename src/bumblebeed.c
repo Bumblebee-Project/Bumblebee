@@ -107,7 +107,7 @@ static void handle_signal(int sig) {
     case SIGQUIT:
     case SIGTERM:
       bb_log(LOG_WARNING, "Received %s signal.\n", strsignal(sig));
-      socketClose(bb_status->bb_socket); //closing the socket terminates the server
+      socketClose(&bb_status.bb_socket); //closing the socket terminates the server
       break;
     default:
       bb_log(LOG_WARNING, "Unhandled signal %s\n", strsignal(sig));
@@ -192,7 +192,7 @@ static void main_loop(void) {
     usleep(100000); //sleep 100ms to prevent 100% CPU time usage
 
     /* Accept a connection. */
-    optirun_socket_fd = socketAccept(bb_status->bb_socket, SOCK_NOBLOCK);
+    optirun_socket_fd = socketAccept(&bb_status.bb_socket, SOCK_NOBLOCK);
     if (optirun_socket_fd >= 0) {
       bb_log(LOG_DEBUG, "Accepted new connection\n", optirun_socket_fd, bb_status.appcount);
 

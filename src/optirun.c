@@ -49,7 +49,7 @@ static void handle_signal(int sig) {
     case SIGQUIT:
     case SIGTERM:
       bb_log(LOG_WARNING, "Received %s signal.\n", strsignal(sig));
-      socketClose(bb_status->bb_socket); //closing the socket terminates the server
+      socketClose(&bb_status.bb_socket); //closing the socket terminates the server
       break;
     default:
       bb_log(LOG_WARNING, "Unhandled signal %s\n", strsignal(sig));
@@ -91,12 +91,12 @@ int main(int argc, char* argv[]) {
   /* Request status */
   if (bb_status.runmode == BB_RUN_STATUS) {
     r = snprintf(buffer, BUFFER_SIZE, "Status?");
-    socketWrite(bb_status->bb_socket, buffer, r);
+    socketWrite(&bb_status.bb_socket, buffer, r);
     while (bb_status.bb_socket != -1) {
-      r = socketRead(bb_status->bb_socket, buffer, BUFFER_SIZE);
+      r = socketRead(&bb_status.bb_socket, buffer, BUFFER_SIZE);
       if (r > 0) {
         printf("Bumblebee status: %*s\n", r, buffer);
-        socketClose(bb_status->bb_socket);
+        socketClose(&bb_status.bb_socket);
       }
     }
   }
@@ -105,14 +105,14 @@ int main(int argc, char* argv[]) {
   if (bb_status.runmode == BB_RUN_APP) {
     int ranapp = 0;
     r = snprintf(buffer, BUFFER_SIZE, "Checking availability...");
-    socketWrite(bb_status->bb_socket, buffer, r);
+    socketWrite(&bb_status.bb_socket, buffer, r);
     while (bb_status.bb_socket != -1) {
-      r = socketRead(bb_status->bb_socket, buffer, BUFFER_SIZE);
+      r = socketRead(&bb_status.bb_socket, buffer, BUFFER_SIZE);
       if (r > 0) {
         bb_log(LOG_INFO, "Response: %*s\n", r, buffer);
         switch (buffer[0]) {
           case 'N': //No, run normally.
-            socketClose(bb_status->bb_socket);
+            socketClose(&bb_status.bb_socket);
             if (!bb_config.fallback_start) {
               bb_log(LOG_ERR, "Cannot access secondary GPU. Aborting.\n");
             }
@@ -143,11 +143,11 @@ int main(int argc, char* argv[]) {
             }
             vglrun_args[8 + r] = 0;
             bb_run_fork_wait(vglrun_args);
-            socketClose(bb_status->bb_socket);
+            socketClose(&bb_status.bb_socket);
             break;
           default: //Something went wrong - output and exit.
             bb_log(LOG_ERR, "Problem: %*s\n", r, buffer);
-            socketClose(bb_status->bb_socket);
+            socketClose(&bb_status.bb_socket);
             break;
         }
       }
