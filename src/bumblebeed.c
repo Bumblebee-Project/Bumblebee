@@ -284,7 +284,7 @@ int main(int argc, char* argv[]) {
   init_config(argc, argv);
 
   /* Change GID and mask according to configuration */
-  if ((bb_config.gid_name != 0) && (bb_config.gid_name[0] != 0)){
+  if ((bb_config.gid_name != 0) && (bb_config.gid_name[0] != 0)) {
     bb_chgid();
   }
 
@@ -297,10 +297,10 @@ int main(int argc, char* argv[]) {
 
   /* Initialize communication socket, enter main loop */
   bb_status.bb_socket = socketServer(bb_config.socket_path, SOCK_NOBLOCK);
-  stop_secondary();//turn off card, nobody is connected right now.
+  stop_secondary(); //turn off card, nobody is connected right now.
   main_loop();
   unlink(bb_config.socket_path);
-  bb_status.runmode = BB_RUN_EXIT;//make sure all methods understand we are shutting down
+  bb_status.runmode = BB_RUN_EXIT; //make sure all methods understand we are shutting down
   if (bb_config.card_shutdown_state) {
     //if shutdown state = 1, turn on card
     start_secondary();

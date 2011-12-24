@@ -256,7 +256,7 @@ void bb_stop_wait(pid_t proc) {
       //after that, use SIGKILL
       kill(proc, SIGKILL);
     }
-    usleep(1000000);//sleep up to a second, waiting for process
+    usleep(1000000); //sleep up to a second, waiting for process
   }
 }
 

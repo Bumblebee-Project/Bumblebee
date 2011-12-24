@@ -37,7 +37,6 @@
 #include <signal.h>
 #include <time.h>
 
-
 /**
  *  Handle recieved signals - except SIGCHLD, which is handled in bbrun.c
  */
@@ -68,7 +67,7 @@ int main(int argc, char* argv[]) {
 
   /* Initializing configuration */
   init_config(argc, argv);
-  
+
   /* set runmode depending on leftover arguments */
   if (optind >= argc) {
     bb_status.runmode = BB_RUN_STATUS;
@@ -114,7 +113,7 @@ int main(int argc, char* argv[]) {
         switch (buffer[0]) {
           case 'N': //No, run normally.
             socketClose(&bb_status.bb_socket);
-            if (!bb_config.fallback_start){
+            if (!bb_config.fallback_start) {
               bb_log(LOG_ERR, "Cannot access secondary GPU. Aborting.\n");
             }
             break;

@@ -127,14 +127,14 @@ static int switcheroo_status(void) {
   if (bbs == 0) {
     return -1;
   }
-  while (r != 0){
+  while (r != 0) {
     r = fgets(buffer, BBS_BUFFER, bbs);
-    if (buffer[2] == 'D'){//found the DIS line
+    if (buffer[2] == 'D') {//found the DIS line
       fclose(bbs);
-      if (buffer[8] == 'P'){
-        return 1;//Pwr
+      if (buffer[8] == 'P') {
+        return 1; //Pwr
       } else {
-        return 0;//Off
+        return 0; //Off
       }
     }
   }
@@ -207,12 +207,12 @@ static int module_is_loaded(char * mod) {
   char * r = buffer;
   FILE * bbs = fopen("/proc/modules", "r");
   if (bbs == 0) {//error opening, return -1
-    bb_log(LOG_DEBUG,"Couldn't open /proc/modules");
+    bb_log(LOG_DEBUG, "Couldn't open /proc/modules");
     return -1;
   }
   while (r != 0) {
     r = fgets(buffer, BUFFER_SIZE - 1, bbs);
-    if (strstr(buffer, mod)){
+    if (strstr(buffer, mod)) {
       //found module, return 1
       fclose(bbs);
       return 1;
@@ -226,9 +226,15 @@ static int module_is_loaded(char * mod) {
 /// Checks if either nvidia or nouveau is currently loaded.
 /// Returns 1 if yes, 0 otherwise (not loaded / error occured).
 static int is_driver_loaded(void) {
-  if (module_is_loaded("nvidia") == 1) {return 1;}
-  if (module_is_loaded("nouveau") == 1) {return 1;}
-  if (module_is_loaded(bb_config.driver) == 1) {return 1;}
+  if (module_is_loaded("nvidia") == 1) {
+    return 1;
+  }
+  if (module_is_loaded("nouveau") == 1) {
+    return 1;
+  }
+  if (module_is_loaded(bb_config.driver) == 1) {
+    return 1;
+  }
   return 0;
 }//is_driver_loaded
 
@@ -311,7 +317,7 @@ void start_secondary(void) {
     if (xdisp != 0) {
       break;
     }
-    usleep(100000);//don't retry too fast
+    usleep(100000); //don't retry too fast
   }
 
   //check if X is available
@@ -335,7 +341,7 @@ void start_secondary(void) {
 
 /// Unloads a module if loaded.
 /// Retries up to 10 times or until successful.
-static void unload_module( char * module_name) {
+static void unload_module(char * module_name) {
   int i = 0;
   while (module_is_loaded(module_name) == 1) {
     if (i > 0) {
@@ -343,7 +349,7 @@ static void unload_module( char * module_name) {
         bb_log(LOG_ERR, "Could not unload module %s - giving up\n");
         return;
       }
-      usleep(1000000);//make sure we sleep for a second or so
+      usleep(1000000); //make sure we sleep for a second or so
     }
     bb_log(LOG_INFO, "Unloading %s module\n", module_name);
     char * mod_argv[] = {
@@ -365,15 +371,15 @@ void stop_secondary() {
   }
 
   if (!bb_config.pm_enabled && (bb_status.runmode != BB_RUN_EXIT)) {
-    return;//do not switch card off if pm_enabled is false, unless exiting.
+    return; //do not switch card off if pm_enabled is false, unless exiting.
   }
 
   //if card is on and can be switched, switch it off
   if (bbswitch_status() == 1) {
     //unload driver(s) first, if loaded
-    unload_module(bb_config.driver);//check manually given driver
-    unload_module("nvidia");//always check nvidia driver when unloading through bbswitch
-    unload_module("nouveau");//always check nouveau driver when unloading through bbswitch
+    unload_module(bb_config.driver); //check manually given driver
+    unload_module("nvidia"); //always check nvidia driver when unloading through bbswitch
+    unload_module("nouveau"); //always check nouveau driver when unloading through bbswitch
 
     //only turn card off if no drivers are loaded
     if (!is_driver_loaded()) {
@@ -398,11 +404,15 @@ void stop_secondary() {
 }//stop_secondary
 
 /// Returns 0 if card is off, 1 if card is on, -1 if not-switchable.
-int status_secondary(void){
+int status_secondary(void) {
   int bbstatus = bbswitch_status();
-  if (bbstatus >= 0){return bbstatus;}
+  if (bbstatus >= 0) {
+    return bbstatus;
+  }
   bbstatus = switcheroo_status();
-  if (bbstatus >= 0){return bbstatus;}
+  if (bbstatus >= 0) {
+    return bbstatus;
+  }
   return -1;
 }
 
@@ -410,7 +420,7 @@ int status_secondary(void){
 /// Sets sane defaults for the current environment, also prints
 /// debug messages including the found hardware/software.
 /// Will print warning message if no switching method is found.
-void check_secondary(void){
+void check_secondary(void) {
   //check installed drivers
   bb_config.driver[0] = 0;
   if (module_is_loaded("nvidia")) {
@@ -421,18 +431,18 @@ void check_secondary(void){
     snprintf(bb_config.driver, BUFFER_SIZE, "nouveau");
     bb_log(LOG_DEBUG, "Detected nouveau driver\n");
   }
-  if (bb_config.driver[0] == 0){
+  if (bb_config.driver[0] == 0) {
     bb_log(LOG_WARNING, "No driver autodetected. Using configured value instead.\n");
   }
 
   //check switch availability, warn if not availble
   int bbstatus = bbswitch_status();
-  if (bbstatus >= 0){
+  if (bbstatus >= 0) {
     bb_log(LOG_INFO, "bbswitch detected and will be used.\n");
     return;
   }
   bbstatus = switcheroo_status();
-  if (bbstatus >= 0){
+  if (bbstatus >= 0) {
     bb_log(LOG_INFO, "vga_switcheroo detected and will be used.\n");
     return;
   }

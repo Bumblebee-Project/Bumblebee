@@ -68,12 +68,12 @@ static void strip_lead_trail_ws(char* str) {
     return;
   }
   // Remove trailing spaces
-  end = str + strlen(str) -1;
+  end = str + strlen(str) - 1;
   while ((end > str) && (isspace(*end))) {
     end--;
   }
   // Add null terminator to end
-  *(end+1) = 0;
+  *(end + 1) = 0;
 }
 
 /**
@@ -81,8 +81,8 @@ static void strip_lead_trail_ws(char* str) {
  *
  *  @return 0 on success.
  */
-static int read_configuration( void ) {
-  bb_log(LOG_DEBUG, "Reading configuration file: %s\n",bb_config.bb_conf_file);
+static int read_configuration(void) {
+  bb_log(LOG_DEBUG, "Reading configuration file: %s\n", bb_config.bb_conf_file);
   FILE *cf = fopen(bb_config.bb_conf_file, "r");
   if (cf == 0) { /* An error ocurred */
     bb_log(LOG_ERR, "Error in config file: %s\n", strerror(errno));
@@ -134,7 +134,7 @@ static int read_configuration( void ) {
 }
 
 /// Prints a single line, for use by print_usage, with alignment.
-static void print_usage_line( char * opt, char * desc) {
+static void print_usage_line(char * opt, char * desc) {
   printf("  %-25s%s\n", opt, desc);
 }
 
@@ -184,30 +184,30 @@ static void print_usage(int exit_val) {
 }
 
 /// Read the commandline parameters
-static void read_cmdline_config( int argc, char ** argv ){
+static void read_cmdline_config(int argc, char ** argv) {
   /* Parse the options, set flags as necessary */
   int opt = 0;
   optind = 0;
   static const char *optString = "+Dqvx:d:s:g:l:c:C:Vh?";
   static const struct option longOpts[] = {
-    {"daemon",0,0,'D'},
-    {"quiet",0,0,'q'},
-    {"silent",0,0,'q'},
-    {"verbose",0,0,'v'},
-    {"xconf",1,0,'x'},
-    {"display",1,0,'d'},
-    {"socket",1,0,'s'},
-    {"group",1,0,'g'},
-    {"ldpath",1,0,'l'},
-    {"vgl-compress",1,0,'c'},
-    {"config",1,0,'C'},
-    {"help",1,0,'h'},
-    {"silent",0,0,'q'},
-    {"version",0,0,'V'},
+    {"daemon", 0, 0, 'D'},
+    {"quiet", 0, 0, 'q'},
+    {"silent", 0, 0, 'q'},
+    {"verbose", 0, 0, 'v'},
+    {"xconf", 1, 0, 'x'},
+    {"display", 1, 0, 'd'},
+    {"socket", 1, 0, 's'},
+    {"group", 1, 0, 'g'},
+    {"ldpath", 1, 0, 'l'},
+    {"vgl-compress", 1, 0, 'c'},
+    {"config", 1, 0, 'C'},
+    {"help", 1, 0, 'h'},
+    {"silent", 0, 0, 'q'},
+    {"version", 0, 0, 'V'},
     {0, 0, 0, 0}
   };
-  while ((opt = getopt_long(argc, argv, optString, longOpts, 0)) != -1){
-    switch (opt){
+  while ((opt = getopt_long(argc, argv, optString, longOpts, 0)) != -1) {
+    switch (opt) {
       case 'D'://daemonize
         bb_status.runmode = BB_RUN_DAEMON;
         break;
@@ -254,25 +254,27 @@ static void read_cmdline_config( int argc, char ** argv ){
 /// then parsing commandline parameters,
 /// then loading the config file,
 /// finally again parsing commandline parameters.
-void init_config( int argc, char ** argv ){
+void init_config(int argc, char ** argv) {
   /* set status */
   int i = 0;
   int lastslash = 0;
   //find the last slash in the program path
-  while (argv[0][i] != 0){
-    if (argv[0][i] == '/'){lastslash = i+1;}
+  while (argv[0][i] != 0) {
+    if (argv[0][i] == '/') {
+      lastslash = i + 1;
+    }
     ++i;
   }
   //set program name
-  strncpy(bb_status.program_name, argv[0]+lastslash, BUFFER_SIZE);
+  strncpy(bb_status.program_name, argv[0] + lastslash, BUFFER_SIZE);
   bb_status.verbosity = VERB_WARN;
   bb_status.bb_socket = -1;
   bb_status.appcount = 0;
-  bb_status.errors[0] = 0;//set first byte to NULL = empty string
+  bb_status.errors[0] = 0; //set first byte to NULL = empty string
   bb_status.x_pid = 0;
-  if (strcmp(bb_status.program_name, "optirun") == 0){
+  if (strcmp(bb_status.program_name, "optirun") == 0) {
     bb_status.runmode = BB_RUN_APP;
-  }else{
+  } else {
     bb_status.runmode = BB_RUN_SERVER;
   }
 
@@ -288,7 +290,7 @@ void init_config( int argc, char ** argv ){
   bb_config.fallback_start = CONF_FALLBACKSTART;
   bb_config.card_shutdown_state = CONF_SHUTDOWNSTATE;
   strncpy(bb_config.vgl_compress, CONF_VGLCOMPRESS, BUFFER_SIZE);
-  if (bb_config.driver[0] == 0){//only set driver if not autodetected
+  if (bb_config.driver[0] == 0) {//only set driver if not autodetected
     strncpy(bb_config.driver, CONF_DRIVER, BUFFER_SIZE);
   }
 
