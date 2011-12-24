@@ -272,7 +272,9 @@ static void main_loop(void) {
 }
 
 int main(int argc, char* argv[]) {
-  /* Setup signal handling before anything else */
+  /* Setup signal handling before anything else. Note that messages are not
+   * shown until init_config has set bb_status.verbosity
+   */
   signal(SIGHUP, handle_signal);
   signal(SIGTERM, handle_signal);
   signal(SIGINT, handle_signal);
