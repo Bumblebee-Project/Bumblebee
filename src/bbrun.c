@@ -135,7 +135,7 @@ static void check_handler(void) {
   if (handler_set == 0) {
     struct sigaction new_action;
     new_action.sa_handler = childsig_handler;
-    sigemptyset(&new_action.sa_mask);
+    sigemptyset(new_action->sa_mask);
     new_action.sa_flags = 0;
     sigaction(SIGCHLD, &new_action, NULL);
     handler_set = 1;
