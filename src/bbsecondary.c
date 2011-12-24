@@ -203,24 +203,27 @@ static void switcheroo_off(void) {
 /// Returns negative upon error.
 /// Works by checking /proc/modules
 static int module_is_loaded(char * mod) {
-  char buffer[BUFFER_SIZE];
-  char * r = buffer;
+  // use the same buffer length as lsmod
+  char buffer[4096];
   FILE * bbs = fopen("/proc/modules", "r");
+  int ret = 0;
+  // assume mod_len <= sizeof(buffer)
+  int mod_len = strlen(mod);
+
   if (bbs == 0) {//error opening, return -1
     bb_log(LOG_DEBUG, "Couldn't open /proc/modules");
     return -1;
   }
-  while (r != 0) {
-    r = fgets(buffer, BUFFER_SIZE - 1, bbs);
-    if (strstr(buffer, mod)) {
-      //found module, return 1
-      fclose(bbs);
-      return 1;
+  while (fgets(buffer, sizeof(buffer), bbs)) {
+    // match "module" with "module " and not "module-blah"
+    if (!strncmp(buffer, mod, mod_len) && buffer[mod_len + 1] == ' ') {
+      // module is found
+      ret = 1;
+      break;
     }
   }
-  //not found, return 0
   fclose(bbs);
-  return 0;
+  return ret;
 }//module_is_loaded
 
 /// Checks if either nvidia or nouveau is currently loaded.
