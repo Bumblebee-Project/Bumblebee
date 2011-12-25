@@ -79,3 +79,4 @@ extern struct bb_config_struct bb_config;
 
 /// Read commandline parameters and config file.
 void init_config(int argc, char ** argv);
+void config_dump(void);

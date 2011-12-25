@@ -76,6 +76,7 @@ int main(int argc, char* argv[]) {
   }
 
   bb_init_log();
+  config_dump();
   bb_log(LOG_DEBUG, "%s version %s starting...\n", bb_status.program_name, GITVERSION);
 
   /* Connect to listening daemon */

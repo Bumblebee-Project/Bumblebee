@@ -282,8 +282,11 @@ int main(int argc, char* argv[]) {
 
   bb_init_log();
 
-  check_secondary();
+  /* first load the config to make the logging verbosity level available */
   init_config(argc, argv);
+  check_secondary();
+  /* dump the config after detecting the driver */
+  config_dump();
 
   /* Change GID and mask according to configuration */
   if ((bb_config.gid_name != 0) && (bb_config.gid_name[0] != 0)) {

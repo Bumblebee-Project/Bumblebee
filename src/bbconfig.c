@@ -290,9 +290,8 @@ void init_config(int argc, char ** argv) {
   bb_config.fallback_start = CONF_FALLBACKSTART;
   bb_config.card_shutdown_state = CONF_SHUTDOWNSTATE;
   strncpy(bb_config.vgl_compress, CONF_VGLCOMPRESS, BUFFER_SIZE);
-  if (bb_config.driver[0] == 0) {//only set driver if not autodetected
-    strncpy(bb_config.driver, CONF_DRIVER, BUFFER_SIZE);
-  }
+  // default to auto-detect
+  strncpy(bb_config.driver, "", BUFFER_SIZE);
 
   // parse commandline configuration (for config file, if changed)
   read_cmdline_config(argc, argv);
@@ -307,7 +306,12 @@ void init_config(int argc, char ** argv) {
     strncpy(tmpstr, bb_config.x_conf_file, BUFFER_SIZE);
     snprintf(bb_config.x_conf_file, BUFFER_SIZE, tmpstr, bb_config.driver);
   }
+}
 
+/**
+ * Prints the current configuration with verbosity level LOG_DEBUG
+ */
+void config_dump(void) {
   //print configuration as debug messages
   bb_log(LOG_DEBUG, "Active configuration:\n");
   bb_log(LOG_DEBUG, " X display: %s\n", bb_config.x_display);
