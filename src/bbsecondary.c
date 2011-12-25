@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <fcntl.h>
 
 #define BBS_BUFFER 100
 
@@ -36,30 +37,30 @@
 /// In other words: 0 means off, anything else means on.
 static int bbswitch_status(void) {
   char buffer[BBS_BUFFER];
-  int i, r;
+  int ret = -1;
   FILE * bbs = fopen("/proc/acpi/bbswitch", "r");
   if (bbs == 0) {
     return -1;
   }
-  for (i = 0; i < BBS_BUFFER; ++i) {
-    buffer[i] = 0;
-  }
-  r = fread(buffer, 1, BBS_BUFFER - 1, bbs);
-  fclose(bbs);
-  for (i = 0; (i < BBS_BUFFER) && (i < r); ++i) {
-    if (buffer[i] == ' ') {//find the space
-      if (buffer[i + 2] == 'F') {
-        return 0;
-      }//OFF
-      if (buffer[i + 2] == 'N') {
-        return 1;
-      }//ON
+  memset(buffer, 0, BBS_BUFFER);
+  // skip the PCI Bus ID, a space and 'O'
+  if (fseek(bbs, strlen("0000:00:00.0 O"), SEEK_SET) != -1) {
+    switch (fgetc(bbs)) {
+      case 'F': // value was 0000:00:00.0 OFF
+        ret = 0;
+        break;
+      case 'N': // value was 0000:00:00.0 ON
+        ret = 1;
+        break;
+      default:
+        // this should never happen unless the behavior of the bbswitch kernel
+        // module has changed. If no device was registered, the procfs entry
+        // should not exist either
+        break;
     }
-    if (buffer[i] == 0) {
-      return -1;
-    }//end of string, stop search
   }
-  return -1; //space not found - assume bbswitch isn't working
+  fclose(bbs);
+  return ret;
 }//bbswitch_status
 
 /// Turns card on if not already on.
