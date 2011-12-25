@@ -14,6 +14,7 @@
 #include <linux/module.h>
 #include <asm/uaccess.h>
 #include <linux/suspend.h>
+#include <linux/seq_file.h>
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Toggle the discrete graphics card");
@@ -244,8 +245,8 @@ static void bbswitch_on(void) {
     pci_set_master(dis_dev);
 }
 
-static int bbswitch_write(struct file *filp, const char __user *buff,
-    unsigned long len, void *data) {
+static ssize_t bbswitch_proc_write(struct file *fp, const char __user *buff,
+    size_t len, loff_t *off) {
     char cmd[8];
 
     if (len >= sizeof(cmd)) {
@@ -265,11 +266,14 @@ static int bbswitch_write(struct file *filp, const char __user *buff,
     return len;
 }
 
-static int bbswitch_read(char *page, char **start, off_t off,
-    int count, int *eof, void *data) {
+static int bbswitch_proc_show(struct seq_file *seqfp, void *p) {
     // show the card state. Example output: 0000:01:00:00 ON
-    return snprintf(page, count, "%s %s\n", dev_name(&dis_dev->dev),
+    seq_printf(seqfp, "%s %s\n", dev_name(&dis_dev->dev),
              is_card_disabled() ? "OFF" : "ON");
+    return 0;
+}
+static int bbswitch_proc_open(struct inode *inode, struct file *file) {
+    return single_open(file, bbswitch_proc_show, NULL);
 }
 
 static int bbswitch_pm_handler(struct notifier_block *nbp,
@@ -299,6 +303,14 @@ static int bbswitch_pm_handler(struct notifier_block *nbp,
     }
     return 0;
 }
+
+static struct file_operations bbswitch_fops = {
+    .open   = bbswitch_proc_open,
+    .read   = seq_read,
+    .write  = bbswitch_proc_write,
+    .llseek = seq_lseek,
+    .release= single_release
+};
 
 static int __init bbswitch_init(void) {
     struct proc_dir_entry *acpi_entry;
@@ -339,7 +351,7 @@ static int __init bbswitch_init(void) {
         return -ENODEV;
     }
 
-    acpi_entry = create_proc_entry("bbswitch", 0660, acpi_root_dir);
+    acpi_entry = proc_create("bbswitch", 0660, acpi_root_dir, &bbswitch_fops);
     if (acpi_entry == NULL) {
         printk(KERN_ERR "bbswitch: Couldn't create proc entry\n");
         return -ENOMEM;
@@ -347,9 +359,6 @@ static int __init bbswitch_init(void) {
 
     printk(KERN_INFO "bbswitch: Succesfully loaded. Discrete card %s is %s\n",
         dev_name(&dis_dev->dev), is_card_disabled() ? "off" : "on");
-
-    acpi_entry->write_proc = bbswitch_write;
-    acpi_entry->read_proc = bbswitch_read;
 
     nb.notifier_call = &bbswitch_pm_handler;
     register_pm_notifier(&nb);
