@@ -55,18 +55,21 @@ static struct bb_key_value bb_get_key_value(const char* line) {
 }
 
 /**
- * Strips leading and trailing whitespaces from a string
+ * Strips leading and trailing whitespaces from a string. The original string
+ * is modified, trailing spaces are removed
  *
  * @param str String to be cleared of leading and trailing whitespaces
+ * @return A pointer to the first non-whitespace
  */
-static void strip_lead_trail_ws(char* str) {
-  char *end;
+static char *strip_lead_trail_ws(char *str) {
+  char *start = str, *end;
   // Remove leading spaces
-  while (isspace(*str)) {
-    str++;
+  while (isspace(*start)) {
+    start++;
   }
-  if (*str == 0) {
-    return;
+  // all whitespace
+  if (*start == 0) {
+    return start;
   }
   // Remove trailing spaces
   end = str + strlen(str) - 1;
@@ -75,6 +78,7 @@ static void strip_lead_trail_ws(char* str) {
   }
   // Add null terminator to end
   *(end + 1) = 0;
+  return start;
 }
 
 /**
@@ -90,13 +94,14 @@ static int read_configuration(void) {
     bb_log(LOG_INFO, "Using default configuration\n");
     return 1;
   }
-  char line[BUFFER_SIZE];
-  while (fgets(line, sizeof line, cf) != NULL) {
-    strip_lead_trail_ws(line);
+  char buf[BUFFER_SIZE];
+  while (fgets(buf, sizeof buf, cf) != NULL) {
+    char *line = strip_lead_trail_ws(buf);
     /* Ignore empty lines and comments */
     if ((line[0] != '#') && (line[0] != '\n')) {
       /* Parse configuration based on the run mode */
       struct bb_key_value kvp = bb_get_key_value(line);
+
       if (strncmp(kvp.key, "VGL_DISPLAY", 11) == 0) {
         snprintf(bb_config.x_display, BUFFER_SIZE, "%s", kvp.value);
         bb_log(LOG_DEBUG, "value set: x_display = %s\n", bb_config.x_display);
