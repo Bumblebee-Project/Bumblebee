@@ -119,28 +119,31 @@ static void bbswitch_off(void) {
   }
 }//bbswitch_off
 
-/// Returns 0 if card is off, 1 if card is on, -1 if bbswitch not active.
+/// Returns 0 if card is off, 1 if card is on, -1 if switcheroo not active.
 /// In other words: 0 means off, anything else means on.
 static int switcheroo_status(void) {
   char buffer[BBS_BUFFER];
-  char * r = buffer;
+  int ret = -1;
   FILE * bbs = fopen("/sys/kernel/debug/vgaswitcheroo/switch", "r");
   if (bbs == 0) {
     return -1;
   }
-  while (r != 0) {
-    r = fgets(buffer, BBS_BUFFER, bbs);
-    if (buffer[2] == 'D') {//found the DIS line
-      fclose(bbs);
-      if (buffer[8] == 'P') {
-        return 1; //Pwr
-      } else {
-        return 0; //Off
+  while (fgets(buffer, BBS_BUFFER, bbs)) {
+    if (strlen(buffer) > strlen("0:DIS: :Pwr") &&
+            !strncmp(buffer + 2, "DIS", 3)) {//found the DIS line
+      // compare the first char after "0:DIS: :"
+      switch (buffer[strlen("0:DIS: :")]) {
+        case 'P': // Pwr
+          ret = 1;
+          break;
+        case 'O':
+          ret = 0;
+          break;
       }
     }
   }
   fclose(bbs);
-  return -1; //DIS line not found - assume switcheroo isn't working
+  return ret;
 }//switcheroo_status
 
 /// Turns card on if not already on.
