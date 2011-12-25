@@ -297,11 +297,26 @@ void init_config(int argc, char ** argv) {
   read_cmdline_config(argc, argv);
 
   //check xorg.conf for %s, replace it by driver name
-  char tmpstr[BUFFER_SIZE];
-  while (strstr(bb_config.x_conf_file, "%s") != 0) {
-    strncpy(tmpstr, bb_config.x_conf_file, BUFFER_SIZE);
-    snprintf(bb_config.x_conf_file, BUFFER_SIZE, tmpstr, bb_config.driver);
+  char tmpstr[BUFFER_SIZE] = {0};
+  // position after last %s
+  char *pos = bb_config.x_conf_file;
+  char *next;
+  while ((next = strstr(pos, "DRIVER")) != 0 && strlen(tmpstr) < BUFFER_SIZE) {
+    unsigned int len = next - pos;
+    if (len + strlen(tmpstr) >= BUFFER_SIZE) {
+      // don't overflow the buffer and keep room for the null byte
+      len = BUFFER_SIZE - strlen(tmpstr) - 1;
+    }
+    strncat(tmpstr, pos, len);
+    if (strlen(tmpstr) < BUFFER_SIZE)
+      strncat(tmpstr, bb_config.driver, BUFFER_SIZE - strlen(tmpstr) - 1);
+
+    // the next search starts at the position after %s
+    pos = next + strlen("DRIVER");
   }
+  // append the remainder after the last %s if any and overwrite the setting
+  strncat(tmpstr, pos, BUFFER_SIZE - strlen(tmpstr) - 1);
+  strncpy(bb_config.x_conf_file, tmpstr, BUFFER_SIZE);
 }
 
 /**
