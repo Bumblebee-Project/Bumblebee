@@ -27,6 +27,7 @@
 #include "bbconfig.h"
 #include <X11/Xlib.h>
 #include <stdio.h>
+#include <ctype.h>
 #include <string.h>
 #include <time.h>
 #include <fcntl.h>
@@ -220,7 +221,7 @@ static int module_is_loaded(char * mod) {
   }
   while (fgets(buffer, sizeof(buffer), bbs)) {
     // match "module" with "module " and not "module-blah"
-    if (!strncmp(buffer, mod, mod_len) && buffer[mod_len + 1] == ' ') {
+    if (!strncmp(buffer, mod, mod_len) && isspace(buffer[mod_len])) {
       // module is found
       ret = 1;
       break;
