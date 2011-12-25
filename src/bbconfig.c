@@ -30,6 +30,7 @@
 #include <assert.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <libgen.h>
 
 struct bb_status_struct bb_status;
 struct bb_config_struct bb_config;
@@ -255,18 +256,8 @@ static void read_cmdline_config(int argc, char ** argv) {
 /// then loading the config file,
 /// finally again parsing commandline parameters.
 void init_config(int argc, char ** argv) {
-  /* set status */
-  int i = 0;
-  int lastslash = 0;
-  //find the last slash in the program path
-  while (argv[0][i] != 0) {
-    if (argv[0][i] == '/') {
-      lastslash = i + 1;
-    }
-    ++i;
-  }
   //set program name
-  strncpy(bb_status.program_name, argv[0] + lastslash, BUFFER_SIZE);
+  strncpy(bb_status.program_name, basename(argv[0]), BUFFER_SIZE);
   bb_status.verbosity = VERB_WARN;
   bb_status.bb_socket = -1;
   bb_status.appcount = 0;
