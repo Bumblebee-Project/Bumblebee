@@ -152,7 +152,7 @@ static int read_configuration(void) {
   while (fgets(line, sizeof line, cf) != NULL) {
     strip_lead_trail_ws(line, line, BUFFER_SIZE);
     /* Ignore empty lines and comments */
-    if ((line[0] != '#') && (line[0] != '\n')) {
+    if ((line[0] != '#') && (line[0] != '\0')) {
       /* Parse configuration based on the run mode */
       struct bb_key_value kvp;
       /* skip lines that could not be parsed */
