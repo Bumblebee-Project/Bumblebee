@@ -212,7 +212,10 @@ int socketServer(char * address, int nonblock) {
   //fill address information
   struct sockaddr_un addr;
   addr.sun_family = AF_UNIX;
-  strcpy(addr.sun_path, address);
+  // XXX this path is 107 bytes (excl. null) on Linux, a larger path is
+  // truncated. bb_config.socket_path can therefore be shrinked as well
+  strncpy(addr.sun_path, address, sizeof(addr.sun_path) - 1);
+  addr.sun_path[sizeof(addr.sun_path) - 1] = 0;
   //bind the socket
   int ret = bind(sock, (struct sockaddr*) & addr, sizeof (addr));
   if (ret == 0) {
