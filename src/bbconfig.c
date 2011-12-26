@@ -58,27 +58,40 @@ static struct bb_key_value bb_get_key_value(const char* line) {
  * Strips leading and trailing whitespaces from a string. The original string
  * is modified, trailing spaces are removed
  *
+ * @param dest String in which the trimmed result is to be stored
  * @param str String to be cleared of leading and trailing whitespaces
- * @return A pointer to the first non-whitespace
+ * @param len Maximum number of bytes to be copied
+ * @return The length of the trimmed string. This may be larger than len if the
+ * buffer is too small
  */
-static char *strip_lead_trail_ws(char *str) {
-  char *start = str, *end;
+static size_t strip_lead_trail_ws(char *dest, char *str, size_t len) {
+  char *end;
+  /* the length of the trimmed string */
+  size_t actual_len;
+
   // Remove leading spaces
-  while (isspace(*start)) {
-    start++;
+  while (isspace(*str)) {
+    str++;
   }
   // all whitespace
-  if (*start == 0) {
-    return start;
+  if (len == 0 || *str == 0) {
+    *dest = 0;
+    return 0;
   }
   // Remove trailing spaces
   end = str + strlen(str) - 1;
   while ((end > str) && (isspace(*end))) {
     end--;
   }
+  actual_len = end - str + 1;
+
+  // if the string is smaller. cast to hide compiler notice, len is always > 0
+  len = actual_len < len ? actual_len : (unsigned) len - 1;
+  memmove(dest, str, len);
   // Add null terminator to end
-  *(end + 1) = 0;
-  return start;
+  dest[len] = 0;
+
+  return actual_len;
 }
 
 /**
@@ -94,9 +107,9 @@ static int read_configuration(void) {
     bb_log(LOG_INFO, "Using default configuration\n");
     return 1;
   }
-  char buf[BUFFER_SIZE];
-  while (fgets(buf, sizeof buf, cf) != NULL) {
-    char *line = strip_lead_trail_ws(buf);
+  char line[BUFFER_SIZE];
+  while (fgets(line, sizeof line, cf) != NULL) {
+    strip_lead_trail_ws(line, line, BUFFER_SIZE);
     /* Ignore empty lines and comments */
     if ((line[0] != '#') && (line[0] != '\n')) {
       /* Parse configuration based on the run mode */
