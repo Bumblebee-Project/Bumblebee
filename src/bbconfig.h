@@ -30,19 +30,23 @@
 #define BB_NODEAMON 0
 
 /* Verbosity levels */
-#define VERB_NONE 0
-#define VERB_ERR 1
-#define VERB_WARN 2
-#define VERB_INFO 3
-#define VERB_DEBUG 4
-#define VERB_ALL 4
+enum verbosity_level {
+    VERB_NONE,
+    VERB_ERR,
+    VERB_WARN,
+    VERB_INFO,
+    VERB_DEBUG,
+    VERB_ALL
+};
 
 /* Running modes */
-#define BB_RUN_SERVER 0
-#define BB_RUN_DAEMON 1
-#define BB_RUN_APP 2
-#define BB_RUN_STATUS 4
-#define BB_RUN_EXIT 99
+enum bb_run_mode {
+    BB_RUN_SERVER = 0,
+    BB_RUN_DAEMON = 1,
+    BB_RUN_APP = 2,
+    BB_RUN_STATUS = 4,
+    BB_RUN_EXIT = 99
+};
 
 /* String buffer size */
 #define BUFFER_SIZE 256
@@ -50,11 +54,11 @@
 /* Structure containing the status of the application */
 struct bb_status_struct {
     char program_name[BUFFER_SIZE]; /// How this application was called.
-    int verbosity; ///Verbosity level of messages.
+    enum verbosity_level verbosity; ///Verbosity level of messages.
     int bb_socket; /// The socket file descriptor of the application.
     unsigned int appcount; /// Count applications using the X server.
     char errors[BUFFER_SIZE]; /// Error message if any. First byte is 0 otherwise.
-    int runmode; /// Running mode.
+    enum bb_run_mode runmode; /// Running mode.
     pid_t x_pid;
 };
 

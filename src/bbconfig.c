@@ -278,7 +278,9 @@ static void read_cmdline_config(int argc, char ** argv) {
         bb_status.verbosity = VERB_NONE;
         break;
       case 'v'://increase verbosity level by one
-        bb_status.verbosity++;
+        if (bb_status.verbosity < VERB_ALL) {
+          bb_status.verbosity++;
+        }
         break;
       case 'x'://xorg.conf path
         snprintf(bb_config.x_conf_file, BUFFER_SIZE, "%s", optarg);
