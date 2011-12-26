@@ -430,7 +430,7 @@ int status_secondary(void) {
 /// Will print warning message if no switching method is found.
 void check_secondary(void) {
   //check installed drivers
-  if (bb_config.driver) {
+  if (*bb_config.driver) {
     bb_log(LOG_DEBUG, "Skipping auto-detection, using configured driver"
             " '%s'\n", bb_config.driver);
   } else if (module_is_loaded("nvidia")) {
