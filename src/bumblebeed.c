@@ -120,6 +120,7 @@ static void handle_signal(int sig) {
 struct clientsocket {
   int sock;
   int inuse;
+  struct clientsocket * prev;
   struct clientsocket * next;
 };
 
@@ -181,10 +182,8 @@ static void handle_socket(struct clientsocket * C) {
  */
 static void main_loop(void) {
   int optirun_socket_fd;
-  struct clientsocket * first = 0; //pointer to the first socket
-  struct clientsocket * last = 0; //pointer to the last socket
-  struct clientsocket * curr = 0; //current pointer to a socket
-  struct clientsocket * prev = 0; //previous pointer to a socket
+  struct clientsocket *client;
+  struct clientsocket *last = 0;// the last client
 
   bb_log(LOG_INFO, "Started main loop\n");
   /* Listen for Optirun conections and act accordingly */
@@ -197,77 +196,59 @@ static void main_loop(void) {
       bb_log(LOG_DEBUG, "Accepted new connection\n", optirun_socket_fd, bb_status.appcount);
 
       /* add to list of sockets */
-      curr = malloc(sizeof (struct clientsocket));
-      curr->sock = optirun_socket_fd;
-      curr->inuse = 0;
-      curr->next = 0;
-      if (last == 0) {
-        first = curr;
-        last = curr;
-      } else {
-        last->next = curr;
-        last = curr;
-      }
+      client = malloc(sizeof (struct clientsocket));
+      client->sock = optirun_socket_fd;
+      client->inuse = 0;
+      client->prev = last;
+      client->next = last ? client : 0;
+      last = client;
     }
 
     /* loop through all connections, removing dead ones, receiving/sending data to the rest */
-    curr = first;
-    prev = 0;
-    while (curr != 0) {
-      if (curr->sock < 0) {
+    struct clientsocket *next_iter;
+    for (client = last; client; client = next_iter) {
+      /* set the next client here because client may be free()'d */
+      next_iter = client->prev;
+      if (client->sock < 0) {
         //remove from list
-        if (curr->inuse > 0) {
+        if (client->inuse > 0) {
           bb_status.appcount--;
           //stop X / card if there is no need to keep it running
           if ((bb_status.appcount == 0) && (bb_config.stop_on_exit)) {
             stop_secondary();
           }
         }
-        if (last == curr) {
-          last = prev;
-        }
-        if (prev == 0) {
-          first = curr->next;
-          free(curr);
-          curr = first;
+        if (client->next) {
+          client->next = client->prev;
         } else {
-          prev->next = curr->next;
-          free(curr);
-          curr = prev->next;
+          last = client->prev;
         }
+        if (client->prev) {
+          client->prev = client->next;
+        }
+        free(client);
       } else {
         //active connection, handle it.
-        handle_socket(curr);
-        prev = curr;
-        curr = curr->next;
+        handle_socket(client);
       }
     }
   }//socket server loop
 
   /* loop through all connections, closing all of them */
-  curr = first;
-  prev = 0;
-  while (curr != 0) {
+  client = last;
+  while (client) {
     //close socket if not already closed
-    if (curr->sock >= 0) {
-      socketClose(&curr->sock);
+    if (client->sock >= 0) {
+      socketClose(&client->sock);
     }
     //remove from list
-    if (curr->inuse > 0) {
+    if (client->inuse > 0) {
       bb_status.appcount--;
     }
-    if (last == curr) {
-      last = prev;
-    }
-    if (prev == 0) {
-      first = curr->next;
-      free(curr);
-      curr = first;
-    } else {
-      prev->next = curr->next;
-      free(curr);
-      curr = prev->next;
-    }
+    // change the client here because after free() there is no way to know prev
+    last = client;
+    client = client->prev;
+    free(last);
   }
 }
 
