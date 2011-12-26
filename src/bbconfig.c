@@ -40,18 +40,59 @@ struct bb_key_value {
   char value[BUFFER_SIZE];
 };
 
+#define CONFIG_PARSE_ERR(err_msg, line) \
+  bb_log(LOG_ERR, "Error parsing configuration: %s. line: %s\n", err_msg, line)
+
+static size_t strip_lead_trail_ws(char *dest, char *str, size_t len);
+
 /**
- * Takes a line and returns a key-value pair
+ * Takes a line and breaks it into a key-value pair
  *
  * @param line String to be broken into a key-value pair
+ * @param kvpair A pointer to a key/value struct to store data in
+ * @return 0 success, non-zero on failure
  */
-static struct bb_key_value bb_get_key_value(const char* line) {
-  struct bb_key_value kvpair;
-  if (EOF == sscanf(line, "%[^=]=%[^\n]", kvpair.key, kvpair.value)) {
-    int err_val = errno;
-    bb_log(LOG_ERR, "Error parsing configuration file: %s\n", strerror(err_val));
+static int bb_get_key_value(const char *line, struct bb_key_value *kvpair) {
+  char *equals_pos = strstr(line, "=");
+  if (!equals_pos) {
+    CONFIG_PARSE_ERR("expected an =-sign.", line);
+    return 1;
   }
-  return kvpair;
+
+  // the length of the key and value including null byte must be smaller than
+  // BUFFER_SIZE
+  int key_len = equals_pos - line;
+  if (key_len >= BUFFER_SIZE) {
+    CONFIG_PARSE_ERR("key name too long", line);
+    return 1;
+  }
+  int val_len = strlen(line) - key_len - strlen("=");
+  if (val_len >= BUFFER_SIZE) {
+    CONFIG_PARSE_ERR("value too long", line);
+    return 1;
+  }
+
+  // consider only the leading part of the line for key
+  memcpy(kvpair->key, line, key_len);
+  kvpair->key[key_len] = 0;
+  strip_lead_trail_ws(kvpair->key, kvpair->key, BUFFER_SIZE);
+  // the remainder can directly be trimmed for value
+  strip_lead_trail_ws(kvpair->value,
+      (char*) line + key_len + strlen("="), BUFFER_SIZE);
+
+  // remove the single or double quotes around a value
+  char value_first_char = *kvpair->value;
+  val_len = strlen(kvpair->value);
+  if (val_len >= 2 && (value_first_char == '\'' || value_first_char == '"')) {
+    if (kvpair->value[val_len - 1] == value_first_char) {
+      // bye last quote
+      kvpair->value[val_len - 1] = 0;
+      // hello value without quote
+      memmove(kvpair->value, kvpair->value + 1, val_len + 1);
+    }
+    // XXX perhaps log than an incorrect value was found like "val?
+  }
+  return 0;
 }
 
 /**
@@ -113,7 +154,10 @@ static int read_configuration(void) {
     /* Ignore empty lines and comments */
     if ((line[0] != '#') && (line[0] != '\n')) {
       /* Parse configuration based on the run mode */
-      struct bb_key_value kvp = bb_get_key_value(line);
+      struct bb_key_value kvp;
+      /* skip lines that could not be parsed */
+      if (bb_get_key_value(line, &kvp))
+        continue;
 
       if (strncmp(kvp.key, "VGL_DISPLAY", 11) == 0) {
         snprintf(bb_config.x_display, BUFFER_SIZE, "%s", kvp.value);
