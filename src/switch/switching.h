@@ -34,16 +34,16 @@ struct switching_method {
   char *name; /* a short name for informational / logging purposes */
   int need_driver_unloaded; /* 1 if the method needs drivers to be unloaded
                               * when disabling the card, 0 otherwise*/
-  int (*status)(void); /* reports status: off (0), on (1), unavailable (-1) */
+  enum switch_state (*status)(void); /* reports status: off (0), on (1), unavailable (-1) */
   void (*on)(void); /* attempts to enable a card */
   void (*off)(void); /* attempts to disable a card */
 };
 
-int bbswitch_status(void);
+enum switch_state bbswitch_status(void);
 void bbswitch_on(void);
 void bbswitch_off(void);
 
-int switcheroo_status(void);
+enum switch_state switcheroo_status(void);
 void switcheroo_on(void);
 void switcheroo_off(void);
 
@@ -55,6 +55,6 @@ struct switching_method switching_methods[SWITCHERS_COUNT];
 struct switching_method *switcher;
 
 struct switching_method *switcher_detect(char *name);
-int switch_status(void);
-int switch_on(void);
-int switch_off(void);
+enum switch_state switch_status(void);
+enum switch_state switch_on(void);
+enum switch_state switch_off(void);

@@ -28,14 +28,15 @@
 /**
  * Reports the status of vga switcheroo
  *
- * @return 0 if card is off, 1 if card is on and -1 if switcheroo not available
+ * @return SWITCH_OFF if card is off, SWITCH_ON if card is on and SWITCH_UNAVAIL
+ * if switcheroo not available
  */
 int switcheroo_status(void) {
   char buffer[BBS_BUFFER];
-  int ret = -1;
+  int ret = SWITCH_UNAVAIL;
   FILE * bbs = fopen(SWITCHEROO_PATH, "r");
   if (bbs == 0) {
-    return -1;
+    return SWITCH_UNAVAIL;
   }
   while (fgets(buffer, BBS_BUFFER, bbs)) {
     if (strlen(buffer) > strlen("0:DIS: :Pwr") &&
@@ -43,10 +44,10 @@ int switcheroo_status(void) {
       // compare the first char after "0:DIS: :"
       switch (buffer[strlen("0:DIS: :")]) {
         case 'P': // Pwr
-          ret = 1;
+          ret = SWITCH_ON;
           break;
         case 'O':
-          ret = 0;
+          ret = SWITCH_OFF;
           break;
       }
     }

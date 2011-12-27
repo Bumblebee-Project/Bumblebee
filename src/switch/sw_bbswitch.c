@@ -28,24 +28,25 @@
 /**
  * Reports the status of bbswitch
  *
- * @return 0 if card is off, 1 if card is on and -1 if bbswitch not available
+ * @return SWITCH_OFF if card is off, SWITCH_ON if card is on and SWITCH_UNAVAIL
+ * if bbswitch not available
  */
-int bbswitch_status(void) {
+enum switch_state bbswitch_status(void) {
   char buffer[BBS_BUFFER];
-  int ret = -1;
+  int ret = SWITCH_UNAVAIL;
   FILE * bbs = fopen(BBSWITCH_PATH, "r");
   if (bbs == 0) {
-    return -1;
+    return SWITCH_UNAVAIL;
   }
   memset(buffer, 0, BBS_BUFFER);
   // skip the PCI Bus ID, a space and 'O'
   if (fseek(bbs, strlen("0000:00:00.0 O"), SEEK_SET) != -1) {
     switch (fgetc(bbs)) {
       case 'F': // value was 0000:00:00.0 OFF
-        ret = 0;
+        ret = SWITCH_OFF;
         break;
       case 'N': // value was 0000:00:00.0 ON
-        ret = 1;
+        ret = SWITCH_ON;
         break;
       default:
         // this should never happen unless the behavior of the bbswitch kernel

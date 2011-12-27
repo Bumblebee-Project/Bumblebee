@@ -48,14 +48,14 @@ struct switching_method *switcher_detect(char *name) {
   return switcher;
 }
 
-int switch_status(void) {
+enum switch_state switch_status(void) {
   if (switcher) {
     return switcher->status();
   }
   return SWITCH_UNAVAIL;
 }
 
-int switch_on(void) {
+enum switch_state switch_on(void) {
   if (switcher) {
     if (switcher->status() == SWITCH_ON) {
       return SWITCH_ON;
@@ -67,7 +67,7 @@ int switch_on(void) {
   return SWITCH_UNAVAIL;
 }
 
-int switch_off(void) {
+enum switch_state switch_off(void) {
   if (switcher) {
     if (switcher->status() == SWITCH_OFF) {
       return SWITCH_OFF;

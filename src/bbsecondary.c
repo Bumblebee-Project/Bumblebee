@@ -221,7 +221,15 @@ void stop_secondary() {
 
 /// Returns 0 if card is off, 1 if card is on, -1 if not-switchable.
 int status_secondary(void) {
-  return switch_status();
+  switch (switch_status()) {
+    case SWITCH_ON:
+      return 1;
+    case SWITCH_OFF:
+      return 0;
+    case SWITCH_UNAVAIL:
+    default:
+      return -1;
+  }
 }
 
 /// Checks what methods are available and what drivers are installed.
