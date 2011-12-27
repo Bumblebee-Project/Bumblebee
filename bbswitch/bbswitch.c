@@ -249,10 +249,8 @@ static ssize_t bbswitch_proc_write(struct file *fp, const char __user *buff,
     size_t len, loff_t *off) {
     char cmd[8];
 
-    if (len >= sizeof(cmd)) {
-        printk(KERN_ERR "bbswitch: Input too large (%lu)\n", len);
-        return -ENOSPC;
-    }
+    if (len >= sizeof(cmd))
+        len = sizeof(cmd) - 1;
 
     if (copy_from_user(cmd, buff, len))
         return -EFAULT;
