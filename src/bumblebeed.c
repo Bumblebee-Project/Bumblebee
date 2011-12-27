@@ -56,7 +56,7 @@ static int bb_chgid(void) {
     exit(EXIT_FAILURE);
   }
   /* Change the file mode mask */
-  umask(023);
+  umask(027);
   return 0;
 }
 
