@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2011 Bumblebee Project
  * Author: Jaron Viëtor AKA "Thulinma" <jaron@vietors.com>
+ * Author: Peter Lekensteyn <lekensteyn@gmail.com>
  *
  * This file is part of Bumblebee.
  *
@@ -20,6 +21,9 @@
 
 #include "../bblogger.h"
 #include "switching.h"
+#include <errno.h>
+
+#define SWITCHEROO_PATH "/sys/kernel/debug/vgaswitcheroo/switch"
 
 /**
  * Reports the status of vga switcheroo
@@ -29,7 +33,7 @@
 int switcheroo_status(void) {
   char buffer[BBS_BUFFER];
   int ret = -1;
-  FILE * bbs = fopen("/sys/kernel/debug/vgaswitcheroo/switch", "r");
+  FILE * bbs = fopen(SWITCHEROO_PATH, "r");
   if (bbs == 0) {
     return -1;
   }
@@ -51,62 +55,31 @@ int switcheroo_status(void) {
   return ret;
 }//switcheroo_status
 
+static void switcheroo_write(char *msg) {
+  FILE * bbs = fopen(SWITCHEROO_PATH, "w");
+  if (bbs == 0) {
+    bb_log(LOG_ERR, "Could not open %s: %s\n", SWITCHEROO_PATH,
+            strerror(errno));
+    return;
+  }
+  fwrite(msg, sizeof msg, strlen(msg) + 1, bbs);
+  if (ferror(bbs)) {
+    bb_log(LOG_WARNING, "Could not write to %s: %s\n", SWITCHEROO_PATH,
+            strerror(errno));
+  }
+  fclose(bbs);
+}
+
 /**
  * Turns card on if not already on
  */
 void switcheroo_on(void) {
-  int r;
-  r = switcheroo_status();
-  if (r != 0) {
-    if (r == 1) {
-      bb_log(LOG_INFO, "Card already on, not it on [vga_switcheroo]\n");
-    } else {
-      bb_log(LOG_WARNING, "vga_switcheroo unavailable, not turning dedicated card on.\n");
-    }
-    return;
-  }
-  FILE * bbs = fopen("/sys/kernel/debug/vgaswitcheroo/switch", "w");
-  if (bbs == 0) {
-    bb_log(LOG_ERR, "Could not access vga_switcheroo.\n");
-    return;
-  }
-  r = fwrite("ON\n", 1, 4, bbs);
-  fclose(bbs);
-  if (r < 2) {
-    bb_log(LOG_WARNING, "vga_switcheroo isn't listening to us!\n");
-  }
-  r = switcheroo_status();
-  if (r != 1) {
-    bb_log(LOG_ERR, "Failed to turn dedicated card on!\n");
-  }
+  switcheroo_write("ON\n");
 }//switcheroo_on
 
 /**
  * Turns card off if not already off.
  */
 void switcheroo_off(void) {
-  int r;
-  r = switcheroo_status();
-  if (r != 1) {
-    if (r == 0) {
-      bb_log(LOG_INFO, "Card already off, not turning it off [vga_switcheroo]\n");
-    } else {
-      bb_log(LOG_WARNING, "vga_switcheroo unavailable, not turning dedicated card off.\n");
-    }
-    return;
-  }
-  FILE * bbs = fopen("/sys/kernel/debug/vgaswitcheroo/switch", "w");
-  if (bbs == 0) {
-    bb_log(LOG_ERR, "Could not access vga_switcheroo.\n");
-    return;
-  }
-  r = fwrite("OFF\n", 1, 5, bbs);
-  fclose(bbs);
-  if (r < 2) {
-    bb_log(LOG_WARNING, "vga_switcheroo isn't listening to us!\n");
-  }
-  r = switcheroo_status();
-  if (r != 0) {
-    bb_log(LOG_ERR, "Failed to turn dedicated card off!\n");
-  }
+  switcheroo_write("OFF\n");
 }//switcheroo_off

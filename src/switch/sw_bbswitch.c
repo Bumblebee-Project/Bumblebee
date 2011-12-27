@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2011 Bumblebee Project
  * Author: Jaron Viëtor AKA "Thulinma" <jaron@vietors.com>
+ * Author: Peter Lekensteyn <lekensteyn@gmail.com>
  *
  * This file is part of Bumblebee.
  *
@@ -20,6 +21,9 @@
 
 #include "../bblogger.h"
 #include "switching.h"
+#include <errno.h>
+
+#define BBSWITCH_PATH "/proc/acpi/bbswitch"
 
 /**
  * Reports the status of bbswitch
@@ -29,7 +33,7 @@
 int bbswitch_status(void) {
   char buffer[BBS_BUFFER];
   int ret = -1;
-  FILE * bbs = fopen("/proc/acpi/bbswitch", "r");
+  FILE * bbs = fopen(BBSWITCH_PATH, "r");
   if (bbs == 0) {
     return -1;
   }
@@ -54,62 +58,30 @@ int bbswitch_status(void) {
   return ret;
 }//bbswitch_status
 
+static void bbswitch_write(char *msg) {
+  FILE *bbs = fopen(BBSWITCH_PATH, "w");
+  if (bbs == 0) {
+    bb_log(LOG_ERR, "Could not open %s: %s\n", BBSWITCH_PATH, strerror(errno));
+    return;
+  }
+  fwrite(msg, sizeof msg, strlen(msg) + 1, bbs);
+  if (ferror(bbs)) {
+    bb_log(LOG_WARNING, "Could not write to %s: %s\n", BBSWITCH_PATH,
+            strerror(errno));
+  }
+  fclose(bbs);
+}
+
 /**
  * Turns card on if not already on
  */
 void bbswitch_on(void) {
-  int r;
-  r = bbswitch_status();
-  if (r != 0) {
-    if (r == 1) {
-      bb_log(LOG_INFO, "Card already on, not switching it on [bbswitch]\n");
-    } else {
-      bb_log(LOG_WARNING, "bbswitch unavailable, not turning dedicated card on\n");
-    }
-    return;
-  }
-  FILE * bbs = fopen("/proc/acpi/bbswitch", "w");
-  if (bbs == 0) {
-    bb_log(LOG_ERR, "Could not access bbswitch module.\n");
-    return;
-  }
-  r = fwrite("ON\n", 1, 4, bbs);
-  fclose(bbs);
-  if (r < 2) {
-    bb_log(LOG_WARNING, "bbswitch isn't listening to us!\n");
-  }
-  r = bbswitch_status();
-  if (r != 1) {
-    bb_log(LOG_ERR, "Failed to turn dedicated card on!\n");
-  }
+  bbswitch_write("ON\n");
 }//bbswitch_on
 
 /**
  * Turns card off if not already off
  */
 void bbswitch_off(void) {
-  int r;
-  r = bbswitch_status();
-  if (r != 1) {
-    if (r == 0) {
-      bb_log(LOG_INFO, "Card already off, not switching it off [bbswitch]\n");
-    } else {
-      bb_log(LOG_WARNING, "bbswitch unavailable, not turning dedicated card off.\n");
-    }
-    return;
-  }
-  FILE * bbs = fopen("/proc/acpi/bbswitch", "w");
-  if (bbs == 0) {
-    bb_log(LOG_ERR, "Could not access bbswitch module.\n");
-    return;
-  }
-  r = fwrite("OFF\n", 1, 5, bbs);
-  fclose(bbs);
-  if (r < 3) {
-    bb_log(LOG_WARNING, "bbswitch isn't listening to us!\n");
-  }
-  r = bbswitch_status();
-  if (r != 0) {
-    bb_log(LOG_ERR, "Failed to turn dedicated card off!\n");
-  }
+  bbswitch_write("OFF\n");
 }//bbswitch_off
