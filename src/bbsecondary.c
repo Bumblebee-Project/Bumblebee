@@ -211,11 +211,13 @@ void stop_secondary() {
 
       //only turn card off if no drivers are loaded
       if (is_driver_loaded()) {
-        bb_log(LOG_DEBUG, "Delaying card OFF - drivers are still loaded\n");
+        bb_log(LOG_DEBUG, "Drivers are still loaded, unable to disable card\n");
         return;
       }
     }
-    switch_off();
+    if (switch_off() != SWITCH_OFF) {
+      bb_log(LOG_WARNING, "Unable to disable discrete card.");
+    }
   }
 }//stop_secondary
 
