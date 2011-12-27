@@ -37,7 +37,8 @@ int handler_set = 0;
 
 struct pidlist {
   pid_t PID;
-  struct pidlist * next;
+  struct pidlist *prev;
+  struct pidlist *next;
 };
 
 struct pidlist * pidlist_start = 0; ///Begin of the linked-list of PIDs, if any.
@@ -46,58 +47,32 @@ struct pidlist * pidlist_start = 0; ///Begin of the linked-list of PIDs, if any.
 /// Creates the list if it is still null.
 
 static void pidlist_add(pid_t newpid) {
-  struct pidlist * curr = 0;
-  curr = pidlist_start;
-  //no list? create one.
-  if (curr == 0) {
-    curr = malloc(sizeof (struct pidlist));
-    curr->next = 0;
-    curr->PID = newpid;
-    pidlist_start = curr;
-    return;
-  }
-  //find the last item in the list
-  while ((curr != 0) && (curr->next != 0)) {
-    curr = curr->next;
-  }
-  //curr now holds the last item, curr->next is null
-  curr->next = malloc(sizeof (struct pidlist));
-  curr = curr->next; //move to new element
-  curr->next = 0;
+  struct pidlist *curr = malloc(sizeof (struct pidlist));
   curr->PID = newpid;
-}//pidlist_add
+  curr->prev = 0;
+  // the PID is inserted BEFORE the first PID, this should not matter
+  curr->next = pidlist_start ? pidlist_start : 0;
+  pidlist_start = curr;
+}
 
 /// Removes a pid_t from the linked list of PIDs.
 /// Makes list null if empty.
-
 static void pidlist_remove(pid_t rempid) {
-  struct pidlist * curr = 0;
-  struct pidlist * prev = 0;
-  curr = pidlist_start;
-  //no list? cancel.
-  if (curr == 0) {
-    return;
-  }
-  //find the item in the list
-  while (curr != 0) {
+  struct pidlist *curr;
+  struct pidlist *next_iter;
+  for (curr = pidlist_start; curr; curr = next_iter) {
+    next_iter = curr->next;
     if (curr->PID == rempid) {
-      if (prev != 0) {
-        prev->next = curr->next;
+      if (curr->next) {
+        curr->next = curr->prev;
       }
-      if (curr == pidlist_start) {
+      if (curr->prev) {
+        curr->prev = curr->next;
+      } else {
         pidlist_start = curr->next;
       }
       free(curr);
-      if (prev != 0) {
-        curr = prev->next;
-      } else {
-        curr = 0;
-      }
-      continue; //just in case it was added twice for some reason
     }
-    //go to the next item
-    prev = curr;
-    curr = curr->next;
   }
 }//pidlist_remove
 
@@ -105,18 +80,11 @@ static void pidlist_remove(pid_t rempid) {
 /// Returns 0 if not found, 1 otherwise.
 
 static int pidlist_find(pid_t findpid) {
-  struct pidlist * curr = 0;
-  curr = pidlist_start;
-  //no list? cancel.
-  if (curr == 0) {
-    return 0;
-  }
-  //find the item in the list
-  while (curr != 0) {
+  struct pidlist *curr;
+  for (curr = pidlist_start; curr; curr = curr->next) {
     if (curr->PID == findpid) {
       return 1;
     }
-    curr = curr->next;
   }
   return 0;
 }//pidlist_find
@@ -262,10 +230,16 @@ void bb_stop_wait(pid_t proc) {
 
 /// Stops all the running processes, if any.
 void bb_stop_all(void) {
-  //kill the first item on the list and wait
-  //until list is completely empty
-  while (pidlist_start > 0) {
-    bb_stop_wait(pidlist_start->PID);
+  struct pidlist *next = pidlist_start;
+  struct pidlist *curr;
+  // loop through all items and kill the first item until it's empty
+  while (next) {
+    curr = next;
+    next = pidlist_start->next;
+    bb_stop_wait(curr->PID);
+    /* If the program could not be killed, the memory is still in use. Just
+     * accept the memory loss for now to avoid an invalid memory access if the
+     * program exited while we're free()'ing it here */
   }
 }
 
