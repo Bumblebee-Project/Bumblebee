@@ -150,8 +150,18 @@ pid_t bb_run_fork_ld(char** argv, char * ldpath) {
   // Fork and attempt to run given application
   pid_t ret = fork();
   if (ret == 0) {
+    char *current_path = getenv("LD_LIBRARY_PATH");
     // Fork went ok, set environment
-    setenv("LD_LIBRARY_PATH", ldpath, 1);
+    if (current_path) {
+      char ldpath_new[4096];
+      /* assume the sizeof ldpath_new > sizeof ldpath */
+      strncpy(ldpath_new, ldpath, sizeof ldpath_new);
+      strncat(ldpath_new, ":", sizeof(ldpath_new) - 1);
+      strncat(ldpath_new, current_path, sizeof(ldpath_new) - 1);
+      setenv("LD_LIBRARY_PATH", ldpath_new, 1);
+    } else {
+      setenv("LD_LIBRARY_PATH", ldpath, 1);
+    }
     bb_run_exec(argv);
   } else {
     if (ret > 0) {

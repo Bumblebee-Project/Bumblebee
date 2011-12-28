@@ -138,12 +138,7 @@ void start_secondary(void) {
       bb_config.mod_path,
       NULL
     };
-    //if using nouveau, do not use -modulepath
-    if (strncmp(bb_config.driver, "nouveau", 8) == 0) {
-      x_argv[10] = 0;//remove -modulepath
-      x_argv[11] = 0;//remove bb_config.mod_path
-    }
-    bb_status.x_pid = bb_run_fork(x_argv);
+    bb_status.x_pid = bb_run_fork_ld(x_argv, bb_config.ld_path);
   }
 
   //check if X is available, for maximum 10 seconds.
