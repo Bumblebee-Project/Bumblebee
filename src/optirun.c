@@ -57,7 +57,83 @@ static void handle_signal(int sig) {
   }
 }
 
-int main(int argc, char* argv[]) {
+static void report_daemon_status(void) {
+  char buffer[BUFFER_SIZE];
+  int r = snprintf(buffer, BUFFER_SIZE, "Status?");
+  socketWrite(&bb_status.bb_socket, buffer, r);
+  while (bb_status.bb_socket != -1) {
+    r = socketRead(&bb_status.bb_socket, buffer, BUFFER_SIZE);
+    if (r > 0) {
+      printf("Bumblebee status: %*s\n", r, buffer);
+      socketClose(&bb_status.bb_socket);
+    }
+  }
+}
+
+static void run_app(int argc, char *argv[]) {
+  char buffer[BUFFER_SIZE];
+  int r;
+  int ranapp = 0;
+  r = snprintf(buffer, BUFFER_SIZE, "Checking availability...");
+  socketWrite(&bb_status.bb_socket, buffer, r);
+  while (bb_status.bb_socket != -1) {
+    r = socketRead(&bb_status.bb_socket, buffer, BUFFER_SIZE);
+    if (r > 0) {
+      bb_log(LOG_INFO, "Response: %*s\n", r, buffer);
+      switch (buffer[0]) {
+        case 'N': //No, run normally.
+          socketClose(&bb_status.bb_socket);
+          if (!bb_config.fallback_start) {
+            bb_log(LOG_ERR, "Cannot access secondary GPU. Aborting.\n");
+          }
+          break;
+        case 'Y': //Yes, run through vglrun
+          bb_log(LOG_INFO, "Running application through vglrun.\n");
+          ranapp = 1;
+          //run vglclient if any method other than proxy is used
+          if (strncmp(bb_config.vgl_compress, "proxy", BUFFER_SIZE) != 0) {
+            char * vglclient_args[] = {
+              "vglclient",
+              "-detach",
+              0
+            };
+            bb_run_fork(vglclient_args);
+          }
+          char ** vglrun_args = malloc(sizeof (char *) * (9 + argc - optind));
+          vglrun_args[0] = "vglrun";
+          vglrun_args[1] = "-c";
+          vglrun_args[2] = bb_config.vgl_compress;
+          vglrun_args[3] = "-d";
+          vglrun_args[4] = bb_config.x_display;
+          int argcount = 5;
+          //only add -ld if not using nouveau
+          if (strncmp(bb_config.driver, "nouveau", 8) != 0) {
+            vglrun_args[5] = "-ld";
+            vglrun_args[6] = bb_config.ld_path;
+            argcount = 7;
+          }
+          vglrun_args[argcount++] = "--";
+          for (r = 0; r < argc - optind; r++) {
+            vglrun_args[argcount++ + r] = argv[optind + r];
+          }
+          vglrun_args[argcount++ + r] = 0;
+          bb_run_fork_wait(vglrun_args);
+          socketClose(&bb_status.bb_socket);
+          break;
+        default: //Something went wrong - output and exit.
+          bb_log(LOG_ERR, "Problem: %*s\n", r, buffer);
+          socketClose(&bb_status.bb_socket);
+          break;
+      }
+    }
+  }
+  if (!ranapp && bb_config.fallback_start) {
+    bb_log(LOG_WARNING, "Running application normally.\n");
+    bb_run_exec(argv + optind);
+  }
+}
+
+int main(int argc, char *argv[]) {
 
   /* Setup signal handling before anything else */
   signal(SIGHUP, handle_signal);
@@ -65,8 +141,11 @@ int main(int argc, char* argv[]) {
   signal(SIGINT, handle_signal);
   signal(SIGQUIT, handle_signal);
 
+  bb_init_log();
+
   /* Initializing configuration */
   init_config(argc, argv);
+  config_dump();
 
   /* set runmode depending on leftover arguments */
   if (optind >= argc) {
@@ -75,8 +154,6 @@ int main(int argc, char* argv[]) {
     bb_status.runmode = BB_RUN_APP;
   }
 
-  bb_init_log();
-  config_dump();
   bb_log(LOG_DEBUG, "%s version %s starting...\n", bb_status.program_name, GITVERSION);
 
   /* Connect to listening daemon */
@@ -86,82 +163,15 @@ int main(int argc, char* argv[]) {
     bb_closelog();
     return EXIT_FAILURE;
   }
-  char buffer[BUFFER_SIZE];
-  int r;
 
   /* Request status */
   if (bb_status.runmode == BB_RUN_STATUS) {
-    r = snprintf(buffer, BUFFER_SIZE, "Status?");
-    socketWrite(&bb_status.bb_socket, buffer, r);
-    while (bb_status.bb_socket != -1) {
-      r = socketRead(&bb_status.bb_socket, buffer, BUFFER_SIZE);
-      if (r > 0) {
-        printf("Bumblebee status: %*s\n", r, buffer);
-        socketClose(&bb_status.bb_socket);
-      }
-    }
+    report_daemon_status();
   }
 
   /* Run given application */
   if (bb_status.runmode == BB_RUN_APP) {
-    int ranapp = 0;
-    r = snprintf(buffer, BUFFER_SIZE, "Checking availability...");
-    socketWrite(&bb_status.bb_socket, buffer, r);
-    while (bb_status.bb_socket != -1) {
-      r = socketRead(&bb_status.bb_socket, buffer, BUFFER_SIZE);
-      if (r > 0) {
-        bb_log(LOG_INFO, "Response: %*s\n", r, buffer);
-        switch (buffer[0]) {
-          case 'N': //No, run normally.
-            socketClose(&bb_status.bb_socket);
-            if (!bb_config.fallback_start) {
-              bb_log(LOG_ERR, "Cannot access secondary GPU. Aborting.\n");
-            }
-            break;
-          case 'Y': //Yes, run through vglrun
-            bb_log(LOG_INFO, "Running application through vglrun.\n");
-            ranapp = 1;
-            //run vglclient if any method other than proxy is used
-            if (strncmp(bb_config.vgl_compress, "proxy", BUFFER_SIZE) != 0) {
-              char * vglclient_args[] = {
-                "vglclient",
-                "-detach",
-                0
-              };
-              bb_run_fork(vglclient_args);
-            }
-            char ** vglrun_args = malloc(sizeof (char *) * (9 + argc - optind));
-            vglrun_args[0] = "vglrun";
-            vglrun_args[1] = "-c";
-            vglrun_args[2] = bb_config.vgl_compress;
-            vglrun_args[3] = "-d";
-            vglrun_args[4] = bb_config.x_display;
-            int argcount = 5;
-            //only add -ld if not using nouveau
-            if (strncmp(bb_config.driver, "nouveau", 8) != 0) {
-              vglrun_args[5] = "-ld";
-              vglrun_args[6] = bb_config.ld_path;
-              argcount = 7;
-            }
-            vglrun_args[argcount++] = "--";
-            for (r = 0; r < argc - optind; r++) {
-              vglrun_args[argcount++ + r] = argv[optind + r];
-            }
-            vglrun_args[argcount++ + r] = 0;
-            bb_run_fork_wait(vglrun_args);
-            socketClose(&bb_status.bb_socket);
-            break;
-          default: //Something went wrong - output and exit.
-            bb_log(LOG_ERR, "Problem: %*s\n", r, buffer);
-            socketClose(&bb_status.bb_socket);
-            break;
-        }
-      }
-    }
-    if (!ranapp && bb_config.fallback_start) {
-      bb_log(LOG_WARNING, "Running application normally.\n");
-      bb_run_exec(argv + optind);
-    }
+    run_app(argc, argv);
   }
 
   bb_closelog();
