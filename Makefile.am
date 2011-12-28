@@ -10,8 +10,8 @@ AM_CFLAGS = ${regular_CFLAGS} -Wextra -funsigned-char -DGITVERSION="\"`git descr
 bin_PROGRAMS = bumblebeed optirun
 
 optirun_SOURCES = src/bbconfig.c src/bblogger.c src/bbrun.c src/bbsocket.c src/optirun.c
-bumblebeed_SOURCES = src/bbconfig.c src/bblogger.c src/bbrun.c src/bbsocket.c src/bbsecondary.c src/bumblebeed.c \
-	src/switch/switching.c src/switch/sw_bbswitch.c src/switch/sw_switcheroo.c
+bumblebeed_SOURCES = src/pci.c src/bbconfig.c src/bblogger.c src/bbrun.c src/bbsocket.c src/bbsecondary.c \
+	src/switch/switching.c src/switch/sw_bbswitch.c src/switch/sw_switcheroo.c src/bumblebeed.c
 bumblebeed_LDADD = ${libX11_LIBS}
 
 bumblebeedconfdir=$(sysconfdir)/bumblebee

@@ -75,6 +75,7 @@ struct bb_config_struct {
     int fallback_start; /// Wheter the application should be launched on the integrated card when X is not available.
     char vgl_compress[BUFFER_SIZE]; /// VGL transport method.
     char driver[BUFFER_SIZE]; /// Driver to use (nvidia or nouveau).
+    int pci_bus_id; /// PCI Bus ID of the discrete video card
     int card_shutdown_state;
 };
 
