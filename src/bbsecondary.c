@@ -112,7 +112,7 @@ void start_secondary(void) {
       *bb_config.module_name ? bb_config.module_name : bb_config.driver,
       NULL
     };
-    bb_run_fork_wait(mod_argv);
+    bb_run_fork_wait(mod_argv, 10);
   }
 
   // if driver load failed, cancel and set error
@@ -172,30 +172,25 @@ void start_secondary(void) {
 }//start_secondary
 
 /**
- * Attempts to unload a module if loaded, ten attempts are performed before
+ * Attempts to unload a module if loaded, for ten seconds before
  * giving up
  *
  * @param module_name The name of the kernel module to be unloaded
  * @return 1 if the driver is succesfully unloaded, 0 otherwise
  */
 static int unload_module(char *module_name) {
-  int i = 0;
-  while (module_is_loaded(module_name) == 1) {
-    if (i > 0) {
-      if (i > 10) {
-        bb_log(LOG_ERR, "Could not unload module %s - giving up\n");
-        return 0;
-      }
-      usleep(1000000); //make sure we sleep for a second or so
-    }
+  if (module_is_loaded(module_name) == 1) {
     bb_log(LOG_INFO, "Unloading %s module\n", module_name);
     char * mod_argv[] = {
       "rmmod",
+      "--wait",
       module_name,
       NULL
     };
-    bb_run_fork_wait(mod_argv);
-    ++i;
+    bb_run_fork_wait(mod_argv, 10);
+    if (module_is_loaded(module_name) == 1) {
+      bb_log(LOG_ERR, "Unloading %s module timed out.\n", module_name);
+    }
   }
   return 1;
 }//unload module

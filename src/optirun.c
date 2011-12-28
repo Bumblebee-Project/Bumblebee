@@ -107,7 +107,7 @@ static void run_app(int argc, char *argv[]) {
             vglrun_args[8 + r] = argv[optind + r];
           }
           vglrun_args[8 + r] = 0;
-          bb_run_fork_wait(vglrun_args);
+          bb_run_fork_wait(vglrun_args, 0);
           free(vglrun_args);
           socketClose(&bb_status.bb_socket);
           break;

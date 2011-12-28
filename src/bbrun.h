@@ -30,8 +30,8 @@ pid_t bb_run_fork(char** argv);
 /// Forks and runs the given application, using an LD_LIBRARY_PATH.
 pid_t bb_run_fork_ld(char** argv, char * ldpath);
 
-/// Forks and runs the given application, waits for process to finish.
-void bb_run_fork_wait(char** argv);
+/// Forks and runs the given application, waits for a maximum of timeout seconds for process to finish.
+void bb_run_fork_wait(char** argv, int timeout);
 
 /// Returns 1 if a process is currently running, 0 otherwise.
 int bb_is_running(pid_t proc);
@@ -47,3 +47,6 @@ void bb_stop_all(void);
 
 /// Attempts to run the given application, replacing the current process
 void bb_run_exec(char ** argv);
+
+/// Cancels waiting for processes to finish - use when doing a fast shutdown.
+void bb_run_stopwaiting(void);

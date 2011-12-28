@@ -105,9 +105,13 @@ static void handle_signal(int sig) {
       break;
     case SIGINT:
     case SIGQUIT:
+      bb_log(LOG_WARNING, "Received %s signal.\n", strsignal(sig));
+      socketClose(&bb_status.bb_socket); //closing the socket terminates the server
+      break;
     case SIGTERM:
       bb_log(LOG_WARNING, "Received %s signal.\n", strsignal(sig));
       socketClose(&bb_status.bb_socket); //closing the socket terminates the server
+      bb_run_stopwaiting();//speed up shutdown by not waiting for processes anymore
       break;
     default:
       bb_log(LOG_WARNING, "Unhandled signal %s\n", strsignal(sig));

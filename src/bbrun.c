@@ -33,6 +33,7 @@
 #include "bblogger.h"
 
 int handler_set = 0;
+int dowait = 1;
 
 /// Socket list structure for use in main_loop.
 
@@ -179,11 +180,11 @@ pid_t bb_run_fork_ld(char** argv, char * ldpath) {
 }
 
 /**
- * Forks and runs the given application, waits for process to finish.
+ * Forks and runs the given application, waits for a maximum of timeout seconds for process to finish.
  *
  * @param argv The arguments values, the first one is the application path or name
  */
-void bb_run_fork_wait(char** argv) {
+void bb_run_fork_wait(char** argv, int timeout) {
   check_handler();
   // Fork and attempt to run given application
   pid_t ret = fork();
@@ -195,9 +196,15 @@ void bb_run_fork_wait(char** argv) {
       // Fork went ok, parent process continues
       bb_log(LOG_INFO, "Process %s started, PID %i.\n", argv[0], ret);
       pidlist_add(ret);
-      //sleep until process finishes
-      while (bb_is_running(ret)) {
+      //sleep until process finishes or timeout reached
+      int i = 0;
+      while (bb_is_running(ret) && ((i < timeout) || (i == 0)) && dowait) {
         usleep(1000000);
+        i++;
+      }
+      //make a single attempt to kill the process if timed out, without waiting
+      if (bb_is_running(ret)) {
+        bb_stop(ret);
       }
     } else {
       // Fork failed
@@ -235,7 +242,11 @@ void bb_stop_wait(pid_t proc) {
       //after that, use SIGKILL
       kill(proc, SIGKILL);
     }
-    usleep(1000000); //sleep up to a second, waiting for process
+    if (dowait) {
+      usleep(1000000); //sleep up to a second, waiting for process
+    } else {
+      usleep(10000); //sleep only 10ms, because we are in a hurry
+    }
   }
 }
 
@@ -255,4 +266,11 @@ void bb_run_exec(char ** argv) {
   execvp(argv[0], argv);
   bb_log(LOG_ERR, "Error running \"%s\": %s\n", argv[0], strerror(errno));
   exit(42);
+}
+
+/**
+ * Cancels waiting for processes to finish - use when doing a fast shutdown.
+ */
+void bb_run_stopwaiting(void){
+  dowait = 0;
 }
