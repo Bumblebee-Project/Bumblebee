@@ -113,6 +113,7 @@ static void run_app(int argc, char *argv[]) {
           }
           vglrun_args[8 + r] = 0;
           bb_run_fork_wait(vglrun_args);
+          free(vglrun_args);
           socketClose(&bb_status.bb_socket);
           break;
         default: //Something went wrong - output and exit.
