@@ -54,6 +54,36 @@ enum {
 
 static size_t strip_lead_trail_ws(char *dest, char *str, size_t len);
 
+
+/**
+ * Takes a pointer to a char pointer, resizing and copying the string value to it.
+ */
+static void set_string_value(char ** configstring, char * newvalue) {
+  //free the string if it already existed.
+  if (*configstring != 0) {
+    free(*configstring);
+    *configstring = 0;
+  }
+  //malloc a new buffer of strlen, plus one for the terminating null byte
+  *configstring = malloc(strlen(newvalue)+1);
+  if (*configstring != 0) {
+    //copy the string if successful
+    strcpy(*configstring, newvalue);
+  } else {
+    //something, somewhere, went terribly wrong
+    bb_log(LOG_ERR, "Could not allocate %i bytes for new config value, setting to empty string!\n", strlen(newvalue)+1);
+    *configstring = malloc(1);
+    if (*configstring == 0) {
+      bb_log(LOG_ERR, "FATAL: Could not allocate even 1 byte for config value!\n");
+      bb_log(LOG_ERR, "Aborting - cannot continue without stable config!\n");
+      exit(1);
+    }
+    (*configstring)[0] = 0;
+  }
+}//set_string_value
+
+
+
 /**
  * Takes a line and breaks it into a key-value pair
  *
@@ -169,16 +199,16 @@ static int read_configuration(void) {
         continue;
 
       if (strncmp(kvp.key, "VGL_DISPLAY", 11) == 0) {
-        snprintf(bb_config.x_display, BUFFER_SIZE, "%s", kvp.value);
+        set_string_value(&bb_config.x_display, kvp.value);
         bb_log(LOG_DEBUG, "value set: x_display = %s\n", bb_config.x_display);
       } else if (strncmp(kvp.key, "STOP_SERVICE_ON_EXIT", 20) == 0) {
         bb_config.stop_on_exit = atoi(kvp.value);
         bb_log(LOG_DEBUG, "value set: stop_on_exit = %d\n", bb_config.stop_on_exit);
       } else if (strncmp(kvp.key, "X_CONFFILE", 10) == 0) {
-        snprintf(bb_config.x_conf_file, BUFFER_SIZE, "%s", kvp.value);
+        set_string_value(&bb_config.x_conf_file, kvp.value);
         bb_log(LOG_DEBUG, "value set: x_conf_file = %s\n", bb_config.x_conf_file);
       } else if (strncmp(kvp.key, "VGL_COMPRESS", 12) == 0) {
-        snprintf(bb_config.vgl_compress, BUFFER_SIZE, "%s", kvp.value);
+        set_string_value(&bb_config.vgl_compress, kvp.value);
         bb_log(LOG_DEBUG, "value set: vgl_compress = %s\n", bb_config.vgl_compress);
       } else if (strncmp(kvp.key, "ENABLE_POWER_MANAGEMENT", 23) == 0) {
         bb_config.pm_enabled = atoi(kvp.value);
@@ -187,19 +217,19 @@ static int read_configuration(void) {
         bb_config.fallback_start = atoi(kvp.value);
         bb_log(LOG_DEBUG, "value set: fallback_start = %d\n", bb_config.fallback_start);
       } else if (strncmp(kvp.key, "BUMBLEBEE_GROUP", 16) == 0) {
-        snprintf(bb_config.gid_name, BUFFER_SIZE, "%s", kvp.value);
+        set_string_value(&bb_config.gid_name, kvp.value);
         bb_log(LOG_DEBUG, "value set: gid_name = %s\n", bb_config.gid_name);
       } else if (strncmp(kvp.key, "DRIVER", 7) == 0) {
-        snprintf(bb_config.driver, BUFFER_SIZE, "%s", kvp.value);
+        set_string_value(&bb_config.driver, kvp.value);
         bb_log(LOG_DEBUG, "value set: driver = %s\n", bb_config.driver);
       } else if (strncmp(kvp.key, "DRIVER_MODULE", 14) == 0) {
-        snprintf(bb_config.module_name, BUFFER_SIZE, "%s", kvp.value);
+        set_string_value(&bb_config.module_name, kvp.value);
         bb_log(LOG_DEBUG, "value set: driver = %s\n", bb_config.driver);
       } else if (strncmp(kvp.key, "NV_LIBRARY_PATH", 16) == 0) {
-        snprintf(bb_config.ld_path, BUFFER_SIZE, "%s", kvp.value);
+        set_string_value(&bb_config.ld_path, kvp.value);
         bb_log(LOG_DEBUG, "value set: ld_path = %s\n", bb_config.ld_path);
       } else if (strncmp(kvp.key, "MODULE_PATH", 12) == 0) {
-        snprintf(bb_config.mod_path, BUFFER_SIZE, "%s", kvp.value);
+        set_string_value(&bb_config.mod_path, kvp.value);
         bb_log(LOG_DEBUG, "value set: ld_path = %s\n", bb_config.ld_path);
       } else if (strncmp(kvp.key, "CARD_SHUTDOWN_STATE", 20) == 0) {
         bb_config.card_shutdown_state = atoi(kvp.value);
@@ -293,34 +323,34 @@ static void read_cmdline_config(int argc, char ** argv) {
         }
         break;
       case 'x'://xorg.conf path
-        snprintf(bb_config.x_conf_file, BUFFER_SIZE, "%s", optarg);
+        set_string_value(&bb_config.x_conf_file, optarg);
         break;
       case 'd'://X display number
-        snprintf(bb_config.x_display, BUFFER_SIZE, "%s", optarg);
+        set_string_value(&bb_config.x_display, optarg);
         break;
       case 's'://Unix socket to use
-        snprintf(bb_config.socket_path, BUFFER_SIZE, "%s", optarg);
+        set_string_value(&bb_config.socket_path, optarg);
         break;
       case 'g'://group name to use
-        snprintf(bb_config.gid_name, BUFFER_SIZE, "%s", optarg);
+        set_string_value(&bb_config.gid_name, optarg);
         break;
       case 'l'://LD driver path
-        snprintf(bb_config.ld_path, BUFFER_SIZE, "%s", optarg);
+        set_string_value(&bb_config.ld_path, optarg);
         break;
       case 'm'://modulepath
-        snprintf(bb_config.mod_path, BUFFER_SIZE, "%s", optarg);
+        set_string_value(&bb_config.mod_path, optarg);
         break;
       case 'c'://vglclient method
-        snprintf(bb_config.vgl_compress, BUFFER_SIZE, "%s", optarg);
+        set_string_value(&bb_config.vgl_compress, optarg);
         break;
       case 'C'://config file
-        snprintf(bb_config.bb_conf_file, BUFFER_SIZE, "%s", optarg);
+        set_string_value(&bb_config.bb_conf_file, optarg);
         break;
       case OPT_DRIVER://driver
-        snprintf(bb_config.driver, BUFFER_SIZE, "%s", optarg);
+        set_string_value(&bb_config.driver, optarg);
         break;
       case 'k'://kernel module
-        snprintf(bb_config.module_name, BUFFER_SIZE, "%s", optarg);
+        set_string_value(&bb_config.module_name, optarg);
         break;
       case 'V'://print version
         printf("Version: %s\n", GITVERSION);
@@ -340,11 +370,11 @@ static void read_cmdline_config(int argc, char ** argv) {
 /// finally again parsing commandline parameters.
 void init_config(int argc, char ** argv) {
   //set program name
-  strncpy(bb_status.program_name, basename(argv[0]), BUFFER_SIZE);
+  set_string_value(&bb_status.program_name, basename(argv[0]));
+  set_string_value(&bb_status.errors, "");//we start without errors, yay!
   bb_status.verbosity = VERB_WARN;
   bb_status.bb_socket = -1;
   bb_status.appcount = 0;
-  bb_status.errors[0] = 0; //set first byte to NULL = empty string
   bb_status.x_pid = 0;
   if (strcmp(bb_status.program_name, "optirun") == 0) {
     bb_status.runmode = BB_RUN_APP;
@@ -352,22 +382,34 @@ void init_config(int argc, char ** argv) {
     bb_status.runmode = BB_RUN_SERVER;
   }
 
+  /* set pointers to 0 just to be sure */
+  bb_config.x_display = 0;
+  bb_config.bb_conf_file = 0;
+  bb_config.ld_path = 0;
+  bb_config.mod_path = 0;
+  bb_config.socket_path = 0;
+  bb_config.gid_name = 0;
+  bb_config.x_conf_file = 0;
+  bb_config.vgl_compress = 0;
+  bb_config.driver = 0;
+  bb_config.module_name = 0;
+
   /* standard configuration */
-  strncpy(bb_config.x_display, CONF_XDISP, BUFFER_SIZE);
-  strncpy(bb_config.bb_conf_file, CONFIG_FILE, BUFFER_SIZE);
-  strncpy(bb_config.ld_path, CONF_LDPATH, BUFFER_SIZE);
-  strncpy(bb_config.mod_path, CONF_MODPATH, BUFFER_SIZE);
-  strncpy(bb_config.socket_path, CONF_SOCKPATH, BUFFER_SIZE);
-  strncpy(bb_config.gid_name, CONF_GID, BUFFER_SIZE);
-  strncpy(bb_config.x_conf_file, CONF_XORG, BUFFER_SIZE);
+  set_string_value(&bb_config.x_display, CONF_XDISP);
+  set_string_value(&bb_config.bb_conf_file, CONFIG_FILE);
+  set_string_value(&bb_config.ld_path, CONF_LDPATH);
+  set_string_value(&bb_config.mod_path, CONF_MODPATH);
+  set_string_value(&bb_config.socket_path, CONF_SOCKPATH);
+  set_string_value(&bb_config.gid_name, CONF_GID);
+  set_string_value(&bb_config.x_conf_file, CONF_XORG);
+  set_string_value(&bb_config.vgl_compress, CONF_VGLCOMPRESS);
+  // default to auto-detect
+  set_string_value(&bb_config.driver, "");
+  set_string_value(&bb_config.module_name, "");
   bb_config.pm_enabled = CONF_PMENABLE;
   bb_config.stop_on_exit = CONF_STOPONEXIT;
   bb_config.fallback_start = CONF_FALLBACKSTART;
   bb_config.card_shutdown_state = CONF_SHUTDOWNSTATE;
-  strncpy(bb_config.vgl_compress, CONF_VGLCOMPRESS, BUFFER_SIZE);
-  // default to auto-detect
-  strncpy(bb_config.driver, "", BUFFER_SIZE);
-  strncpy(bb_config.module_name, "", BUFFER_SIZE);
 
   // parse commandline configuration (for config file, if changed)
   read_cmdline_config(argc, argv);
@@ -396,7 +438,7 @@ void init_config(int argc, char ** argv) {
   }
   // append the remainder after the last %s if any and overwrite the setting
   strncat(tmpstr, pos, BUFFER_SIZE - strlen(tmpstr) - 1);
-  strncpy(bb_config.x_conf_file, tmpstr, BUFFER_SIZE);
+  set_string_value(&bb_config.x_conf_file, tmpstr);
 }
 
 /**
@@ -418,3 +460,19 @@ void config_dump(void) {
   bb_log(LOG_DEBUG, " Driver: %s\n", bb_config.driver);
   bb_log(LOG_DEBUG, " Card shutdown state: %i\n", bb_config.card_shutdown_state);
 }
+
+/**
+ * Sets error messages if any problems occur.
+ * Resets stored error when called with argument 0.
+ */
+void set_bb_error(char * msg) {
+  if (msg && msg[0] != 0) {
+    set_string_value(&bb_status.errors, msg);
+    bb_log(LOG_ERR, "%s\n", msg);
+  } else {
+    //clear set error message, if any.
+    if (bb_status.errors[0] != 0) {
+      set_string_value(&bb_status.errors, "");
+    }
+  }
+}//set_bb_error

@@ -53,30 +53,30 @@ enum bb_run_mode {
 
 /* Structure containing the status of the application */
 struct bb_status_struct {
-    char program_name[BUFFER_SIZE]; /// How this application was called.
+    char * program_name; /// How this application was called.
     enum verbosity_level verbosity; ///Verbosity level of messages.
     int bb_socket; /// The socket file descriptor of the application.
     unsigned int appcount; /// Count applications using the X server.
-    char errors[BUFFER_SIZE]; /// Error message if any. First byte is 0 otherwise.
+    char * errors; /// Error message if any. First byte is 0 otherwise.
     enum bb_run_mode runmode; /// Running mode.
     pid_t x_pid;
 };
 
 /* Structure containing the configuration. */
 struct bb_config_struct {
-    char x_display[BUFFER_SIZE]; /// X display number to use.
-    char x_conf_file[BUFFER_SIZE]; /// Path to the X configuration file.
-    char bb_conf_file[BUFFER_SIZE]; /// Path to the bumblebeed configuration file.
-    char ld_path[BUFFER_SIZE]; /// LD_LIBRARY_PATH to launch applications.
-    char mod_path[BUFFER_SIZE]; /// ModulePath for xorg.
-    char socket_path[BUFFER_SIZE]; /// Path to the server socket.
-    char gid_name[BUFFER_SIZE]; /// Group name for setgid.
+    char * x_display; /// X display number to use.
+    char * x_conf_file; /// Path to the X configuration file.
+    char * bb_conf_file; /// Path to the bumblebeed configuration file.
+    char * ld_path; /// LD_LIBRARY_PATH to launch applications.
+    char * mod_path; /// ModulePath for xorg.
+    char * socket_path; /// Path to the server socket.
+    char * gid_name; /// Group name for setgid.
     int pm_enabled; /// Whether power management is enabled.
     int stop_on_exit; /// Whether to stop the X server on last optirun instance exit.
     int fallback_start; /// Wheter the application should be launched on the integrated card when X is not available.
-    char vgl_compress[BUFFER_SIZE]; /// VGL transport method.
-    char driver[BUFFER_SIZE]; /// Driver to use (nvidia or nouveau).
-    char module_name[BUFFER_SIZE]; /* Kernel module to be loaded for the driver.
+    char * vgl_compress; /// VGL transport method.
+    char * driver; /// Driver to use (nvidia or nouveau).
+    char * module_name; /* Kernel module to be loaded for the driver.
                                     * If empty, driver will be used. This is
                                     * for Ubuntu which uses nvidia-current */
     int card_shutdown_state;
@@ -88,3 +88,9 @@ extern struct bb_config_struct bb_config;
 /// Read commandline parameters and config file.
 void init_config(int argc, char ** argv);
 void config_dump(void);
+
+/**
+ * Sets error messages if any problems occur.
+ * Resets stored error when called with argument 0.
+ */
+void set_bb_error(char * msg);

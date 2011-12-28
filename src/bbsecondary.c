@@ -67,14 +67,6 @@ static int module_is_loaded(char * mod) {
   return ret;
 }//module_is_loaded
 
-/// Sets error message for problems starting the secondary.
-/// Sets bb_status.errors as well as printing the error.
-static void set_secondary_error(char * msg) {
-  snprintf(bb_status.errors, BUFFER_SIZE, "%s", msg);
-  bb_log(LOG_ERR, "%s\n", msg);
-}//set_secondary_error
-
-
 /// Start the X server by fork-exec, turn card on and load driver if needed.
 /// If after this method finishes X is running, it was successfull.
 /// If it somehow fails, X should not be running after this method finishes.
@@ -83,7 +75,7 @@ void start_secondary(void) {
   /* enable card if the switcher is available */
   if (switcher) {
     if (switch_on() != SWITCH_ON) {
-      set_secondary_error("Could not enable discrete graphics card");
+      set_bb_error("Could not enable discrete graphics card");
       return;
     }
   }
@@ -117,7 +109,7 @@ void start_secondary(void) {
 
   // if driver load failed, cancel and set error
   if (!pci_get_driver(NULL, pci_bus_id, 0)) {
-    set_secondary_error("Could not load GPU driver");
+    set_bb_error("Could not load GPU driver");
     return;
   }
 
@@ -158,16 +150,18 @@ void start_secondary(void) {
     /// \todo Maybe check X exit status and/or messages?
     if (bb_is_running(bb_status.x_pid)) {
       //X active, but not accepting connections
-      set_secondary_error("X unresponsive after 10 seconds - aborting");
+      set_bb_error("X unresponsive after 10 seconds - aborting");
       bb_stop(bb_status.x_pid);
     } else {
       //X terminated itself
-      set_secondary_error("X did not start properly");
+      set_bb_error("X did not start properly");
     }
   } else {
     //X accepted the connetion - we assume it works
     XCloseDisplay(xdisp); //close connection to X again
     bb_log(LOG_INFO, "X successfully started in %i seconds\n", time(0) - xtimer);
+    //reset errors, if any
+    set_bb_error(0);
   }
 }//start_secondary
 
