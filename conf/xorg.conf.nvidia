@@ -1,0 +1,14 @@
+Section "ServerLayout"
+    Identifier "Layout0"
+    Option "AutoAddDevices" "false"
+EndSection
+
+Section "Device"
+    Identifier "Device1"
+    Driver "nvidia"
+    VendorName "NVIDIA Corporation"
+    Option "NoLogo" "true"
+    Option "UseEDID" "false"
+    Option "ConnectedMonitor" "DFP"
+EndSection
+

@@ -15,4 +15,4 @@ bumblebeed_SOURCES = src/pci.c src/bbconfig.c src/bblogger.c src/bbrun.c src/bbs
 bumblebeed_LDADD = ${libX11_LIBS}
 
 bumblebeedconfdir=$(sysconfdir)/bumblebee
-bumblebeedconf_DATA = conf/bumblebee.conf conf/xorg.conf.nouveau
+bumblebeedconf_DATA = conf/bumblebee.conf conf/xorg.conf.nouveau conf/xorg.conf.nvidia
