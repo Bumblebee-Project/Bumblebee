@@ -124,6 +124,8 @@ void start_secondary(void) {
   //no problems, start X if not started yet
   if (!bb_is_running(bb_status.x_pid)) {
     bb_log(LOG_INFO, "Starting X server on display %s.\n", bb_config.x_display);
+    char pci_id[12];
+    snprintf(pci_id, 12, "PCI:%02x:%02x:%o", pci_bus_id >> 8, (pci_bus_id >> 3) & 0x1f, pci_bus_id & 0x7);
     char * x_argv[] = {
       "X",
       bb_config.x_display,
@@ -131,7 +133,7 @@ void start_secondary(void) {
       "-sharevts",
       "-nolisten", "tcp",
       "-noreset",
-      "-isolateDevice", "PCI:01:00:0",
+      "-isolateDevice", pci_id,
       "-modulepath",
       bb_config.mod_path,
       NULL
