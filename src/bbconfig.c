@@ -198,7 +198,7 @@ static int read_configuration(void) {
 
 /// Prints a single line, for use by print_usage, with alignment.
 static void print_usage_line(char * opt, char * desc) {
-  printf("  %-25s%s\n", opt, desc);
+  printf("  %-35s%s\n", opt, desc);
 }
 
 /**
@@ -215,33 +215,21 @@ static void print_usage(int exit_val) {
   printf(" Options:\n");
   if (strncmp(bb_status.program_name, "optirun", 8) == 0) {
     //client-only options
-    print_usage_line("-c [METHOD]", "Connection method to use for VirtualGL.");
-    print_usage_line("--vgl-compress [METHOD]", "Connection method to use for VirtualGL.");
+    print_usage_line("--vgl-compress / -c [METHOD]", "Connection method to use for VirtualGL.");
   } else {
     //server-only options
-    print_usage_line("-D", "Run as daemon.");
-    print_usage_line("--daemon", "Run as daemon.");
-    print_usage_line("-x [PATH]", "xorg.conf file to use.");
-    print_usage_line("--xconf [PATH]", "xorg.conf file to use.");
-    print_usage_line("-g [GROUPNAME]", "Name of group to change to.");
-    print_usage_line("--group [GROUPNAME]", "Name of group to change to.");
+    print_usage_line("--daemon / -D", "Run as daemon.");
+    print_usage_line("--xconf / -x [PATH]", "xorg.conf file to use.");
+    print_usage_line("--group / -g [GROUPNAME]", "Name of group to change to.");
   }
   //common options
-  print_usage_line("-q", "Be quiet (sets verbosity to zero)");
-  print_usage_line("--quiet", "Be quiet (sets verbosity to zero)");
-  print_usage_line("--silent", "Be quiet (sets verbosity to zero)");
-  print_usage_line("-v", "Be more verbose (can be used multiple times)");
-  print_usage_line("--verbose", "Be more verbose (can be used multiple times)");
-  print_usage_line("-d [DISPLAY NAME]", "X display number to use.");
-  print_usage_line("--display [DISPLAY NAME]", "X display number to use.");
-  print_usage_line("-C [PATH]", "Configuration file to use.");
-  print_usage_line("--config [PATH]", "Configuration file to use.");
-  print_usage_line("-l [PATH]", "LD driver path to use.");
-  print_usage_line("--ldpath [PATH]", "LD driver path to use.");
-  print_usage_line("-s [PATH]", "Unix socket to use.");
-  print_usage_line("--socket [PATH]", "Unix socket to use.");
-  print_usage_line("-h", "Show this help screen.");
-  print_usage_line("--help", "Show this help screen.");
+  print_usage_line("--quiet / --silent / -q", "Be quiet (sets verbosity to zero)");
+  print_usage_line("--verbose / -v", "Be more verbose (can be used multiple times)");
+  print_usage_line("--display / -d [DISPLAY NAME]", "X display number to use.");
+  print_usage_line("--config / -C [PATH]", "Configuration file to use.");
+  print_usage_line("--ldpath / -l [PATH]", "LD driver path to use.");
+  print_usage_line("--socket / -s [PATH]", "Unix socket to use.");
+  print_usage_line("--help / -h", "Show this help screen.");
   printf("\n");
   exit(exit_val);
 }
