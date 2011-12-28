@@ -19,9 +19,11 @@
  * along with Bumblebee. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
 #include "../bblogger.h"
 #include "switching.h"
-#include <errno.h>
 
 #define SWITCHEROO_PATH "/sys/kernel/debug/vgaswitcheroo/switch"
 

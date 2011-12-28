@@ -23,19 +23,14 @@
  * C-coded version of the Bumblebee daemon and optirun.
  */
 
+#include <stdlib.h>
+#include <signal.h>
+#include <stdio.h>
+#include <string.h>
 #include "bbconfig.h"
 #include "bbsocket.h"
 #include "bblogger.h"
 #include "bbrun.h"
-#include <assert.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <unistd.h>
-#include <grp.h>
-#include <signal.h>
-#include <time.h>
 
 /**
  *  Handle recieved signals - except SIGCHLD, which is handled in bbrun.c

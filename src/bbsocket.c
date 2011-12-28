@@ -22,12 +22,18 @@
  * Common networking functions for Bumblebee
  */
 
-#include "bbsocket.h"
-#include "bblogger.h"
-
 #include <sys/stat.h>
 #include <poll.h>
-#include <netdb.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <errno.h>
+#include <string.h>
+#include <fcntl.h>
+#include "bbsocket.h"
+#include "bblogger.h"
 
 #ifdef __FreeBSD__
 #include <netinet/in.h>

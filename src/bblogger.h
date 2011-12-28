@@ -21,12 +21,8 @@
 /*
  * bblogger.c: loggin functions for bumblebee daemon and client
  */
-
+/* necessary for all LOG_ constants */
 #include <syslog.h>
-#include <stdarg.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
 
 #ifndef _BBLOGGER
 #define _BBLOGGER

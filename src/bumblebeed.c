@@ -23,19 +23,18 @@
  * C-coded version of the Bumblebee daemon and optirun.
  */
 
+#include <stdlib.h>
+#include <sys/stat.h>
+#include <grp.h>
+#include <signal.h>
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
 #include "bbconfig.h"
 #include "bbsocket.h"
 #include "bblogger.h"
 #include "bbsecondary.h"
 #include "bbrun.h"
-#include <assert.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <grp.h>
-#include <signal.h>
-#include <time.h>
 #include "pci.h"
 
 /**
@@ -201,7 +200,7 @@ static void main_loop(void) {
       client->sock = optirun_socket_fd;
       client->inuse = 0;
       client->prev = last;
-      client->next = last ? client : 0;
+      client->next = 0;
       last = client;
     }
 

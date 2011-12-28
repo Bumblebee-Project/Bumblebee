@@ -26,16 +26,6 @@
 #define SOCK_BLOCK 0
 #define SOCK_NOBLOCK 1
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <errno.h>
-#include <string.h>
-#include <fcntl.h>
-
 int socketConnect(char * address, int nonblock);
 void socketClose(int * sock);
 int socketCanRead(int sock);

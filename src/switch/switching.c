@@ -18,6 +18,7 @@
  * along with Bumblebee. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stddef.h>
 #include "../bblogger.h"
 #include "switching.h"
 

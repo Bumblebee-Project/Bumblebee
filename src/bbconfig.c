@@ -23,8 +23,6 @@
  * bbconfig.c: Bumblebee configuration file handler
  */
 
-#include "bbconfig.h"
-#include "bblogger.h"
 #include <errno.h>
 #include <ctype.h>
 #include <assert.h>
@@ -32,6 +30,11 @@
 #include <getopt.h>
 #include <libgen.h>
 #include <limits.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include "bbconfig.h"
+#include "bblogger.h"
 
 struct bb_status_struct bb_status;
 struct bb_config_struct bb_config;

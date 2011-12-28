@@ -22,14 +22,15 @@
  * Run command functions for Bumblebee
  */
 
-#include "bbrun.h"
-#include "bblogger.h"
 #include <string.h>
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include "bbrun.h"
+#include "bblogger.h"
 
 int handler_set = 0;
 

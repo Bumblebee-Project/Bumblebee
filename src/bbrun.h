@@ -22,7 +22,7 @@
  * Run command functions for Bumblebee
  */
 #pragma once
-#include <unistd.h>
+#include <sys/types.h>
 
 /// Forks and runs the given application.
 pid_t bb_run_fork(char** argv);
