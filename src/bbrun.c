@@ -239,18 +239,13 @@ void bb_stop_wait(pid_t proc) {
   }
 }
 
-/// Stops all the running processes, if any.
+/**
+ * Stops all the running processes, if any
+ */
 void bb_stop_all(void) {
-  struct pidlist *next = pidlist_start;
-  struct pidlist *curr;
-  // loop through all items and kill the first item until it's empty
-  while (next) {
-    curr = next;
-    next = pidlist_start->next;
-    bb_stop_wait(curr->PID);
-    /* If the program could not be killed, the memory is still in use. Just
-     * accept the memory loss for now to avoid an invalid memory access if the
-     * program exited while we're free()'ing it here */
+  /* keep killing the first program in the list until it's empty */
+  while (pidlist_start) {
+    bb_stop_wait(pidlist_start->PID);
   }
 }
 
