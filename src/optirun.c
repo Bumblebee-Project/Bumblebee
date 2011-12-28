@@ -136,13 +136,18 @@ int main(int argc, char* argv[]) {
             vglrun_args[2] = bb_config.vgl_compress;
             vglrun_args[3] = "-d";
             vglrun_args[4] = bb_config.x_display;
-            vglrun_args[5] = "-ld";
-            vglrun_args[6] = bb_config.ld_path;
-            vglrun_args[7] = "--";
-            for (r = 0; r < argc - optind; r++) {
-              vglrun_args[8 + r] = argv[optind + r];
+            int argcount = 5;
+            //only add -ld if not using nouveau
+            if (strncmp(bb_config.driver, "nouveau", 8) != 0) {
+              vglrun_args[5] = "-ld";
+              vglrun_args[6] = bb_config.ld_path;
+              argcount = 7;
             }
-            vglrun_args[8 + r] = 0;
+            vglrun_args[argcount++] = "--";
+            for (r = 0; r < argc - optind; r++) {
+              vglrun_args[argcount++ + r] = argv[optind + r];
+            }
+            vglrun_args[argcount++ + r] = 0;
             bb_run_fork_wait(vglrun_args);
             socketClose(&bb_status.bb_socket);
             break;
