@@ -249,13 +249,13 @@ void check_secondary(void) {
     bb_log(LOG_DEBUG, "Skipping auto-detection, using configured driver"
             " '%s'\n", bb_config.driver);
   } else if (module_is_loaded("nvidia")) {
-    snprintf(bb_config.driver, BUFFER_SIZE, "nvidia");
+    set_string_value(&bb_config.driver, "nvidia");
     bb_log(LOG_DEBUG, "Detected nvidia driver\n");
   } else if (module_is_loaded("nouveau")) {
-    snprintf(bb_config.driver, BUFFER_SIZE, "nouveau");
+    set_string_value(&bb_config.driver, "nouveau");
     bb_log(LOG_DEBUG, "Detected nouveau driver\n");
   } else {
-    strncpy(bb_config.driver, CONF_DRIVER, BUFFER_SIZE);
+    set_string_value(&bb_config.driver, CONF_DRIVER);
     bb_log(LOG_WARNING, "No driver auto-detected. Using compile default '%s'"
             " instead.\n", bb_config.driver);
   }

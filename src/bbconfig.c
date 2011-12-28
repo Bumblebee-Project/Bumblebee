@@ -58,7 +58,7 @@ static size_t strip_lead_trail_ws(char *dest, char *str, size_t len);
 /**
  * Takes a pointer to a char pointer, resizing and copying the string value to it.
  */
-static void set_string_value(char ** configstring, char * newvalue) {
+void set_string_value(char ** configstring, char * newvalue) {
   //free the string if it already existed.
   if (*configstring != 0) {
     free(*configstring);

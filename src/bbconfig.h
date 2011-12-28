@@ -94,3 +94,8 @@ void config_dump(void);
  * Resets stored error when called with argument 0.
  */
 void set_bb_error(char * msg);
+
+/**
+ * Takes a pointer to a char pointer, resizing and copying the string value to it.
+ */
+void set_string_value(char ** configstring, char * newvalue);
