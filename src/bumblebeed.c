@@ -205,6 +205,9 @@ static void main_loop(void) {
       client->inuse = 0;
       client->prev = last;
       client->next = 0;
+      if (last) {
+        last->next = client;
+      }
       last = client;
     }
 
@@ -223,12 +226,12 @@ static void main_loop(void) {
           }
         }
         if (client->next) {
-          client->next = client->prev;
+          client->next->prev = client->prev;
         } else {
           last = client->prev;
         }
         if (client->prev) {
-          client->prev = client->next;
+          client->prev->next = client->next;
         }
         free(client);
       } else {
@@ -253,6 +256,9 @@ static void main_loop(void) {
     last = client;
     client = client->prev;
     free(last);
+  }
+  if (bb_status.appcount != 0) {
+    bb_log(LOG_WARNING, "appcount = %i (should be 0)\n", bb_status.appcount);
   }
 }
 

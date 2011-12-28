@@ -66,10 +66,10 @@ static void pidlist_remove(pid_t rempid) {
     next_iter = curr->next;
     if (curr->PID == rempid) {
       if (curr->next) {
-        curr->next = curr->prev;
+        curr->next->prev = curr->prev;
       }
       if (curr->prev) {
-        curr->prev = curr->next;
+        curr->prev->next = curr->next;
       } else {
         pidlist_start = curr->next;
       }
