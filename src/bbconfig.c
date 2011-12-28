@@ -221,6 +221,7 @@ static void print_usage(int exit_val) {
     print_usage_line("--daemon / -D", "Run as daemon.");
     print_usage_line("--xconf / -x [PATH]", "xorg.conf file to use.");
     print_usage_line("--group / -g [GROUPNAME]", "Name of group to change to.");
+    print_usage_line("--driver [nvidia / nouveau]", "Force use of a certain GPU driver.");
   }
   //common options
   print_usage_line("--quiet / --silent / -q", "Be quiet (sets verbosity to zero)");
@@ -255,6 +256,7 @@ static void read_cmdline_config(int argc, char ** argv) {
     {"help", 1, 0, 'h'},
     {"silent", 0, 0, 'q'},
     {"version", 0, 0, 'V'},
+    {"driver", 1, 0, (char)42},
     {0, 0, 0, 0}
   };
   while ((opt = getopt_long(argc, argv, optString, longOpts, 0)) != -1) {
@@ -290,6 +292,9 @@ static void read_cmdline_config(int argc, char ** argv) {
         break;
       case 'C'://config file
         snprintf(bb_config.bb_conf_file, BUFFER_SIZE, "%s", optarg);
+        break;
+      case 42://driver
+        snprintf(bb_config.driver, BUFFER_SIZE, "%s", optarg);
         break;
       case 'V'://print version
         printf("Version: %s\n", GITVERSION);
