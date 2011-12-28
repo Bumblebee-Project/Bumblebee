@@ -126,14 +126,22 @@ void start_secondary(void) {
     bb_log(LOG_INFO, "Starting X server on display %s.\n", bb_config.x_display);
     char * x_argv[] = {
       "X",
+      bb_config.x_display,
       "-config", bb_config.x_conf_file,
       "-sharevts",
       "-nolisten", "tcp",
       "-noreset",
-      bb_config.x_display,
+      "-isolateDevice", "PCI:01:00:0",
+      "-modulepath",
+      bb_config.mod_path,
       NULL
     };
-    bb_status.x_pid = bb_run_fork_ld(x_argv, bb_config.ld_path);
+    //if using nouveau, do not use -modulepath
+    if (strncmp(bb_config.driver, "nouveau", 8) == 0) {
+      x_argv[10] = 0;//remove -modulepath
+      x_argv[11] = 0;//remove bb_config.mod_path
+    }
+    bb_status.x_pid = bb_run_fork(x_argv);
   }
 
   //check if X is available, for maximum 10 seconds.
