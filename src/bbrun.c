@@ -198,7 +198,7 @@ void bb_run_fork_wait(char** argv, int timeout) {
       pidlist_add(ret);
       //sleep until process finishes or timeout reached
       int i = 0;
-      while (bb_is_running(ret) && ((i < timeout) || (i == 0)) && dowait) {
+      while (bb_is_running(ret) && ((i < timeout) || (timeout == 0)) && dowait) {
         usleep(1000000);
         i++;
       }
