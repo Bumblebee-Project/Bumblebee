@@ -183,6 +183,9 @@ static int read_configuration(void) {
       } else if (strncmp(kvp.key, "DRIVER", 7) == 0) {
         snprintf(bb_config.driver, BUFFER_SIZE, "%s", kvp.value);
         bb_log(LOG_DEBUG, "value set: driver = %s\n", bb_config.driver);
+      } else if (strncmp(kvp.key, "DRIVER_MODULE", 14) == 0) {
+        snprintf(bb_config.module_name, BUFFER_SIZE, "%s", kvp.value);
+        bb_log(LOG_DEBUG, "value set: driver = %s\n", bb_config.driver);
       } else if (strncmp(kvp.key, "NV_LIBRARY_PATH", 16) == 0) {
         snprintf(bb_config.ld_path, BUFFER_SIZE, "%s", kvp.value);
         bb_log(LOG_DEBUG, "value set: ld_path = %s\n", bb_config.ld_path);
@@ -226,6 +229,8 @@ static void print_usage(int exit_val) {
     print_usage_line("--group / -g [GROUPNAME]", "Name of group to change to.");
     print_usage_line("--driver [nvidia / nouveau]", "Force use of a certain GPU driver.");
     print_usage_line("--modulepath / -m [PATH]", "ModulePath to use for xorg (nvidia-only).");
+    print_usage_line("--driver-module / -k [NAME]", "Name of kernel module to be"
+            " loaded if different from the driver");
   }
   //common options
   print_usage_line("--quiet / --silent / -q", "Be quiet (sets verbosity to zero)");
@@ -262,6 +267,7 @@ static void read_cmdline_config(int argc, char ** argv) {
     {"version", 0, 0, 'V'},
     {"driver", 1, 0, (char)42},
     {"modulepath", 1, 0, 'm'},
+    {"driver-module", 1, 0, 'k'},
     {0, 0, 0, 0}
   };
   while ((opt = getopt_long(argc, argv, optString, longOpts, 0)) != -1) {
@@ -303,6 +309,9 @@ static void read_cmdline_config(int argc, char ** argv) {
         break;
       case 42://driver
         snprintf(bb_config.driver, BUFFER_SIZE, "%s", optarg);
+        break;
+      case 'k'://kernel module
+        snprintf(bb_config.module_name, BUFFER_SIZE, "%s", optarg);
         break;
       case 'V'://print version
         printf("Version: %s\n", GITVERSION);
@@ -349,6 +358,7 @@ void init_config(int argc, char ** argv) {
   strncpy(bb_config.vgl_compress, CONF_VGLCOMPRESS, BUFFER_SIZE);
   // default to auto-detect
   strncpy(bb_config.driver, "", BUFFER_SIZE);
+  strncpy(bb_config.module_name, "", BUFFER_SIZE);
 
   // parse commandline configuration (for config file, if changed)
   read_cmdline_config(argc, argv);

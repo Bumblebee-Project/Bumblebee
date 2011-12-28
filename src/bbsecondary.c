@@ -104,7 +104,7 @@ void start_secondary(void) {
     bb_log(LOG_INFO, "Loading %s module\n", bb_config.driver);
     char * mod_argv[] = {
       "modprobe",
-      bb_config.driver,
+      *bb_config.module_name ? bb_config.module_name : bb_config.driver,
       NULL
     };
     bb_run_fork_wait(mod_argv);
