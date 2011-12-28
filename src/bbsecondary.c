@@ -88,6 +88,11 @@ void start_secondary(void) {
     }
   }
 
+  //if runmode is BB_RUN_EXIT, do not start X, we are shutting down.
+  if (bb_status.runmode == BB_RUN_EXIT) {
+    return;
+  }
+
   if (pci_get_driver(driver, pci_bus_id, sizeof driver)) {
     /* if the loaded driver does not equal the driver from config, unload it */
     if (strcasecmp(bb_config.driver, driver)) {
@@ -113,11 +118,6 @@ void start_secondary(void) {
   // if driver load failed, cancel and set error
   if (!pci_get_driver(NULL, pci_bus_id, 0)) {
     set_secondary_error("Could not load GPU driver");
-    return;
-  }
-
-  //if runmode is BB_RUN_EXIT, do not start X, we are shutting down.
-  if (bb_status.runmode == BB_RUN_EXIT) {
     return;
   }
 
