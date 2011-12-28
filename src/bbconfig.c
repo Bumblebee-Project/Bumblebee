@@ -31,6 +31,7 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <libgen.h>
+#include <limits.h>
 
 struct bb_status_struct bb_status;
 struct bb_config_struct bb_config;
@@ -42,6 +43,11 @@ struct bb_key_value {
 
 #define CONFIG_PARSE_ERR(err_msg, line) \
   bb_log(LOG_ERR, "Error parsing configuration: %s. line: %s\n", err_msg, line)
+
+/* use a value that cannot be a valid char for getopt */
+enum {
+  OPT_DRIVER = CHAR_MAX + 1
+};
 
 static size_t strip_lead_trail_ws(char *dest, char *str, size_t len);
 
@@ -228,7 +234,7 @@ static void print_usage(int exit_val) {
     print_usage_line("--xconf / -x [PATH]", "xorg.conf file to use.");
     print_usage_line("--group / -g [GROUPNAME]", "Name of group to change to.");
     print_usage_line("--driver [nvidia / nouveau]", "Force use of a certain GPU driver.");
-    print_usage_line("--modulepath / -m [PATH]", "ModulePath to use for xorg (nvidia-only).");
+    print_usage_line("--module-path / -m [PATH]", "ModulePath to use for xorg (nvidia-only).");
     print_usage_line("--driver-module / -k [NAME]", "Name of kernel module to be"
             " loaded if different from the driver");
   }
@@ -249,7 +255,7 @@ static void read_cmdline_config(int argc, char ** argv) {
   /* Parse the options, set flags as necessary */
   int opt = 0;
   optind = 0;
-  static const char *optString = "+Dqvx:d:s:g:l:c:C:Vh?";
+  static const char *optString = "+Dqvx:d:s:g:l:c:C:Vh?m:k:";
   static const struct option longOpts[] = {
     {"daemon", 0, 0, 'D'},
     {"quiet", 0, 0, 'q'},
@@ -265,8 +271,8 @@ static void read_cmdline_config(int argc, char ** argv) {
     {"help", 1, 0, 'h'},
     {"silent", 0, 0, 'q'},
     {"version", 0, 0, 'V'},
-    {"driver", 1, 0, (char)42},
-    {"modulepath", 1, 0, 'm'},
+    {"driver", 1, 0, OPT_DRIVER},
+    {"module-path", 1, 0, 'm'},
     {"driver-module", 1, 0, 'k'},
     {0, 0, 0, 0}
   };
@@ -307,7 +313,7 @@ static void read_cmdline_config(int argc, char ** argv) {
       case 'C'://config file
         snprintf(bb_config.bb_conf_file, BUFFER_SIZE, "%s", optarg);
         break;
-      case 42://driver
+      case OPT_DRIVER://driver
         snprintf(bb_config.driver, BUFFER_SIZE, "%s", optarg);
         break;
       case 'k'://kernel module
