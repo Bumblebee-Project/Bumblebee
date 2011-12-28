@@ -49,7 +49,7 @@ enum bb_run_mode {
 };
 
 /* String buffer size */
-#define BUFFER_SIZE 256
+#define BUFFER_SIZE 1024
 
 /* Structure containing the status of the application */
 struct bb_status_struct {
@@ -68,6 +68,7 @@ struct bb_config_struct {
     char x_conf_file[BUFFER_SIZE]; /// Path to the X configuration file.
     char bb_conf_file[BUFFER_SIZE]; /// Path to the bumblebeed configuration file.
     char ld_path[BUFFER_SIZE]; /// LD_LIBRARY_PATH to launch applications.
+    char mod_path[BUFFER_SIZE]; /// ModulePath for xorg.
     char socket_path[BUFFER_SIZE]; /// Path to the server socket.
     char gid_name[BUFFER_SIZE]; /// Group name for setgid.
     int pm_enabled; /// Whether power management is enabled.

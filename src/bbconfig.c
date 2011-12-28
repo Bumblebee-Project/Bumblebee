@@ -187,6 +187,9 @@ static int read_configuration(void) {
       } else if (strncmp(kvp.key, "NV_LIBRARY_PATH", 16) == 0) {
         snprintf(bb_config.ld_path, BUFFER_SIZE, "%s", kvp.value);
         bb_log(LOG_DEBUG, "value set: ld_path = %s\n", bb_config.ld_path);
+      } else if (strncmp(kvp.key, "MODULE_PATH", 12) == 0) {
+        snprintf(bb_config.mod_path, BUFFER_SIZE, "%s", kvp.value);
+        bb_log(LOG_DEBUG, "value set: ld_path = %s\n", bb_config.ld_path);
       } else if (strncmp(kvp.key, "CARD_SHUTDOWN_STATE", 20) == 0) {
         bb_config.card_shutdown_state = atoi(kvp.value);
         bb_log(LOG_DEBUG, "value set: card_shutdown_state = %d\n", bb_config.card_shutdown_state);
@@ -223,13 +226,14 @@ static void print_usage(int exit_val) {
     print_usage_line("--xconf / -x [PATH]", "xorg.conf file to use.");
     print_usage_line("--group / -g [GROUPNAME]", "Name of group to change to.");
     print_usage_line("--driver [nvidia / nouveau]", "Force use of a certain GPU driver.");
+    print_usage_line("--modulepath / -m [PATH]", "ModulePath to use for xorg (nvidia-only).");
   }
   //common options
   print_usage_line("--quiet / --silent / -q", "Be quiet (sets verbosity to zero)");
   print_usage_line("--verbose / -v", "Be more verbose (can be used multiple times)");
   print_usage_line("--display / -d [DISPLAY NAME]", "X display number to use.");
   print_usage_line("--config / -C [PATH]", "Configuration file to use.");
-  print_usage_line("--ldpath / -l [PATH]", "LD driver path to use.");
+  print_usage_line("--ldpath / -l [PATH]", "LD driver path to use (nvidia-only).");
   print_usage_line("--socket / -s [PATH]", "Unix socket to use.");
   print_usage_line("--help / -h", "Show this help screen.");
   printf("\n");
@@ -258,6 +262,7 @@ static void read_cmdline_config(int argc, char ** argv) {
     {"silent", 0, 0, 'q'},
     {"version", 0, 0, 'V'},
     {"driver", 1, 0, (char)42},
+    {"modulepath", 1, 0, 'm'},
     {0, 0, 0, 0}
   };
   while ((opt = getopt_long(argc, argv, optString, longOpts, 0)) != -1) {
@@ -287,6 +292,9 @@ static void read_cmdline_config(int argc, char ** argv) {
         break;
       case 'l'://LD driver path
         snprintf(bb_config.ld_path, BUFFER_SIZE, "%s", optarg);
+        break;
+      case 'm'://modulepath
+        snprintf(bb_config.mod_path, BUFFER_SIZE, "%s", optarg);
         break;
       case 'c'://vglclient method
         snprintf(bb_config.vgl_compress, BUFFER_SIZE, "%s", optarg);
@@ -331,6 +339,7 @@ void init_config(int argc, char ** argv) {
   strncpy(bb_config.x_display, CONF_XDISP, BUFFER_SIZE);
   strncpy(bb_config.bb_conf_file, CONFIG_FILE, BUFFER_SIZE);
   strncpy(bb_config.ld_path, CONF_LDPATH, BUFFER_SIZE);
+  strncpy(bb_config.mod_path, CONF_MODPATH, BUFFER_SIZE);
   strncpy(bb_config.socket_path, CONF_SOCKPATH, BUFFER_SIZE);
   strncpy(bb_config.gid_name, CONF_GID, BUFFER_SIZE);
   strncpy(bb_config.x_conf_file, CONF_XORG, BUFFER_SIZE);
@@ -384,6 +393,7 @@ void config_dump(void) {
   bb_log(LOG_DEBUG, " xorg.conf file: %s\n", bb_config.x_conf_file);
   bb_log(LOG_DEBUG, " bumblebeed config file: %s\n", bb_config.bb_conf_file);
   bb_log(LOG_DEBUG, " LD_LIBRARY_PATH: %s\n", bb_config.ld_path);
+  bb_log(LOG_DEBUG, " ModulePath: %s\n", bb_config.mod_path);
   bb_log(LOG_DEBUG, " Socket path: %s\n", bb_config.socket_path);
   bb_log(LOG_DEBUG, " GID name: %s\n", bb_config.gid_name);
   bb_log(LOG_DEBUG, " Power management: %i\n", bb_config.pm_enabled);
