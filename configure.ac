@@ -9,7 +9,8 @@ AC_CONFIG_SRCDIR([src/bbsocket.c])
 
 # default configuration
 AC_DEFINE(CONF_XDISP, ":8", "X screen number")
-AC_DEFINE(CONF_LDPATH, "/usr/lib64/nvidia-current", "ld path")
+AC_DEFINE(CONF_LDPATH, "/usr/lib64/nvidia-current:/usr/lib/nvidia-current:/usr/lib32/nvidia-current:/usr/lib64/nvidia:/usr/lib/nvidia:/usr/lib32/nvidia", "ld path")
+AC_DEFINE(CONF_MODPATH, ["/usr/lib64/nvidia-current/xorg,/usr/lib/nvidia-current/xorg,/usr/lib32/nvidia-current/xorg,/usr/lib64/nvidia/xorg,/usr/lib/nvidia/xorg,/usr/lib32/nvidia/xorg,/usr/lib64/xorg/extra-modules,/usr/lib64/xorg/modules,/usr/lib/xorg/extra-modules,/usr/lib/xorg/modules,/usr/lib32/xorg/extra-modules,/usr/lib32/xorg/modules"], "ModulePath for xorg")
 AC_DEFINE(CONF_SOCKPATH, "/var/run/bumblebee.socket", "socket path")
 AC_DEFINE(CONF_GID, "bumblebee", "group to use when setting GID")
 AC_DEFINE(CONF_PMENABLE, 1, "enable power management")
