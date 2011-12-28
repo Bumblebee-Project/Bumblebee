@@ -25,7 +25,6 @@
 
 #include "bbconfig.h"
 #include "bblogger.h"
-#include "pci.h"
 #include <errno.h>
 #include <ctype.h>
 #include <assert.h>
@@ -341,8 +340,6 @@ void init_config(int argc, char ** argv) {
   strncpy(bb_config.vgl_compress, CONF_VGLCOMPRESS, BUFFER_SIZE);
   // default to auto-detect
   strncpy(bb_config.driver, "", BUFFER_SIZE);
-  /* default unset, it's currently only used by bumblebeed */
-  bb_config.pci_bus_id = -1;
 
   // parse commandline configuration (for config file, if changed)
   read_cmdline_config(argc, argv);

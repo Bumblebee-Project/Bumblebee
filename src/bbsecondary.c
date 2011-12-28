@@ -34,6 +34,9 @@
 #include <time.h>
 #include <fcntl.h>
 
+/* PCI Bus ID of the discrete video card, -1 means invalid */
+int pci_bus_id = -1;
+
 static int unload_module(char *module_name);
 
 /// Returns 1 if the named module (or a module containing the
@@ -85,7 +88,7 @@ void start_secondary(void) {
     }
   }
 
-  if (pci_get_driver(driver, bb_config.pci_bus_id, sizeof driver)) {
+  if (pci_get_driver(driver, pci_bus_id, sizeof driver)) {
     /* if the loaded driver does not equal the driver from config, unload it */
     if (strcasecmp(bb_config.driver, driver)) {
       if (!unload_module(driver)) {
@@ -108,7 +111,7 @@ void start_secondary(void) {
   }
 
   // if driver load failed, cancel and set error
-  if (!pci_get_driver(NULL, bb_config.pci_bus_id, 0)) {
+  if (!pci_get_driver(NULL, pci_bus_id, 0)) {
     set_secondary_error("Could not load GPU driver");
     return;
   }
@@ -213,12 +216,12 @@ void stop_secondary() {
         return;
       }
       /* unload the driver loaded by the graphica card */
-      if (pci_get_driver(driver, bb_config.pci_bus_id, sizeof driver)) {
+      if (pci_get_driver(driver,pci_bus_id, sizeof driver)) {
         unload_module(driver);
       }
 
       //only turn card off if no drivers are loaded
-      if (pci_get_driver(NULL, bb_config.pci_bus_id, 0)) {
+      if (pci_get_driver(NULL, pci_bus_id, 0)) {
         bb_log(LOG_DEBUG, "Drivers are still loaded, unable to disable card\n");
         return;
       }

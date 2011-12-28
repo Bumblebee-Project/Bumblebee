@@ -22,6 +22,9 @@
  */
 #pragma once
 
+/* PCI Bus ID of the discrete video card */
+int pci_bus_id;
+
 /// Start the X server by fork-exec, turn card on if needed.
 void start_secondary(void);
 
