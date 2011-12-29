@@ -13,7 +13,7 @@ Build Requirements
 
 autotools (2.68+ recommended)  
 libx11 and development headers  
-[bbswitch](https://github.com/Lekensteyn/acpi-stuff/tree/master/bbswitch) (optional)
+[bbswitch](https://github.com/Bumblebee-Project/bbswitch) (optional)
 
 Building
 ---------
