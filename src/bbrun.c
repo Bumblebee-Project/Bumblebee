@@ -162,12 +162,16 @@ pid_t bb_run_fork_ld(char** argv, char * ldpath) {
     char *current_path = getenv("LD_LIBRARY_PATH");
     // Fork went ok, set environment
     if (current_path) {
-      char ldpath_new[4096];
-      /* assume the sizeof ldpath_new > sizeof ldpath */
-      strncpy(ldpath_new, ldpath, sizeof ldpath_new);
-      strncat(ldpath_new, ":", sizeof(ldpath_new) - 1);
-      strncat(ldpath_new, current_path, sizeof(ldpath_new) - 1);
-      setenv("LD_LIBRARY_PATH", ldpath_new, 1);
+      char *ldpath_new = malloc(strlen(ldpath) + 1 + strlen(current_path) + 1);
+      if (ldpath_new) {
+        strcpy(ldpath_new, ldpath);
+        strcat(ldpath_new, ":");
+        strcat(ldpath_new, current_path);
+        setenv("LD_LIBRARY_PATH", ldpath_new, 1);
+        free(ldpath_new);
+      } else {
+        bb_log(LOG_WARNING, "Could not allocate memory for LD_LIBRARY_PATH\n");
+      }
     } else {
       setenv("LD_LIBRARY_PATH", ldpath, 1);
     }
