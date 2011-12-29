@@ -95,8 +95,15 @@ static void childsig_handler(int signum) {
   if (signum != SIGCHLD) {
     return;
   }
-  pid_t ret = wait(0);
-  bb_log(LOG_DEBUG, "Process with PID %i terminated.\n", ret);
+  int chld_stat;
+  /* Wait for the child to exit */
+  pid_t ret = wait(&chld_stat);
+  /* Log the child termination and return value */
+  if (WIFEXITED (chld_stat)) {
+    bb_log(LOG_DEBUG, "Process with PID %i returned code %d\n", ret, WEXITSTATUS (chld_stat));
+  } else {
+    bb_log(LOG_WARNING, "Process with PID %i returned code %d\n", ret, WEXITSTATUS (chld_stat));
+  }
   pidlist_remove(ret);
 }//childsig_handler
 
