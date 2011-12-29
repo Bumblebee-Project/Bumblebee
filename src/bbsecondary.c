@@ -130,6 +130,9 @@ void start_secondary(void) {
       bb_config.mod_path,
       NULL
     };
+    if (!*bb_config.mod_path) {
+      x_argv[10] = 0;//remove -modulepath if not set
+    }
     bb_status.x_pid = bb_run_fork_ld(x_argv, bb_config.ld_path);
   }
 
