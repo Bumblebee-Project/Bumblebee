@@ -1,5 +1,6 @@
 *.o
 .deps/
+.dirstamp
 Makefile
 Makefile.in
 
@@ -9,3 +10,5 @@ Makefile.in
 /config.*
 /configure
 /stamp-h1
+
+/bin/
