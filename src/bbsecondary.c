@@ -33,6 +33,7 @@
 #include <string.h>
 #include <time.h>
 #include <fcntl.h>
+#include <stdlib.h>
 
 /* PCI Bus ID of the discrete video card, -1 means invalid */
 int pci_bus_id = -1;
@@ -66,6 +67,51 @@ static int module_is_loaded(char * mod) {
   fclose(bbs);
   return ret;
 }//module_is_loaded
+
+/**
+ * Substitutes DRIVER in the passed path
+ * @param x_conf_file A path to be processed
+ * @param driver The replacement for each occurence of DRIVER
+ * @return A path to xorg.conf with DRIVER substituted for the driver
+ */
+static char *xorg_path_w_driver(char *x_conf_file, char *driver) {
+  static char *path;
+  const char *driver_keyword = "DRIVER";
+  unsigned int driver_occurences = 0;
+  int path_length;
+  char *pos, *next;
+
+  /* calculate the path buffer size */
+  pos = x_conf_file;
+  while ((next = strstr(pos, driver_keyword)) != 0) {
+    driver_occurences++;
+    pos = next + strlen(driver_keyword);
+  }
+  path_length = strlen(x_conf_file) +
+          driver_occurences * (strlen(driver_keyword) - 1);
+ 
+  /* allocate some memory including null byte and make it an empty string */
+  path = malloc(path_length + 1);
+  if (!path) {
+    bb_log(LOG_WARNING, "Could not allocate memory for xorg conf path\n");
+    return NULL;
+  }
+  path[0] = 0;
+
+  /* now replace for real */
+  pos = x_conf_file;
+  while ((next = strstr(pos, driver_keyword)) != 0) {
+    int len = next - pos;
+    strncat(path, pos, len);
+    strncat(path, driver, path_length);
+
+    /* the next search starts at the position after %s */
+    pos = next + strlen(driver_keyword);
+  }
+  /* append the remainder after the last %s if any and overwrite the setting */
+  strncat(path, pos, path_length);
+  return path;
+}
 
 /// Start the X server by fork-exec, turn card on and load driver if needed.
 /// If after this method finishes X is running, it was successfull.
@@ -115,13 +161,19 @@ void start_secondary(void) {
 
   //no problems, start X if not started yet
   if (!bb_is_running(bb_status.x_pid)) {
-    bb_log(LOG_INFO, "Starting X server on display %s.\n", bb_config.x_display);
     char pci_id[12];
-    snprintf(pci_id, 12, "PCI:%02x:%02x:%o", pci_bus_id >> 8, (pci_bus_id >> 3) & 0x1f, pci_bus_id & 0x7);
-    char * x_argv[] = {
+    static char *x_conf_file;
+    snprintf(pci_id, 12, "PCI:%02x:%02x:%o", pci_bus_id >> 8, (pci_bus_id >> 3)
+            & 0x1f, pci_bus_id & 0x7);
+    if (!x_conf_file) {
+      x_conf_file = xorg_path_w_driver(bb_config.x_conf_file, bb_config.driver);
+    }
+
+    bb_log(LOG_INFO, "Starting X server on display %s.\n", bb_config.x_display);
+    char *x_argv[] = {
       "X",
       bb_config.x_display,
-      "-config", bb_config.x_conf_file,
+      "-config", x_conf_file,
       "-sharevts",
       "-nolisten", "tcp",
       "-noreset",
