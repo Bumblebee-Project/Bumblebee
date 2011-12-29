@@ -11,5 +11,4 @@ Makefile.in
 /configure
 /stamp-h1
 
-/bumblebeed
-/optirun
+/bin/
