@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include "bbconfig.h"
 #include "bblogger.h"
+#include "bbrun.h"
 
 struct bb_status_struct bb_status;
 struct bb_config_struct bb_config;
@@ -49,7 +50,8 @@ struct bb_key_value {
 
 /* use a value that cannot be a valid char for getopt */
 enum {
-  OPT_DRIVER = CHAR_MAX + 1
+  OPT_DRIVER = CHAR_MAX + 1,
+  OPT_FAILSAFE,
 };
 
 static size_t strip_lead_trail_ws(char *dest, char *str, size_t len);
@@ -82,7 +84,18 @@ void set_string_value(char ** configstring, char * newvalue) {
   }
 }//set_string_value
 
-
+/**
+ * Determines the boolean value for a given string
+ * @param value A value to be analyzed
+ * @return 1 if the value resolves to a truth value, 0 otherwise
+ */
+static int boolean_value(char *val) {
+  /* treat void, an empty string, N, n and zero as false */
+  if (!val || !*val || *val == 'N' || *val == 'n' || *val == '0') {
+    return 0;
+  }
+  return 1;
+}
 
 /**
  * Takes a line and breaks it into a key-value pair
@@ -202,7 +215,7 @@ static int read_configuration(void) {
         set_string_value(&bb_config.x_display, kvp.value);
         bb_log(LOG_DEBUG, "value set: x_display = %s\n", bb_config.x_display);
       } else if (strncmp(kvp.key, "STOP_SERVICE_ON_EXIT", 20) == 0) {
-        bb_config.stop_on_exit = atoi(kvp.value);
+        bb_config.stop_on_exit = boolean_value(kvp.value);
         bb_log(LOG_DEBUG, "value set: stop_on_exit = %d\n", bb_config.stop_on_exit);
       } else if (strncmp(kvp.key, "X_CONFFILE", 10) == 0) {
         set_string_value(&bb_config.x_conf_file, kvp.value);
@@ -211,10 +224,10 @@ static int read_configuration(void) {
         set_string_value(&bb_config.vgl_compress, kvp.value);
         bb_log(LOG_DEBUG, "value set: vgl_compress = %s\n", bb_config.vgl_compress);
       } else if (strncmp(kvp.key, "ENABLE_POWER_MANAGEMENT", 23) == 0) {
-        bb_config.pm_enabled = atoi(kvp.value);
+        bb_config.pm_enabled = boolean_value(kvp.value);
         bb_log(LOG_DEBUG, "value set: pm_enabled = %d\n", bb_config.pm_enabled);
       } else if (strncmp(kvp.key, "FALLBACK_START", 15) == 0) {
-        bb_config.fallback_start = atoi(kvp.value);
+        bb_config.fallback_start = boolean_value(kvp.value);
         bb_log(LOG_DEBUG, "value set: fallback_start = %d\n", bb_config.fallback_start);
       } else if (strncmp(kvp.key, "BUMBLEBEE_GROUP", 16) == 0) {
         set_string_value(&bb_config.gid_name, kvp.value);
@@ -232,7 +245,7 @@ static int read_configuration(void) {
         set_string_value(&bb_config.mod_path, kvp.value);
         bb_log(LOG_DEBUG, "value set: ld_path = %s\n", bb_config.ld_path);
       } else if (strncmp(kvp.key, "CARD_SHUTDOWN_STATE", 20) == 0) {
-        bb_config.card_shutdown_state = atoi(kvp.value);
+        bb_config.card_shutdown_state = boolean_value(kvp.value);
         bb_log(LOG_DEBUG, "value set: card_shutdown_state = %d\n", bb_config.card_shutdown_state);
       }
     }
@@ -261,6 +274,8 @@ static void print_usage(int exit_val) {
   if (strncmp(bb_status.program_name, "optirun", 8) == 0) {
     //client-only options
     print_usage_line("--vgl-compress / -c [METHOD]", "Connection method to use for VirtualGL.");
+    print_usage_line("--failsafe={Y|N}", "If Y, the program even starts if the"
+            " server is unavailable");
   } else {
     //server-only options
     print_usage_line("--daemon / -D", "Run as daemon.");
@@ -307,6 +322,7 @@ static void read_cmdline_config(int argc, char ** argv) {
     {"driver", 1, 0, OPT_DRIVER},
     {"module-path", 1, 0, 'm'},
     {"driver-module", 1, 0, 'k'},
+    {"failsafe", 1, 0, OPT_FAILSAFE},
     {0, 0, 0, 0}
   };
   while ((opt = getopt_long(argc, argv, optString, longOpts, 0)) != -1) {
@@ -355,6 +371,9 @@ static void read_cmdline_config(int argc, char ** argv) {
       case 'V'://print version
         printf("Version: %s\n", GITVERSION);
         exit(EXIT_SUCCESS);
+        break;
+      case OPT_FAILSAFE: // for optirun
+        bb_config.fallback_start = boolean_value(optarg);
         break;
       default:
         print_usage(EXIT_FAILURE);

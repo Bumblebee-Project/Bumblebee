@@ -65,6 +65,17 @@ static void report_daemon_status(void) {
   }
 }
 
+/**
+ * Runs a requested program if fallback mode was enabled
+ * @param argv The program and param list to be executed
+ */
+static void run_fallback(char *argv[]) {
+  if (bb_status.runmode == BB_RUN_APP && bb_config.fallback_start) {
+    bb_log(LOG_WARNING, "The Bumblebee server was not available.\n");
+    bb_run_exec(argv);
+  }
+}
+
 static void run_app(int argc, char *argv[]) {
   char buffer[BUFFER_SIZE];
   int r;
@@ -118,9 +129,8 @@ static void run_app(int argc, char *argv[]) {
       }
     }
   }
-  if (!ranapp && bb_config.fallback_start) {
-    bb_log(LOG_WARNING, "Running application normally.\n");
-    bb_run_exec(argv + optind);
+  if (!ranapp) {
+    run_fallback(argv + optind);
   }
 }
 
@@ -151,6 +161,7 @@ int main(int argc, char *argv[]) {
   bb_status.bb_socket = socketConnect(bb_config.socket_path, SOCK_NOBLOCK);
   if (bb_status.bb_socket < 0) {
     bb_log(LOG_ERR, "Could not connect to bumblebee daemon - is it running?\n");
+    run_fallback(argv + optind);
     bb_closelog();
     return EXIT_FAILURE;
   }
