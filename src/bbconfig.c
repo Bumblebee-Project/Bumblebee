@@ -45,8 +45,10 @@ struct bb_key_value {
   char value[BUFFER_SIZE];
 };
 
-#define CONFIG_PARSE_ERR(err_msg, line) \
-  bb_log(LOG_ERR, "Error parsing configuration: %s. line: %s\n", err_msg, line)
+/* Little funciton to log partins errors */
+inline void bb_config_parse_err(const char* msg, const char* line) {
+  bb_log(LOG_ERR, "Error parsing configuration: %s. line: %s\n", msg, line);
+}
 
 /* use a value that cannot be a valid char for getopt */
 enum {
@@ -107,7 +109,7 @@ static int boolean_value(char *val) {
 static int bb_get_key_value(const char *line, struct bb_key_value *kvpair) {
   char *equals_pos = strstr(line, "=");
   if (!equals_pos) {
-    CONFIG_PARSE_ERR("expected an =-sign.", line);
+    bb_config_parse_err("expected an =-sign.", line);
     return 1;
   }
 
@@ -115,12 +117,12 @@ static int bb_get_key_value(const char *line, struct bb_key_value *kvpair) {
   // BUFFER_SIZE
   int key_len = equals_pos - line;
   if (key_len >= BUFFER_SIZE) {
-    CONFIG_PARSE_ERR("key name too long", line);
+    bb_config_parse_err("key name too long", line);
     return 1;
   }
   int val_len = strlen(line) - key_len - strlen("=");
   if (val_len >= BUFFER_SIZE) {
-    CONFIG_PARSE_ERR("value too long", line);
+    bb_config_parse_err("value too long", line);
     return 1;
   }
 
