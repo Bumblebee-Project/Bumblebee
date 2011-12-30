@@ -120,39 +120,54 @@ static void check_handler(void) {
 }//check_handler
 
 /**
- * Forks and runs the given application.
- * More suitable for configurable arguments to pass
+ * Forks and runs the given application and waits for the process to finish
  *
- * @param argv The arguments values, the first one is the application path or name
- * @return The new process PID
+ * @param argv The arguments values, the first one is the program
+ * @return Exit code of the program (between 0 and 255) or -1 on failure
  */
-pid_t bb_run_fork(char** argv) {
+int bb_run_fork(char **argv) {
+  int exitcode = -1;
+
   check_handler();
-  // Fork and attempt to run given application
-  pid_t ret = fork();
-  if (ret == 0) {
-    // Fork went ok, child process replace
+  /* Fork and attempt to run given application */
+  pid_t pid = fork();
+  if (pid == 0) {
+    /* child process after fork */
     bb_run_exec(argv);
-  } else {
-    if (ret > 0) {
-      // Fork went ok, parent process continues
-      bb_log(LOG_INFO, "Process %s started, PID %i.\n", argv[0], ret);
-      pidlist_add(ret);
+  } else if (pid > 0) {
+    /* parent process after fork */
+    int status = 0;
+
+    bb_log(LOG_INFO, "Process %s started, PID %i.\n", argv[0], pid);
+    pidlist_add(pid);
+
+    if (waitpid(pid, &status, 0) != -1) {
+      if (WIFEXITED(status)) {
+        /* program exited normally, return status */
+        exitcode = WEXITSTATUS(status);
+      } else if (WIFSIGNALED(status)) {
+        /* program was terminated by a signal */
+        exitcode = 128 + WTERMSIG(status);
+      }
     } else {
-      // Fork failed
-      bb_log(LOG_ERR, "Process %s could not be started. fork() failed.\n", argv[0]);
-      return 0;
+      bb_log(LOG_ERR, "waitpid(%i) faild with %s\n", pid, strerror(errno));
     }
+    pidlist_remove(pid);
+  } else {
+    /* Fork failed */
+    bb_log(LOG_ERR, "Process %s could not be started. fork() failed.\n", argv[0]);
   }
-  return ret;
+
+  /* could not determine return value */
+  return exitcode;
 }
 
 /**
- * Forks and runs the given application, using an LD_LIBRARY_PATH.
- * More suitable for configurable arguments to pass
+ * Forks and runs the given application, using an LD_LIBRARY_PATH. The function
+ * then returns immediately
  *
- * @param argv The arguments values, the first one is the application path or name
- * @return The new process PID
+ * @param argv The arguments values, the first one is the program
+ * @return The childs process ID
  */
 pid_t bb_run_fork_ld(char** argv, char * ldpath) {
   check_handler();

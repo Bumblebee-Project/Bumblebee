@@ -52,7 +52,12 @@ static void handle_signal(int sig) {
   }
 }
 
-static void report_daemon_status(void) {
+/**
+ * Prints the status of the Bumblebee server if available
+ * @return EXIT_SUCCESS if the status is succesfully retrieved,
+ * EXIT_FAILURE otherwise
+ */
+static int report_daemon_status(void) {
   char buffer[BUFFER_SIZE];
   int r = snprintf(buffer, BUFFER_SIZE, "Status?");
   socketWrite(&bb_status.bb_socket, buffer, r);
@@ -61,22 +66,37 @@ static void report_daemon_status(void) {
     if (r > 0) {
       printf("Bumblebee status: %*s\n", r, buffer);
       socketClose(&bb_status.bb_socket);
+      return EXIT_SUCCESS;
     }
   }
+  return EXIT_FAILURE;
 }
 
 /**
  * Runs a requested program if fallback mode was enabled
  * @param argv The program and param list to be executed
+ * @return EXIT_FAILURE on failure and if fallback was disabled, -1 on failure
+ * and if fallback was enabled and never on success
  */
-static void run_fallback(char *argv[]) {
+static int run_fallback(char *argv[]) {
   if (bb_status.runmode == BB_RUN_APP && bb_config.fallback_start) {
     bb_log(LOG_WARNING, "The Bumblebee server was not available.\n");
     bb_run_exec(argv);
+    bb_log(LOG_ERR, "Unable to start program in fallback mode.\n");
   }
+  return EXIT_FAILURE;
 }
 
-static void run_app(int argc, char *argv[]) {
+/**
+ * Starts a program with Bumblebee if possible
+ *
+ * @param argc The number of arguments
+ * @param argv The values of arguments
+ * @return The exitcode of the program on success, EXIT_FAILURE if the program
+ * could not be started
+ */
+static int run_app(int argc, char *argv[]) {
+  int exitcode = EXIT_FAILURE;
   char buffer[BUFFER_SIZE];
   int r;
   int ranapp = 0;
@@ -118,7 +138,7 @@ static void run_app(int argc, char *argv[]) {
             vglrun_args[8 + r] = argv[optind + r];
           }
           vglrun_args[8 + r] = 0;
-          bb_run_fork_wait(vglrun_args, 0);
+          exitcode = bb_run_fork(vglrun_args);
           free(vglrun_args);
           socketClose(&bb_status.bb_socket);
           break;
@@ -130,11 +150,13 @@ static void run_app(int argc, char *argv[]) {
     }
   }
   if (!ranapp) {
-    run_fallback(argv + optind);
+    exitcode = run_fallback(argv + optind);
   }
+  return exitcode;
 }
 
 int main(int argc, char *argv[]) {
+  int exitcode = EXIT_FAILURE;
 
   /* Setup signal handling before anything else */
   signal(SIGHUP, handle_signal);
@@ -163,20 +185,20 @@ int main(int argc, char *argv[]) {
     bb_log(LOG_ERR, "Could not connect to bumblebee daemon - is it running?\n");
     run_fallback(argv + optind);
     bb_closelog();
-    return EXIT_FAILURE;
+    return exitcode;
   }
 
   /* Request status */
   if (bb_status.runmode == BB_RUN_STATUS) {
-    report_daemon_status();
+    exitcode = report_daemon_status();
   }
 
   /* Run given application */
   if (bb_status.runmode == BB_RUN_APP) {
-    run_app(argc, argv);
+    exitcode = run_app(argc, argv);
   }
 
   bb_closelog();
   bb_stop_all(); //stop any started processes that are left
-  return (EXIT_SUCCESS);
+  return exitcode;
 }
