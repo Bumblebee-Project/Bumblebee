@@ -283,6 +283,9 @@ int main(int argc, char* argv[]) {
   check_secondary();
   /* dump the config after detecting the driver */
   config_dump();
+  if (config_validate() != 0) {
+    return (EXIT_FAILURE);
+  }
 
   /* Change GID and mask according to configuration */
   if ((bb_config.gid_name != 0) && (bb_config.gid_name[0] != 0)) {

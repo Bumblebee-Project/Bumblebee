@@ -459,6 +459,35 @@ void config_dump(void) {
 }
 
 /**
+ * Checks the configuration for errors and report them
+ *
+ * @return 0 if no errors are detected, non-zero otherwise
+ */
+int config_validate(void) {
+  int error = 0;
+  if (*bb_config.driver) {
+    char *mod = *bb_config.module_name ? bb_config.module_name : bb_config.driver;
+    char *mod_argv[] = {
+      "modinfo",
+      "--field", "",
+      mod,
+      NULL
+    };
+    if (bb_run_fork(mod_argv) != EXIT_SUCCESS) {
+      error = 1;
+      bb_log(LOG_ERR, "Kernel module '%s' is not found.\n", mod);
+    }
+  } else {
+    bb_log(LOG_ERR, "Invalid configuration: no driver configured.\n");
+    error = 1;
+  }
+  if (!error) {
+    bb_log(LOG_DEBUG, "Configuration test passed.\n");
+  }
+  return error;
+}
+
+/**
  * Sets error messages if any problems occur.
  * Resets stored error when called with argument 0.
  */
