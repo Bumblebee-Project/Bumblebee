@@ -95,7 +95,7 @@ static void childsig_handler(int signum) {
   if (signum != SIGCHLD) {
     return;
   }
-  int chld_stat;
+  int chld_stat = 0;
   /* Wait for the child to exit */
   pid_t ret = wait(&chld_stat);
   /* Log the child termination and return value */
@@ -283,6 +283,7 @@ void bb_stop_wait(pid_t proc) {
  * Stops all the running processes, if any
  */
 void bb_stop_all(void) {
+  bb_log(LOG_DEBUG, "Killing all remaining processes.\n");
   /* keep killing the first program in the list until it's empty */
   while (pidlist_start) {
     bb_stop_wait(pidlist_start->PID);
