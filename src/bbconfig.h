@@ -48,6 +48,14 @@ enum bb_run_mode {
     BB_RUN_EXIT = 99
 };
 
+/* Power management methods */
+enum bb_pm_method {
+    PM_DISABLED = 0,
+    PM_AUTO = 1, // This will be a temporary state, as it would cahnge to the method available.
+    PM_BBSWITCH = 2,
+    PM_VGASWITCHEROO = 3
+}
+
 /* String buffer size */
 #define BUFFER_SIZE 1024
 
@@ -71,7 +79,7 @@ struct bb_config_struct {
     char * mod_path; /// ModulePath for xorg.
     char * socket_path; /// Path to the server socket.
     char * gid_name; /// Group name for setgid.
-    int pm_enabled; /// Whether power management is enabled.
+    int pm_enabled; /// Wich method to use for power management.
     int stop_on_exit; /// Whether to stop the X server on last optirun instance exit.
     int fallback_start; /// Wheter the application should be launched on the integrated card when X is not available.
     char * vgl_compress; /// VGL transport method.
