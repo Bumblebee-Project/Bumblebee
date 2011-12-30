@@ -101,6 +101,7 @@ static void daemonize(void) {
 static void handle_signal(int sig) {
   switch (sig) {
     case SIGHUP:
+    case SIGPIPE:
       bb_log(LOG_WARNING, "Received %s signal (ignoring...)\n", strsignal(sig));
       break;
     case SIGINT:
@@ -272,6 +273,7 @@ int main(int argc, char* argv[]) {
   signal(SIGTERM, handle_signal);
   signal(SIGINT, handle_signal);
   signal(SIGQUIT, handle_signal);
+  signal(SIGPIPE, handle_signal);
 
   bb_init_log();
 
