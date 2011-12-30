@@ -99,10 +99,15 @@ static void childsig_handler(int signum) {
   /* Wait for the child to exit */
   pid_t ret = wait(&chld_stat);
   /* Log the child termination and return value */
-  if (WIFEXITED (chld_stat)) {
-    bb_log(LOG_DEBUG, "Process with PID %i returned code %d\n", ret, WEXITSTATUS (chld_stat));
-  } else {
-    bb_log(LOG_WARNING, "Process with PID %i returned code %d\n", ret, WEXITSTATUS (chld_stat));
+  if (ret == -1) {
+    bb_log(LOG_DEBUG, "SIGCHILD received, but wait failed with %s\n",
+            strerror(errno));
+  } else if (WIFEXITED(chld_stat)) {
+    bb_log(LOG_DEBUG, "Process with PID %i returned code %i\n", ret,
+            WEXITSTATUS (chld_stat));
+  } else if (WIFSIGNALED(chld_stat)) {
+    bb_log(LOG_DEBUG, "Process with PID %i terminated with %i\n", ret,
+            WTERMSIG(chld_stat));
   }
   pidlist_remove(ret);
 }//childsig_handler
