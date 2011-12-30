@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include "../bblogger.h"
 #include "switching.h"
 
@@ -71,6 +72,23 @@ static void switcheroo_write(char *msg) {
             strerror(errno));
   }
   fclose(bbs);
+}
+
+/**
+ * Whether vga_switcheroo is available for use
+ *
+ * @param info A struct containing information which would help with the
+ * decision whether vga_switcheroo is usable or not
+ * @return 1 if available for use for PM, 0 otherwise
+ */
+int switcheroo_is_available(struct switch_info info) {
+  if (strcmp("nouveau", info.driver)) {
+    /* switcheroo cannot be used with drivers other than nouveau */
+    bb_log(LOG_DEBUG, "vga_switcheroo can only be used with the nouveau driver,"
+            " skipping method.\n");
+    return 0;
+  }
+  return 1;
 }
 
 /**

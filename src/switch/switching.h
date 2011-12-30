@@ -30,20 +30,30 @@ enum switch_state {
   SWITCH_UNAVAIL = -1
 };
 
+/* information that could be useful for use in is_available */
+struct switch_info {
+  char *driver; /* possible values are nouveau and nvidia */
+};
+
 struct switching_method {
   char *name; /* a short name for informational / logging purposes */
   int need_driver_unloaded; /* 1 if the method needs drivers to be unloaded
                               * when disabling the card, 0 otherwise*/
-  enum switch_state (*status)(void); /* reports status: off (0), on (1), unavailable (-1) */
+  enum switch_state (*status)(void); /* reports status: off (0), on (1),
+                                      * unavailable (-1) */
+  int (*is_available)(struct switch_info); /* returns 1 if available for use,
+                                            * 0 otherwise */
   void (*on)(void); /* attempts to enable a card */
   void (*off)(void); /* attempts to disable a card */
 };
 
 enum switch_state bbswitch_status(void);
+int bbswitch_is_available(struct switch_info);
 void bbswitch_on(void);
 void bbswitch_off(void);
 
 enum switch_state switcheroo_status(void);
+int switcheroo_is_available(struct switch_info);
 void switcheroo_on(void);
 void switcheroo_off(void);
 
@@ -54,7 +64,7 @@ struct switching_method switching_methods[SWITCHERS_COUNT];
 /* A switching method that can be used or NULL if none */
 struct switching_method *switcher;
 
-struct switching_method *switcher_detect(char *name);
+struct switching_method *switcher_detect(char *name, struct switch_info);
 enum switch_state switch_status(void);
 enum switch_state switch_on(void);
 enum switch_state switch_off(void);

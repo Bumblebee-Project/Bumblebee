@@ -22,8 +22,11 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+#include <stdlib.h>
 #include "../bblogger.h"
 #include "switching.h"
+#include "../module.h"
 
 #define BBSWITCH_PATH "/proc/acpi/bbswitch"
 
@@ -73,6 +76,26 @@ static void bbswitch_write(char *msg) {
             strerror(errno));
   }
   fclose(bbs);
+}
+
+/**
+ * Whether bbswitch is available for use
+ *
+ * @param info A struct containing information which would help with the
+ * decision whether bbswitch is usable or not
+ * @return 1 if available for use for PM, 0 otherwise
+ */
+int bbswitch_is_available(struct switch_info info) {
+  /* easy one: if the path is available, bbswitch is usable */
+  if (access(BBSWITCH_PATH, F_OK | R_OK | W_OK) == 0) {
+    /* file exists and read/write is allowed */
+    bb_log(LOG_DEBUG, "bbswitch has been detected.\n");
+    return 1;
+  }
+  /* nope, we can't use bbswitch */
+  bb_log(LOG_DEBUG, "bbswitch is not available, perhaps you need to insmod"
+          " it?\n");
+  return 0;
 }
 
 /**

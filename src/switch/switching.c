@@ -19,13 +19,16 @@
  */
 
 #include <stddef.h>
+#include <string.h>
 #include "../bblogger.h"
 #include "switching.h"
 
 /* increase SWITCHERS_COUNT in switching.h when more methods are added */
 struct switching_method switching_methods[SWITCHERS_COUNT] = {
-  {"bbswitch", 1, bbswitch_status, bbswitch_on, bbswitch_off},
-  {"switcheroo", 0, switcheroo_status, switcheroo_on, switcheroo_off}
+  {"bbswitch", 1, bbswitch_status, bbswitch_is_available,
+          bbswitch_on, bbswitch_off},
+  {"switcheroo", 0, switcheroo_status, switcheroo_is_available,
+          switcheroo_on, switcheroo_off}
 };
 
 /**
@@ -33,15 +36,17 @@ struct switching_method switching_methods[SWITCHERS_COUNT] = {
  * 
  * @param name An optional name to find out the status for that name. If NULL,
  * all methods will be probed
+ * @param info A struct containing information which would help with the
+ * decision whether bbswitch is usable or not
  * @return A switching method if available, NULL otherwise
  */
-struct switching_method *switcher_detect(char *name) {
+struct switching_method *switcher_detect(char *name, struct switch_info info) {
   int i;
   switcher = NULL;
   for (i = 0; i<SWITCHERS_COUNT; ++i) {
     /* If the status is 0 or 1, the method is usable */
-    if ((name && name == switching_methods[i].name) ||
-            (switching_methods[i].status() != SWITCH_UNAVAIL)) {
+    if ((!name || strcmp(name, switching_methods[i].name) == 0) &&
+            switching_methods[i].is_available(info)) {
       switcher = &switching_methods[i];
       break;
     }

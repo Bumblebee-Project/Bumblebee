@@ -262,7 +262,10 @@ void check_secondary(void) {
   }
 
   //check switch availability, warn if not availble
-  switcher = switcher_detect(NULL);
+  struct switch_info info;
+  memset(&info, 0, sizeof info);
+  info.driver = bb_config.driver;
+  switcher = switcher_detect(NULL, info);
   if (switcher) {
     bb_log(LOG_INFO, "Switching method '%s' is available and will be used.\n",
             switcher->name);
