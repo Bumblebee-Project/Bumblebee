@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdlib.h>
 #include "module.h"
 #include "bblogger.h"
 #include "bbrun.h"
@@ -80,4 +81,20 @@ int module_unload(char *module_name) {
     }
   }
   return 1;
+}
+
+/**
+ * Checks whether a kernel module is available for loading
+ *
+ * @param module_name The module name to be checked
+ * @return 1 if the module is available for loading, 0 otherwise
+ */
+int module_is_available(char *module_name) {
+  char *mod_argv[] = {
+    "modinfo",
+    "--field", "",
+    module_name,
+    NULL
+  };
+  return bb_run_fork(mod_argv) == EXIT_SUCCESS;
 }

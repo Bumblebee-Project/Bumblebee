@@ -22,3 +22,4 @@
 
 int module_is_loaded(char *module_name);
 int module_unload(char *module_name);
+int module_is_available(char *module_name);

@@ -35,7 +35,7 @@
 #include <stdio.h>
 #include "bbconfig.h"
 #include "bblogger.h"
-#include "bbrun.h"
+#include "module.h"
 
 struct bb_status_struct bb_status;
 struct bb_config_struct bb_config;
@@ -467,13 +467,7 @@ int config_validate(void) {
   int error = 0;
   if (*bb_config.driver) {
     char *mod = *bb_config.module_name ? bb_config.module_name : bb_config.driver;
-    char *mod_argv[] = {
-      "modinfo",
-      "--field", "",
-      mod,
-      NULL
-    };
-    if (bb_run_fork(mod_argv) != EXIT_SUCCESS) {
+    if (!module_is_available(mod)) {
       error = 1;
       bb_log(LOG_ERR, "Kernel module '%s' is not found.\n", mod);
     }
