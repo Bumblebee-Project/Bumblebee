@@ -21,52 +21,22 @@
  * along with Bumblebee. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <X11/Xlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
+#include <fcntl.h>
+#include <stdlib.h>
 #include "bbsecondary.h"
 #include "switch/switching.h"
 #include "bbrun.h"
 #include "bblogger.h"
 #include "bbconfig.h"
 #include "pci.h"
-#include <X11/Xlib.h>
-#include <stdio.h>
-#include <ctype.h>
-#include <string.h>
-#include <time.h>
-#include <fcntl.h>
-#include <stdlib.h>
+#include "module.h"
 
 /* PCI Bus ID of the discrete video card, -1 means invalid */
 int pci_bus_id = -1;
-
-static int unload_module(char *module_name);
-
-/// Returns 1 if the named module (or a module containing the
-/// string in its name) is loaded, 0 otherwise.
-/// Returns negative upon error.
-/// Works by checking /proc/modules
-static int module_is_loaded(char * mod) {
-  // use the same buffer length as lsmod
-  char buffer[4096];
-  FILE * bbs = fopen("/proc/modules", "r");
-  int ret = 0;
-  // assume mod_len <= sizeof(buffer)
-  int mod_len = strlen(mod);
-
-  if (bbs == 0) {//error opening, return -1
-    bb_log(LOG_DEBUG, "Couldn't open /proc/modules");
-    return -1;
-  }
-  while (fgets(buffer, sizeof(buffer), bbs)) {
-    // match "module" with "module " and not "module-blah"
-    if (!strncmp(buffer, mod, mod_len) && isspace(buffer[mod_len])) {
-      // module is found
-      ret = 1;
-      break;
-    }
-  }
-  fclose(bbs);
-  return ret;
-}//module_is_loaded
 
 /**
  * Substitutes DRIVER in the passed path
@@ -134,7 +104,7 @@ void start_secondary(void) {
   if (pci_get_driver(driver, pci_bus_id, sizeof driver)) {
     /* if the loaded driver does not equal the driver from config, unload it */
     if (strcasecmp(bb_config.driver, driver)) {
-      if (!unload_module(driver)) {
+      if (!module_unload(driver)) {
         /* driver failed to unload, aborting */
         return;
       }
@@ -220,30 +190,6 @@ void start_secondary(void) {
   }
 }//start_secondary
 
-/**
- * Attempts to unload a module if loaded, for ten seconds before
- * giving up
- *
- * @param module_name The name of the kernel module to be unloaded
- * @return 1 if the driver is succesfully unloaded, 0 otherwise
- */
-static int unload_module(char *module_name) {
-  if (module_is_loaded(module_name) == 1) {
-    bb_log(LOG_INFO, "Unloading %s module\n", module_name);
-    char * mod_argv[] = {
-      "rmmod",
-      "--wait",
-      module_name,
-      NULL
-    };
-    bb_run_fork_wait(mod_argv, 10);
-    if (module_is_loaded(module_name) == 1) {
-      bb_log(LOG_ERR, "Unloading %s module timed out.\n", module_name);
-    }
-  }
-  return 1;
-}//unload module
-
 /// Kill the second X server if any, turn card off if requested.
 void stop_secondary() {
   char driver[BUFFER_SIZE];
@@ -266,7 +212,7 @@ void stop_secondary() {
       }
       /* unload the driver loaded by the graphica card */
       if (pci_get_driver(driver,pci_bus_id, sizeof driver)) {
-        unload_module(driver);
+        module_unload(driver);
       }
 
       //only turn card off if no drivers are loaded
