@@ -224,12 +224,12 @@ static int read_configuration(void) {
       } else if (strncmp(kvp.key, "VGL_COMPRESS", 12) == 0) {
         set_string_value(&bb_config.vgl_compress, kvp.value);
         bb_log(LOG_DEBUG, "value set: vgl_compress = %s\n", bb_config.vgl_compress);
-      } else if (strncmp(kvp.key, "PM_METHOD",9) == 0) {
-        if (strncmp(kvp.key, "auto", 4) == 0) {
+      } else if (strncmp(kvp.key, "PM_METHOD", 9) == 0) {
+        if (strncmp(kvp.value, "auto", 4) == 0) {
           bb_config.pm_method = PM_AUTO;
-        } else if (strncmp(kvp.key, "bbswitch", 8) == 0) {
+        } else if (strncmp(kvp.value, "bbswitch", 8) == 0) {
           bb_config.pm_method = PM_BBSWITCH;
-        } else if (strncmp(kvp.key, "vgaswitcheroo", 13) == 0) {
+        } else if (strncmp(kvp.value, "vgaswitcheroo", 13) == 0) {
           bb_config.pm_method = PM_VGASWITCHEROO;
         } else { // none
           bb_config.pm_method = PM_DISABLED;
