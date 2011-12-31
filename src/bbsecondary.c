@@ -264,6 +264,7 @@ void check_secondary(void) {
     struct switch_info info;
     memset(&info, 0, sizeof info);
     info.driver = bb_config.driver;
+    info.configured_pm = bb_pm_method_string[bb_config.pm_method];
 
     const char *pm_method = NULL;
     if (bb_config.pm_method != PM_AUTO) {

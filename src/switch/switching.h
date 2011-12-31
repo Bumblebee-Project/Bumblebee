@@ -33,6 +33,7 @@ enum switch_state {
 /* information that could be useful for use in is_available */
 struct switch_info {
   char *driver; /* possible values are nouveau and nvidia */
+  const char *configured_pm; /* configured PM method, NOT the detected one */
 };
 
 struct switching_method {

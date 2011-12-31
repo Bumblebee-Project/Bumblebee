@@ -92,6 +92,14 @@ int bbswitch_is_available(struct switch_info info) {
     bb_log(LOG_DEBUG, "bbswitch has been detected.\n");
     return 1;
   }
+  /* module is not loaded yet. Only try to load it if explicitly requested */
+  if (strcmp(info.configured_pm, "bbswitch") == 0) {
+    if (module_load("bbswitch")) {
+      /* hurrah, bbswitch could be loaded which means that the module is
+       * available and that the card is supported */
+      return 1;
+    }
+  }
   /* nope, we can't use bbswitch */
   bb_log(LOG_DEBUG, "bbswitch is not available, perhaps you need to insmod"
           " it?\n");
