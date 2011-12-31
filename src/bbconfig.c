@@ -256,13 +256,13 @@ static int read_configuration(void) {
         bb_log(LOG_DEBUG, "value set: driver = %s\n", bb_config.driver);
       } else if (strcmp(kvp.key, "DRIVER_MODULE") == 0) {
         set_string_value(&bb_config.module_name, kvp.value);
-        bb_log(LOG_DEBUG, "value set: driver = %s\n", bb_config.driver);
+        bb_log(LOG_DEBUG, "value set: module_name = %s\n", bb_config.module_name);
       } else if (strcmp(kvp.key, "NV_LIBRARY_PATH") == 0) {
         set_string_value(&bb_config.ld_path, kvp.value);
         bb_log(LOG_DEBUG, "value set: ld_path = %s\n", bb_config.ld_path);
       } else if (strcmp(kvp.key, "MODULE_PATH") == 0) {
         set_string_value(&bb_config.mod_path, kvp.value);
-        bb_log(LOG_DEBUG, "value set: ld_path = %s\n", bb_config.ld_path);
+        bb_log(LOG_DEBUG, "value set: mod_path = %s\n", bb_config.mod_path);
       } else if (strcmp(kvp.key, "CARD_SHUTDOWN_STATE") == 0) {
         bb_config.card_shutdown_state = boolean_value(kvp.value);
         bb_log(LOG_DEBUG, "value set: card_shutdown_state = %d\n", bb_config.card_shutdown_state);
