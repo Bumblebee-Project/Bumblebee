@@ -45,8 +45,8 @@ struct bb_key_value {
   char value[BUFFER_SIZE];
 };
 
-/* Little funciton to log partins errors */
-inline void bb_config_parse_err(const char* msg, const char* line) {
+/* Little function to log parsing errors */
+static inline void bb_config_parse_err(const char* msg, const char* line) {
   bb_log(LOG_ERR, "Error parsing configuration: %s. line: %s\n", msg, line);
 }
 
