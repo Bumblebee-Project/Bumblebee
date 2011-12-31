@@ -212,53 +212,53 @@ static int read_configuration(void) {
       if (bb_get_key_value(line, &kvp))
         continue;
 
-      if (strncmp(kvp.key, "VGL_DISPLAY", 11) == 0) {
+      if (strcmp(kvp.key, "VGL_DISPLAY") == 0) {
         set_string_value(&bb_config.x_display, kvp.value);
         bb_log(LOG_DEBUG, "value set: x_display = %s\n", bb_config.x_display);
-      } else if (strncmp(kvp.key, "STOP_SERVICE_ON_EXIT", 20) == 0) {
+      } else if (strcmp(kvp.key, "STOP_SERVICE_ON_EXIT") == 0) {
         bb_config.stop_on_exit = boolean_value(kvp.value);
         bb_log(LOG_DEBUG, "value set: stop_on_exit = %d\n", bb_config.stop_on_exit);
-      } else if (strncmp(kvp.key, "X_CONFFILE", 10) == 0) {
+      } else if (strcmp(kvp.key, "X_CONFFILE") == 0) {
         set_string_value(&bb_config.x_conf_file, kvp.value);
         bb_log(LOG_DEBUG, "value set: x_conf_file = %s\n", bb_config.x_conf_file);
-      } else if (strncmp(kvp.key, "VGL_COMPRESS", 12) == 0) {
+      } else if (strcmp(kvp.key, "VGL_COMPRESS") == 0) {
         set_string_value(&bb_config.vgl_compress, kvp.value);
         bb_log(LOG_DEBUG, "value set: vgl_compress = %s\n", bb_config.vgl_compress);
-      } else if (strncmp(kvp.key, "PM_METHOD", 9) == 0) {
-        if (strncmp(kvp.value, "auto", 4) == 0) {
+      } else if (strcmp(kvp.key, "PM_METHOD") == 0) {
+        if (strcmp(kvp.value, "auto") == 0) {
           bb_config.pm_method = PM_AUTO;
-        } else if (strncmp(kvp.value, "bbswitch", 8) == 0) {
+        } else if (strcmp(kvp.value, "bbswitch") == 0) {
           bb_config.pm_method = PM_BBSWITCH;
-        } else if (strncmp(kvp.value, "vgaswitcheroo", 13) == 0) {
+        } else if (strcmp(kvp.value, "vgaswitcheroo") == 0) {
           bb_config.pm_method = PM_VGASWITCHEROO;
         } else { // none
           bb_config.pm_method = PM_DISABLED;
         }
         bb_log(LOG_DEBUG, "value set: pm_method = %d\n", bb_config.pm_method);
-      } else if (strncmp(kvp.key, "ENABLE_POWER_MANAGEMENT", 23) == 0) {
+      } else if (strcmp(kvp.key, "ENABLE_POWER_MANAGEMENT") == 0) {
         /* First step to deprecate ENABLE_POWER_MANAGEMENT */
         bb_log(LOG_WARNING, "Using deprecated method for enabling power management.");
         bb_config.pm_enabled = boolean_value(kvp.value);
         bb_log(LOG_DEBUG, "value set: pm_enabled = %d\n", bb_config.pm_enabled);
-      } else if (strncmp(kvp.key, "FALLBACK_START", 15) == 0) {
+      } else if (strcmp(kvp.key, "FALLBACK_START") == 0) {
         bb_config.fallback_start = boolean_value(kvp.value);
         bb_log(LOG_DEBUG, "value set: fallback_start = %d\n", bb_config.fallback_start);
-      } else if (strncmp(kvp.key, "BUMBLEBEE_GROUP", 16) == 0) {
+      } else if (strcmp(kvp.key, "BUMBLEBEE_GROUP") == 0) {
         set_string_value(&bb_config.gid_name, kvp.value);
         bb_log(LOG_DEBUG, "value set: gid_name = %s\n", bb_config.gid_name);
-      } else if (strncmp(kvp.key, "DRIVER", 7) == 0) {
+      } else if (strcmp(kvp.key, "DRIVER") == 0) {
         set_string_value(&bb_config.driver, kvp.value);
         bb_log(LOG_DEBUG, "value set: driver = %s\n", bb_config.driver);
-      } else if (strncmp(kvp.key, "DRIVER_MODULE", 14) == 0) {
+      } else if (strcmp(kvp.key, "DRIVER_MODULE") == 0) {
         set_string_value(&bb_config.module_name, kvp.value);
         bb_log(LOG_DEBUG, "value set: driver = %s\n", bb_config.driver);
-      } else if (strncmp(kvp.key, "NV_LIBRARY_PATH", 16) == 0) {
+      } else if (strcmp(kvp.key, "NV_LIBRARY_PATH") == 0) {
         set_string_value(&bb_config.ld_path, kvp.value);
         bb_log(LOG_DEBUG, "value set: ld_path = %s\n", bb_config.ld_path);
-      } else if (strncmp(kvp.key, "MODULE_PATH", 12) == 0) {
+      } else if (strcmp(kvp.key, "MODULE_PATH") == 0) {
         set_string_value(&bb_config.mod_path, kvp.value);
         bb_log(LOG_DEBUG, "value set: ld_path = %s\n", bb_config.ld_path);
-      } else if (strncmp(kvp.key, "CARD_SHUTDOWN_STATE", 20) == 0) {
+      } else if (strcmp(kvp.key, "CARD_SHUTDOWN_STATE") == 0) {
         bb_config.card_shutdown_state = boolean_value(kvp.value);
         bb_log(LOG_DEBUG, "value set: card_shutdown_state = %d\n", bb_config.card_shutdown_state);
       }
