@@ -82,6 +82,11 @@ static void switcheroo_write(char *msg) {
  * @return 1 if available for use for PM, 0 otherwise
  */
 int switcheroo_is_available(struct switch_info info) {
+  if (strcmp(info.configured_pm, "switcheroo") != 0) {
+    bb_log(LOG_INFO, "Skipping switcheroo PM method because it is not"
+            " explicitly selected in the configuration.\n");
+    return 0;
+  }
   if (strcmp("nouveau", info.driver)) {
     /* switcheroo cannot be used with drivers other than nouveau */
     bb_log(LOG_DEBUG, "vga_switcheroo can only be used with the nouveau driver,"
