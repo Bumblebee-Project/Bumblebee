@@ -114,19 +114,14 @@ void start_secondary(void) {
   /* load the driver if none was loaded or if the loaded driver did not match
    * the configured one */
   if (strcasecmp(bb_config.driver, driver)) {
-    bb_log(LOG_INFO, "Loading %s module\n", bb_config.driver);
-    char * mod_argv[] = {
-      "modprobe",
-      *bb_config.module_name ? bb_config.module_name : bb_config.driver,
-      NULL
-    };
-    bb_run_fork_wait(mod_argv, 10);
-  }
-
-  // if driver load failed, cancel and set error
-  if (!pci_get_driver(NULL, pci_bus_id, 0)) {
-    set_bb_error("Could not load GPU driver");
-    return;
+    char *module_name = bb_config.module_name;
+    if (!*module_name) {
+      module_name = bb_config.driver;
+    }
+    if (!module_load(module_name)) {
+      set_bb_error("Could not load GPU driver");
+      return;
+    }
   }
 
   //no problems, start X if not started yet

@@ -57,6 +57,30 @@ int module_is_loaded(char *module_name) {
   return ret;
 }
 
+/**
+ * Attempts to load a module. If the module has not been loaded after ten
+ * seconds, give up
+ *
+ * @param module_name The name of the kernel module to be loaded
+ * @return 1 if the driver is succesfully loaded, 0 otherwise
+ */
+int module_load(char *module_name) {
+  if (module_is_loaded(module_name) == 0) {
+    /* the module has not loaded yet, try to load it */
+    bb_log(LOG_INFO, "Loading %s module\n", module_name);
+    char *mod_argv[] = {
+      "modprobe",
+      module_name,
+      NULL
+    };
+    bb_run_fork_wait(mod_argv, 10);
+    if (module_is_loaded(module_name) == 0) {
+      bb_log(LOG_ERR, "Module %s could not be loaded (timeout?)\n", module_name);
+      return 0;
+    }
+  }
+  return 1;
+}
 
 /**
  * Attempts to unload a module if loaded, for ten seconds before
