@@ -40,7 +40,8 @@ struct switching_method switching_methods[SWITCHERS_COUNT] = {
  * decision whether bbswitch is usable or not
  * @return A switching method if available, NULL otherwise
  */
-struct switching_method *switcher_detect(char *name, struct switch_info info) {
+struct switching_method *switcher_detect(const char *name,
+        struct switch_info info) {
   int i;
   switcher = NULL;
   for (i = 0; i<SWITCHERS_COUNT; ++i) {

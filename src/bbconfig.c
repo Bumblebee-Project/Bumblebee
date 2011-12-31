@@ -37,6 +37,15 @@
 #include "bblogger.h"
 #include "module.h"
 
+/* config values for PM methods, edit bb_pm_method in bbconfig.h as well! */
+const char *bb_pm_method_string[PM_METHODS_COUNT] = {
+    "none",
+    "auto",
+     /* the below names are used in switch/switching.c */
+    "bbswitch",
+    "switcheroo",
+};
+
 struct bb_status_struct bb_status;
 struct bb_config_struct bb_config;
 
@@ -225,21 +234,17 @@ static int read_configuration(void) {
         set_string_value(&bb_config.vgl_compress, kvp.value);
         bb_log(LOG_DEBUG, "value set: vgl_compress = %s\n", bb_config.vgl_compress);
       } else if (strcmp(kvp.key, "PM_METHOD") == 0) {
-        if (strcmp(kvp.value, "auto") == 0) {
-          bb_config.pm_method = PM_AUTO;
-        } else if (strcmp(kvp.value, "bbswitch") == 0) {
-          bb_config.pm_method = PM_BBSWITCH;
-        } else if (strcmp(kvp.value, "vgaswitcheroo") == 0) {
-          bb_config.pm_method = PM_VGASWITCHEROO;
-        } else { // none
-          bb_config.pm_method = PM_DISABLED;
+        /* loop backwards through all possible values. If no valid value is
+         * found, assume the first element ("none") */
+        int method_index = PM_METHODS_COUNT;
+        while (--method_index >= 0) {
+          if (strcmp(kvp.value, bb_pm_method_string[method_index]) == 0) {
+            break;
+          }
         }
-        bb_log(LOG_DEBUG, "value set: pm_method = %d\n", bb_config.pm_method);
-      } else if (strcmp(kvp.key, "ENABLE_POWER_MANAGEMENT") == 0) {
-        /* First step to deprecate ENABLE_POWER_MANAGEMENT */
-        bb_log(LOG_WARNING, "Using deprecated method for enabling power management.");
-        bb_config.pm_enabled = boolean_value(kvp.value);
-        bb_log(LOG_DEBUG, "value set: pm_enabled = %d\n", bb_config.pm_enabled);
+        bb_config.pm_method = method_index;
+        bb_log(LOG_DEBUG, "value set: pm_method = %s\n",
+                bb_pm_method_string[method_index]);
       } else if (strcmp(kvp.key, "FALLBACK_START") == 0) {
         bb_config.fallback_start = boolean_value(kvp.value);
         bb_log(LOG_DEBUG, "value set: fallback_start = %d\n", bb_config.fallback_start);
@@ -439,8 +444,7 @@ void init_config(int argc, char ** argv) {
   // default to auto-detect
   set_string_value(&bb_config.driver, "");
   set_string_value(&bb_config.module_name, "");
-  bb_config.pm_enabled = CONF_PMENABLE;
-  bb_config.pm_method = PM_AUTO;
+  bb_config.pm_method = CONF_PM_METHOD;
   bb_config.stop_on_exit = CONF_STOPONEXIT;
   bb_config.fallback_start = CONF_FALLBACKSTART;
   bb_config.card_shutdown_state = CONF_SHUTDOWNSTATE;
@@ -466,8 +470,8 @@ void config_dump(void) {
   bb_log(LOG_DEBUG, " ModulePath: %s\n", bb_config.mod_path);
   bb_log(LOG_DEBUG, " Socket path: %s\n", bb_config.socket_path);
   bb_log(LOG_DEBUG, " GID name: %s\n", bb_config.gid_name);
-  bb_log(LOG_DEBUG, " Power management: %i\n", bb_config.pm_enabled);
-  bb_log(LOG_DEBUG, " Power method: %i\n", bb_config.pm_method);
+  bb_log(LOG_DEBUG, " Power method: %s\n",
+    bb_pm_method_string[bb_config.pm_method]);
   bb_log(LOG_DEBUG, " Stop X on exit: %i\n", bb_config.stop_on_exit);
   bb_log(LOG_DEBUG, " VGL Compression: %s\n", bb_config.vgl_compress);
   bb_log(LOG_DEBUG, " Driver: %s\n", bb_config.driver);

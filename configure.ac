@@ -13,7 +13,7 @@ AC_DEFINE(CONF_LDPATH, "/usr/lib64/nvidia-current:/usr/lib/nvidia-current:/usr/l
 AC_DEFINE(CONF_MODPATH, ["/usr/lib64/nvidia-current/xorg,/usr/lib/nvidia-current/xorg,/usr/lib32/nvidia-current/xorg,/usr/lib64/nvidia/xorg,/usr/lib/nvidia/xorg,/usr/lib32/nvidia/xorg,/usr/lib/i386-linux-gnu/xorg/extra-modules,/usr/lib/x86_64-linux-gnu/xorg/extra-modules,/usr/lib64/xorg/extra-modules,/usr/lib64/xorg/modules,/usr/lib/xorg/extra-modules,/usr/lib/xorg/modules,/usr/lib32/xorg/extra-modules,/usr/lib32/xorg/modules"], "ModulePath for xorg")
 AC_DEFINE(CONF_SOCKPATH, "/var/run/bumblebee.socket", "socket path")
 AC_DEFINE(CONF_GID, "bumblebee", "group to use when setting GID")
-AC_DEFINE(CONF_PMENABLE, 1, "enable power management")
+AC_DEFINE(CONF_PM_METHOD, PM_AUTO, "Power management method")
 AC_DEFINE(CONF_STOPONEXIT, 1, "stop secondary X on exit of last optirun executable")
 AC_DEFINE(CONF_FALLBACKSTART, 1, "make optirun start applications normally if secondary is unavailable")
 AC_DEFINE(CONF_VGLCOMPRESS, "proxy", "vglclient transport method")

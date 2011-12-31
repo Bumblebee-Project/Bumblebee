@@ -64,7 +64,7 @@ struct switching_method switching_methods[SWITCHERS_COUNT];
 /* A switching method that can be used or NULL if none */
 struct switching_method *switcher;
 
-struct switching_method *switcher_detect(char *name, struct switch_info);
+struct switching_method *switcher_detect(const char *name, struct switch_info);
 enum switch_state switch_status(void);
 enum switch_state switch_on(void);
 enum switch_state switch_off(void);

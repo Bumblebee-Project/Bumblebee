@@ -199,8 +199,9 @@ void stop_secondary() {
     bb_stop_wait(bb_status.x_pid);
   }
 
-  if (!bb_config.pm_enabled && (bb_status.runmode != BB_RUN_EXIT)) {
-    return; //do not switch card off if pm_enabled is false, unless exiting.
+  if (bb_config.pm_method == PM_DISABLED && bb_status.runmode != BB_RUN_EXIT) {
+    /* do not disable the card if PM is disabled unless exiting */
+    return;
   }
 
   //if card is on and can be switched, switch it off
@@ -262,15 +263,26 @@ void check_secondary(void) {
   }
 
   //check switch availability, warn if not availble
-  struct switch_info info;
-  memset(&info, 0, sizeof info);
-  info.driver = bb_config.driver;
-  switcher = switcher_detect(NULL, info);
-  if (switcher) {
-    bb_log(LOG_INFO, "Switching method '%s' is available and will be used.\n",
-            switcher->name);
+  if (bb_config.pm_method == PM_DISABLED) {
+    bb_log(LOG_INFO, "PM is disabled, not performing detection.\n");
   } else {
-    bb_log(LOG_WARNING, "No switching method available. The dedicated card will"
-            " always be on.\n");
+    struct switch_info info;
+    memset(&info, 0, sizeof info);
+    info.driver = bb_config.driver;
+
+    const char *pm_method = NULL;
+    if (bb_config.pm_method != PM_AUTO) {
+      /* auto-detection override */
+      pm_method = bb_pm_method_string[bb_config.pm_method];
+    }
+
+    switcher = switcher_detect(pm_method, info);
+    if (switcher) {
+      bb_log(LOG_INFO, "Switching method '%s' is available and will be used.\n",
+              switcher->name);
+    } else {
+      bb_log(LOG_WARNING, "No switching method available. The dedicated card"
+              " will always be on.\n");
+    }
   }
 }
