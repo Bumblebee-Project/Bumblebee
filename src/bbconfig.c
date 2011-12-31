@@ -58,7 +58,6 @@ enum {
 
 static size_t strip_lead_trail_ws(char *dest, char *str, size_t len);
 
-
 /**
  * Takes a pointer to a char pointer, resizing and copying the string value to it.
  */
@@ -225,7 +224,20 @@ static int read_configuration(void) {
       } else if (strncmp(kvp.key, "VGL_COMPRESS", 12) == 0) {
         set_string_value(&bb_config.vgl_compress, kvp.value);
         bb_log(LOG_DEBUG, "value set: vgl_compress = %s\n", bb_config.vgl_compress);
+      } else if (strncmp(kvp.key, "PM_METHOD",9) == 0) {
+        if (strncmp(kvp.key, "auto", 4) == 0) {
+          bb_config.pm_method = PM_AUTO;
+        } else if (strncmp(kvp.key, "bbswitch", 8) == 0) {
+          bb_config.pm_method = PM_BBSWITCH;
+        } else if (strncmp(kvp.key, "vgaswitcheroo", 13) == 0) {
+          bb_config.pm_method = PM_VGASWITCHEROO;
+        } else { // none
+          bb_config.pm_method = PM_DISABLED;
+        }
+        bb_log(LOG_DEBUG, "value set: pm_method = %d\n", bb_config.pm_method);
       } else if (strncmp(kvp.key, "ENABLE_POWER_MANAGEMENT", 23) == 0) {
+        /* First step to deprecate ENABLE_POWER_MANAGEMENT */
+        bb_log(LOG_WARNING, "Using deprecated method for enabling power management.");
         bb_config.pm_enabled = boolean_value(kvp.value);
         bb_log(LOG_DEBUG, "value set: pm_enabled = %d\n", bb_config.pm_enabled);
       } else if (strncmp(kvp.key, "FALLBACK_START", 15) == 0) {
@@ -428,6 +440,7 @@ void init_config(int argc, char ** argv) {
   set_string_value(&bb_config.driver, "");
   set_string_value(&bb_config.module_name, "");
   bb_config.pm_enabled = CONF_PMENABLE;
+  bb_config.pm_method = PM_AUTO;
   bb_config.stop_on_exit = CONF_STOPONEXIT;
   bb_config.fallback_start = CONF_FALLBACKSTART;
   bb_config.card_shutdown_state = CONF_SHUTDOWNSTATE;
@@ -454,6 +467,7 @@ void config_dump(void) {
   bb_log(LOG_DEBUG, " Socket path: %s\n", bb_config.socket_path);
   bb_log(LOG_DEBUG, " GID name: %s\n", bb_config.gid_name);
   bb_log(LOG_DEBUG, " Power management: %i\n", bb_config.pm_enabled);
+  bb_log(LOG_DEBUG, " Power method: %i\n", bb_config.pm_method);
   bb_log(LOG_DEBUG, " Stop X on exit: %i\n", bb_config.stop_on_exit);
   bb_log(LOG_DEBUG, " VGL Compression: %s\n", bb_config.vgl_compress);
   bb_log(LOG_DEBUG, " Driver: %s\n", bb_config.driver);
