@@ -22,6 +22,14 @@
  */
 #pragma once
 
+/**
+ * OpenSUSE: /usr/bin/X -> /var/lib/X11/X -> /usr/bin/Xorg
+ * Fedora, Arch Linux: /usr/bin/X -> /usr/bin/Xorg
+ * Ubuntu: /usr/bin/X is a custom binary doing authorization and then executes
+ *         /etc/X11/X -> /usr/bin/Xorg
+ */
+#define XORG_BINARY "Xorg"
+
 /* PCI Bus ID of the discrete video card */
 int pci_bus_id;
 

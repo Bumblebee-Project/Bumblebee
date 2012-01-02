@@ -133,7 +133,7 @@ void start_secondary(void) {
 
     bb_log(LOG_INFO, "Starting X server on display %s.\n", bb_config.x_display);
     char *x_argv[] = {
-      "X",
+      XORG_BINARY,
       bb_config.x_display,
       "-config", x_conf_file,
       "-sharevts",
