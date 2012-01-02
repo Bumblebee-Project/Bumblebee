@@ -7,7 +7,6 @@ EndSection
 Section "Device"
     Identifier     "Device0"
     Driver         "nouveau"
-    BusID "PCI:01:00:0"
 EndSection
 
 Section "Screen"
