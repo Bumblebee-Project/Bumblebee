@@ -318,11 +318,11 @@ static void print_usage(int exit_val) {
 }
 
 /// Read the commandline parameters
-static void read_cmdline_config(int argc, char ** argv) {
+static void parse_second_round(int argc, char ** argv) {
   /* Parse the options, set flags as necessary */
   int opt = 0;
   optind = 0;
-  static const char *optString = "+Dqvx:d:s:g:l:c:C:Vh?m:k:";
+  static const char *optString = "+Dqvx:d:s:g:l:c:Vh?m:k:";
   static const struct option longOpts[] = {
     {"daemon", 0, 0, 'D'},
     {"quiet", 0, 0, 'q'},
@@ -334,7 +334,6 @@ static void read_cmdline_config(int argc, char ** argv) {
     {"group", 1, 0, 'g'},
     {"ldpath", 1, 0, 'l'},
     {"vgl-compress", 1, 0, 'c'},
-    {"config", 1, 0, 'C'},
     {"help", 1, 0, 'h'},
     {"version", 0, 0, 'V'},
     {"driver", 1, 0, OPT_DRIVER},
@@ -377,9 +376,6 @@ static void read_cmdline_config(int argc, char ** argv) {
       case 'c'://vglclient method
         set_string_value(&bb_config.vgl_compress, optarg);
         break;
-      case 'C'://config file
-        set_string_value(&bb_config.bb_conf_file, optarg);
-        break;
       case OPT_DRIVER://driver
         set_string_value(&bb_config.driver, optarg);
         break;
@@ -400,7 +396,7 @@ static void read_cmdline_config(int argc, char ** argv) {
   }
 }
 
-/** 
+/**
  * Read the provided configuration file
  */
 static void parse_first_round(int argc, char** argv) {
@@ -416,7 +412,7 @@ static void parse_first_round(int argc, char** argv) {
             case 'C'://config file
             set_string_value(&bb_config.bb_conf_file, optarg);
             break;
-        } 
+        }
     }
 }
 
@@ -477,9 +473,8 @@ void init_config(int argc, char **argv) {
   // parse config file
   read_configuration();
 
-  bb_status.verbosity = verb_level_before;
   // parse commandline configuration again (so config file params are overwritten)
-  read_cmdline_config(argc, argv);
+  parse_second_round(argc, argv);
 }
 
 /**
