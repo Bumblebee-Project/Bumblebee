@@ -147,7 +147,7 @@ void start_secondary(void) {
     if (!*bb_config.mod_path) {
       x_argv[10] = 0;//remove -modulepath if not set
     }
-    bb_status.x_pid = bb_run_fork_ld(x_argv, bb_config.ld_path);
+    bb_status.x_pid = bb_run_fork_detached(x_argv);
   }
 
   //check if X is available, for maximum 10 seconds.
