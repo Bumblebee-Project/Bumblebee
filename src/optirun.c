@@ -60,7 +60,7 @@ static void handle_signal(int sig) {
 static int report_daemon_status(void) {
   char buffer[BUFFER_SIZE];
   int r = snprintf(buffer, BUFFER_SIZE, "Status?");
-  socketWrite(&bb_status.bb_socket, buffer, r);
+  socketWrite(&bb_status.bb_socket, buffer, r + 1);
   while (bb_status.bb_socket != -1) {
     r = socketRead(&bb_status.bb_socket, buffer, BUFFER_SIZE);
     if (r > 0) {
@@ -101,7 +101,7 @@ static int run_app(int argc, char *argv[]) {
   int r;
   int ranapp = 0;
   r = snprintf(buffer, BUFFER_SIZE, "Checking availability...");
-  socketWrite(&bb_status.bb_socket, buffer, r);
+  socketWrite(&bb_status.bb_socket, buffer, r + 1);
   while (bb_status.bb_socket != -1) {
     r = socketRead(&bb_status.bb_socket, buffer, BUFFER_SIZE);
     if (r > 0) {

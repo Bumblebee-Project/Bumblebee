@@ -148,7 +148,9 @@ static void handle_socket(struct clientsocket * C) {
             r = snprintf(buffer, BUFFER_SIZE, "Ready (%s). X inactive.\n", GITVERSION);
           }
         }
-        socketWrite(&C->sock, buffer, r); //we assume the write is fully successful.
+        /* don't rely on result of snprintf, instead calculate length including
+         * null byte. We assume a succesful write */
+        socketWrite(&C->sock, buffer, strlen(buffer) + 1);
         break;
       case 'F'://force VirtualGL if possible
       case 'C'://check if VirtualGL is allowed
@@ -170,7 +172,9 @@ static void handle_socket(struct clientsocket * C) {
             r = snprintf(buffer, BUFFER_SIZE, "No, secondary X is not active.\n");
           }
         }
-        socketWrite(&C->sock, buffer, r); //we assume the write is fully successful.
+        /* don't rely on result of snprintf, instead calculate length including
+         * null byte. We assume a succesful write */
+        socketWrite(&C->sock, buffer, strlen(buffer) + 1);
         break;
       case 'D'://done, close the socket.
         socketClose(&C->sock);
