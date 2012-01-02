@@ -11,9 +11,10 @@ smart power management of the dGPU when it's not in use.
 Build Requirements
 -------------------
 
-autotools (2.68+ recommended)  
-libx11 and development headers  
-[bbswitch](https://github.com/Bumblebee-Project/bbswitch) (optional)
+- pkg-config
+- autotools (2.68+ recommended)
+- libx11 and development headers
+- [bbswitch](https://github.com/Bumblebee-Project/bbswitch) (optional, for PM)
 
 Building
 ---------
