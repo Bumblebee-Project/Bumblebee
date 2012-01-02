@@ -264,7 +264,7 @@ static void main_loop(void) {
 }
 
 int main(int argc, char* argv[]) {
-  bb_status.bb_socket = -1;//initialize the main socket to -1
+  init_early_config(argc, argv);
 
   /* Setup signal handling before anything else. Note that messages are not
    * shown until init_config has set bb_status.verbosity

@@ -158,6 +158,8 @@ static int run_app(int argc, char *argv[]) {
 int main(int argc, char *argv[]) {
   int exitcode = EXIT_FAILURE;
 
+  init_early_config(argc, argv);
+
   /* Setup signal handling before anything else */
   signal(SIGHUP, handle_signal);
   signal(SIGTERM, handle_signal);

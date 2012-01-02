@@ -95,8 +95,10 @@ struct bb_config_struct {
 extern struct bb_status_struct bb_status;
 extern struct bb_config_struct bb_config;
 
-/// Read commandline parameters and config file.
-void init_config(int argc, char ** argv);
+/* Early initialization of bb_status */
+void init_early_config(int argc, char **argv);
+/* Parse configuration from command line and configuration files */
+void init_config(int argc, char **argv);
 void config_dump(void);
 int config_validate(void);
 

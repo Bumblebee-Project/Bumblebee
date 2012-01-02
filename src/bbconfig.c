@@ -336,7 +336,6 @@ static void read_cmdline_config(int argc, char ** argv) {
     {"vgl-compress", 1, 0, 'c'},
     {"config", 1, 0, 'C'},
     {"help", 1, 0, 'h'},
-    {"silent", 0, 0, 'q'},
     {"version", 0, 0, 'V'},
     {"driver", 1, 0, OPT_DRIVER},
     {"module-path", 1, 0, 'm'},
@@ -401,13 +400,15 @@ static void read_cmdline_config(int argc, char ** argv) {
   }
 }
 
-/// Read commandline parameters and config file.
-/// Works by first setting compiled-in defaults,
-/// then parsing commandline parameters,
-/// then loading the config file,
-/// finally again parsing commandline parameters.
-void init_config(int argc, char ** argv) {
-  //set program name
+/**
+ * Set options that must be set before opening logs or loading configuration
+ * @param argc Arguments count
+ * @param argv Argument values
+ */
+void init_early_config(int argc, char **argv) {
+  /* clear existing configuration and reset pointers */
+  memset(&bb_status, 0, sizeof bb_status);
+  /* set program name */
   set_string_value(&bb_status.program_name, basename(argv[0]));
   set_string_value(&bb_status.errors, "");//we start without errors, yay!
   bb_status.verbosity = VERB_WARN;
@@ -419,20 +420,17 @@ void init_config(int argc, char ** argv) {
   } else {
     bb_status.runmode = BB_RUN_SERVER;
   }
+}
 
-  /* set pointers to 0 just to be sure */
-  bb_config.x_display = 0;
-  bb_config.bb_conf_file = 0;
-  bb_config.ld_path = 0;
-  bb_config.mod_path = 0;
-  bb_config.socket_path = 0;
-  bb_config.gid_name = 0;
-  bb_config.x_conf_file = 0;
-  bb_config.vgl_compress = 0;
-  bb_config.driver = 0;
-  bb_config.module_name = 0;
-
-  /* standard configuration */
+/**
+ * Parse configuration file and command line arguments
+ * @param argc Arguments count
+ * @param argv Argument values
+ */
+void init_config(int argc, char **argv) {
+  /* clear pointers and settings */
+  memset(&bb_config, 0, sizeof bb_config);
+  /* set defaults if not set already */
   set_string_value(&bb_config.x_display, CONF_XDISP);
   set_string_value(&bb_config.bb_conf_file, CONFIG_FILE);
   set_string_value(&bb_config.ld_path, CONF_LDPATH);
