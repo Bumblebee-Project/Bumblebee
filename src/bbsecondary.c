@@ -264,7 +264,7 @@ void check_secondary(void) {
 
   if (!*bb_config.module_name) {
     /* no module has been configured, set a sensible one based on driver */
-    if (strcmp(bb_config.driver, "nvidia") &&
+    if (strcmp(bb_config.driver, "nvidia") == 0 &&
             module_is_available("nvidia-current")) {
       set_string_value(&bb_config.module_name, "nvidia-current");
     } else {
