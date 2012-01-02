@@ -115,9 +115,6 @@ void start_secondary(void) {
    * the configured one */
   if (strcasecmp(bb_config.driver, driver)) {
     char *module_name = bb_config.module_name;
-    if (!*module_name) {
-      module_name = bb_config.driver;
-    }
     if (!module_load(module_name)) {
       set_bb_error("Could not load GPU driver");
       return;
@@ -241,20 +238,38 @@ int status_secondary(void) {
 /// debug messages including the found hardware/software.
 /// Will print warning message if no switching method is found.
 void check_secondary(void) {
-  //check installed drivers
+  /* determine driver to be used */
   if (*bb_config.driver) {
     bb_log(LOG_DEBUG, "Skipping auto-detection, using configured driver"
             " '%s'\n", bb_config.driver);
-  } else if (module_is_loaded("nvidia")) {
+  } else if (strlen(CONF_DRIVER)) {
+    /* if the default driver is set, use that */
+    bb_log(LOG_DEBUG, "Using compile default driver '%s'", CONF_DRIVER);
+  } else if (module_is_loaded("nouveau")) {
+    /* loaded drivers take precedence over ones available for modprobing */
+    set_string_value(&bb_config.driver, "nouveau");
+    set_string_value(&bb_config.module_name, "nouveau");
+    bb_log(LOG_DEBUG, "Detected nouveau driver\n");
+  } else if (module_is_available("nvidia") ||
+          module_is_available("nvidia-current")) {
+    /* Ubuntu and Mandriva use nvidia-current.ko. nvidia cannot be compiled into
+     * the kernel, so module_is_loaded makes module_is_available redundant */
     set_string_value(&bb_config.driver, "nvidia");
     bb_log(LOG_DEBUG, "Detected nvidia driver\n");
-  } else if (module_is_loaded("nouveau")) {
+  } else if (module_is_available("nouveau")) {
     set_string_value(&bb_config.driver, "nouveau");
+    set_string_value(&bb_config.module_name, "nouveau");
     bb_log(LOG_DEBUG, "Detected nouveau driver\n");
-  } else {
-    set_string_value(&bb_config.driver, CONF_DRIVER);
-    bb_log(LOG_WARNING, "No driver auto-detected. Using compile default '%s'"
-            " instead.\n", bb_config.driver);
+  }
+
+  if (!*bb_config.module_name) {
+    /* no module has been configured, set a sensible one based on driver */
+    if (strcmp(bb_config.driver, "nvidia") &&
+            module_is_available("nvidia-current")) {
+      set_string_value(&bb_config.module_name, "nvidia-current");
+    } else {
+      set_string_value(&bb_config.module_name, bb_config.driver);
+    }
   }
 
   //check switch availability, warn if not availble

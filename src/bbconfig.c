@@ -443,7 +443,7 @@ void init_config(int argc, char ** argv) {
   set_string_value(&bb_config.vgl_compress, CONF_VGLCOMPRESS);
   // default to auto-detect
   set_string_value(&bb_config.driver, "");
-  set_string_value(&bb_config.module_name, "");
+  set_string_value(&bb_config.module_name, CONF_DRIVER_MODULE);
   bb_config.pm_method = CONF_PM_METHOD;
   bb_config.stop_on_exit = CONF_STOPONEXIT;
   bb_config.fallback_start = CONF_FALLBACKSTART;
@@ -475,6 +475,7 @@ void config_dump(void) {
   bb_log(LOG_DEBUG, " Stop X on exit: %i\n", bb_config.stop_on_exit);
   bb_log(LOG_DEBUG, " VGL Compression: %s\n", bb_config.vgl_compress);
   bb_log(LOG_DEBUG, " Driver: %s\n", bb_config.driver);
+  bb_log(LOG_DEBUG, " Driver module: %s\n", bb_config.module_name);
   bb_log(LOG_DEBUG, " Card shutdown state: %i\n", bb_config.card_shutdown_state);
 }
 
@@ -486,7 +487,7 @@ void config_dump(void) {
 int config_validate(void) {
   int error = 0;
   if (*bb_config.driver) {
-    char *mod = *bb_config.module_name ? bb_config.module_name : bb_config.driver;
+    char *mod = bb_config.module_name;
     if (!module_is_available(mod)) {
       error = 1;
       bb_log(LOG_ERR, "Kernel module '%s' is not found.\n", mod);
