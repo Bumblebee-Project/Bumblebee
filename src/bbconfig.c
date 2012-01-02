@@ -447,10 +447,16 @@ void init_config(int argc, char **argv) {
   bb_config.fallback_start = CONF_FALLBACKSTART;
   bb_config.card_shutdown_state = CONF_SHUTDOWNSTATE;
 
+  /* temporary hack for fixing -v being interpreted as -vv because the cmdline
+   * config is read twice */
+  int verb_level_before = bb_status.verbosity;
   // parse commandline configuration (for config file, if changed)
   read_cmdline_config(argc, argv);
+
   // parse config file
   read_configuration();
+
+  bb_status.verbosity = verb_level_before;
   // parse commandline configuration again (so config file params are overwritten)
   read_cmdline_config(argc, argv);
 }
