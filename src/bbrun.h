@@ -27,8 +27,8 @@
 /* Forks and runs the given application. */
 int bb_run_fork(char** argv);
 
-/* forks and runs a given application detached, without hanging the caller */
-pid_t bb_run_fork_detached(char **argv);
+/// Forks and runs the given application, using an LD_LIBRARY_PATH.
+pid_t bb_run_fork_ld(char** argv, char * ldpath);
 
 /// Forks and runs the given application, waits for a maximum of timeout seconds for process to finish.
 void bb_run_fork_wait(char** argv, int timeout);

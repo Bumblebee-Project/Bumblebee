@@ -168,16 +168,36 @@ int bb_run_fork(char **argv) {
 }
 
 /**
- * Forks and runs the given application. The function returns immediately.
+ * Forks and runs the given application, using an optional LD_LIBRARY_PATH. The
+ * function then returns immediately
  *
  * @param argv The arguments values, the first one is the program
+ * @param ldpath The library path to be used if any (may be NULL)
  * @return The childs process ID
  */
-pid_t bb_run_fork_detached(char **argv) {
+pid_t bb_run_fork_ld(char **argv, char *ldpath) {
   check_handler();
   // Fork and attempt to run given application
   pid_t ret = fork();
   if (ret == 0) {
+    if (ldpath && *ldpath) {
+      char *current_path = getenv("LD_LIBRARY_PATH");
+      /* Fork went ok, set environment if necessary */
+      if (current_path) {
+        char *ldpath_new = malloc(strlen(ldpath) + 1 + strlen(current_path) + 1);
+        if (ldpath_new) {
+          strcpy(ldpath_new, ldpath);
+          strcat(ldpath_new, ":");
+          strcat(ldpath_new, current_path);
+          setenv("LD_LIBRARY_PATH", ldpath_new, 1);
+          free(ldpath_new);
+        } else {
+          bb_log(LOG_WARNING, "Could not allocate memory for LD_LIBRARY_PATH\n");
+        }
+      } else {
+        setenv("LD_LIBRARY_PATH", ldpath, 1);
+      }
+    }
     bb_run_exec(argv);
   } else {
     if (ret > 0) {
