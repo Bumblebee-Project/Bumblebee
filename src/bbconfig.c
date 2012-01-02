@@ -400,26 +400,6 @@ static void read_cmdline_config(int argc, char ** argv) {
   }
 }
 
-/** 
- * Read the provided configuration file
- */
-static void parse_first_round(int argc, char** argv) {
-    int opt = 0;
-    optind = 0;
-    static const char *optString = "C:";
-    static const struct option longOpts[] = {
-        {"config", 1, 0, 'C'},
-        {0, 0, 0, 0}
-    };
-    while ((opt = getopt_long(argc, argv, optString, longOpts, 0)) != -1) {
-        switch (opt) {
-            case 'C'://config file
-            set_string_value(&bb_config.bb_conf_file, optarg);
-            break;
-        } 
-    }
-}
-
 /**
  * Set options that must be set before opening logs or loading configuration
  * @param argc Arguments count
@@ -471,8 +451,7 @@ void init_config(int argc, char **argv) {
    * config is read twice */
   int verb_level_before = bb_status.verbosity;
   // parse commandline configuration (for config file, if changed)
-  //read_cmdline_config(argc, argv);
-  parse_first_round(argc, argv);
+  read_cmdline_config(argc, argv);
 
   // parse config file
   read_configuration();
