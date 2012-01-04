@@ -439,20 +439,27 @@ void init_config(int argc, char **argv) {
 void config_dump(void) {
   //print configuration as debug messages
   bb_log(LOG_DEBUG, "Active configuration:\n");
-  bb_log(LOG_DEBUG, " X display: %s\n", bb_config.x_display);
-  bb_log(LOG_DEBUG, " xorg.conf file: %s\n", bb_config.x_conf_file);
+  /* common options */
   bb_log(LOG_DEBUG, " bumblebeed config file: %s\n", bb_config.bb_conf_file);
+  bb_log(LOG_DEBUG, " X display: %s\n", bb_config.x_display);
   bb_log(LOG_DEBUG, " LD_LIBRARY_PATH: %s\n", bb_config.ld_path);
-  bb_log(LOG_DEBUG, " ModulePath: %s\n", bb_config.mod_path);
   bb_log(LOG_DEBUG, " Socket path: %s\n", bb_config.socket_path);
-  bb_log(LOG_DEBUG, " GID name: %s\n", bb_config.gid_name);
-  bb_log(LOG_DEBUG, " Power method: %s\n",
-    bb_pm_method_string[bb_config.pm_method]);
-  bb_log(LOG_DEBUG, " Stop X on exit: %i\n", bb_config.stop_on_exit);
-  bb_log(LOG_DEBUG, " VGL Compression: %s\n", bb_config.vgl_compress);
-  bb_log(LOG_DEBUG, " Driver: %s\n", bb_config.driver);
-  bb_log(LOG_DEBUG, " Driver module: %s\n", bb_config.module_name);
-  bb_log(LOG_DEBUG, " Card shutdown state: %i\n", bb_config.card_shutdown_state);
+  if (bb_status.runmode == BB_RUN_SERVER || bb_status.runmode == BB_RUN_DAEMON) {
+    /* daemon options */
+    bb_log(LOG_DEBUG, " xorg.conf file: %s\n", bb_config.x_conf_file);
+    bb_log(LOG_DEBUG, " ModulePath: %s\n", bb_config.mod_path);
+    bb_log(LOG_DEBUG, " GID name: %s\n", bb_config.gid_name);
+    bb_log(LOG_DEBUG, " Power method: %s\n",
+      bb_pm_method_string[bb_config.pm_method]);
+    bb_log(LOG_DEBUG, " Stop X on exit: %i\n", bb_config.stop_on_exit);
+    bb_log(LOG_DEBUG, " Driver: %s\n", bb_config.driver);
+    bb_log(LOG_DEBUG, " Driver module: %s\n", bb_config.module_name);
+    bb_log(LOG_DEBUG, " Card shutdown state: %i\n",
+            bb_config.card_shutdown_state);
+  } else {
+    /* client options */
+    bb_log(LOG_DEBUG, " VGL Compression: %s\n", bb_config.vgl_compress);
+  }
 }
 
 /**
