@@ -51,6 +51,7 @@ int bbconfig_parse_options(int opt, char *value);
 enum {
   OPT_DRIVER = CHAR_MAX + 1,
   OPT_FAILSAFE,
+  OPT_STATUS,
 };
 
 int boolean_value(char *val);
@@ -140,3 +141,5 @@ void set_bb_error(char * msg);
 void set_string_value(char ** configstring, char * newvalue);
 
 struct option *config_get_longopts(struct option *longopts, size_t items);
+
+void print_usage(int exit_val);

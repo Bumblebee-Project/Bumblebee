@@ -275,7 +275,7 @@ static void print_usage_line(char * opt, char * desc) {
  * Prints a usage message and exits with given exit code
  * @param exit_val The exit code to be passed to exit()
  */
-static void print_usage(int exit_val) {
+void print_usage(int exit_val) {
   int is_optirun = bb_status.runmode == BB_RUN_APP ||
     bb_status.runmode == BB_RUN_STATUS;
   printf("%s version %s\n\n", bb_status.program_name, GITVERSION);

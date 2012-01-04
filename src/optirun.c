@@ -171,6 +171,7 @@ struct option *bbconfig_get_lopts(void) {
   static struct option longOpts[] = {
     {"failsafe", 1, 0, OPT_FAILSAFE},
     {"vgl-compress", 1, 0, 'c'},
+    {"status", 0, 0, OPT_STATUS},
     BBCONFIG_COMMON_LOPTS
   };
   return longOpts;
@@ -189,6 +190,9 @@ int bbconfig_parse_options(int opt, char *value) {
         break;
       case OPT_FAILSAFE: // for optirun
         bb_config.fallback_start = boolean_value(value);
+        break;
+      case OPT_STATUS:
+        bb_status.runmode = BB_RUN_STATUS;
         break;
       default:
         /* no options parsed */
@@ -214,13 +218,6 @@ int main(int argc, char *argv[]) {
   init_config(argc, argv);
   config_dump();
 
-  /* set runmode depending on leftover arguments */
-  if (optind >= argc) {
-    bb_status.runmode = BB_RUN_STATUS;
-  } else {
-    bb_status.runmode = BB_RUN_APP;
-  }
-
   bb_log(LOG_DEBUG, "%s version %s starting...\n", bb_status.program_name, GITVERSION);
 
   /* Connect to listening daemon */
@@ -239,7 +236,12 @@ int main(int argc, char *argv[]) {
 
   /* Run given application */
   if (bb_status.runmode == BB_RUN_APP) {
-    exitcode = run_app(argc, argv);
+    if (optind >= argc) {
+      bb_log(LOG_ERR, "Missing argument: application to run\n");
+      print_usage(EXIT_FAILURE);
+    } else {
+      exitcode = run_app(argc, argv);
+    }
   }
 
   bb_closelog();
