@@ -200,7 +200,7 @@ int bbconfig_parse_options(int opt, char *value) {
 int main(int argc, char *argv[]) {
   int exitcode = EXIT_FAILURE;
 
-  init_early_config(argc, argv);
+  init_early_config(argc, argv, BB_RUN_APP);
 
   /* Setup signal handling before anything else */
   signal(SIGHUP, handle_signal);

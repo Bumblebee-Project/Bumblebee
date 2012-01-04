@@ -272,18 +272,20 @@ static void print_usage_line(char * opt, char * desc) {
 }
 
 /**
- *  Print a little note on usage
+ * Prints a usage message and exits with given exit code
+ * @param exit_val The exit code to be passed to exit()
  */
 static void print_usage(int exit_val) {
-  // Print help message and exit with exit code
+  int is_optirun = bb_status.runmode == BB_RUN_APP ||
+    bb_status.runmode == BB_RUN_STATUS;
   printf("%s version %s\n\n", bb_status.program_name, GITVERSION);
-  if (strncmp(bb_status.program_name, "optirun", 8) == 0) {
+  if (is_optirun) {
     printf("Usage: %s [options] [--] [application to run] [application options]\n", bb_status.program_name);
   } else {
     printf("Usage: %s [options]\n", bb_status.program_name);
   }
   printf(" Options:\n");
-  if (strncmp(bb_status.program_name, "optirun", 8) == 0) {
+  if (is_optirun) {
     //client-only options
     print_usage_line("--vgl-compress / -c [METHOD]", "Connection method to use for VirtualGL.");
     print_usage_line("--failsafe={Y|N}", "If Y, the program even starts if the"
@@ -381,8 +383,9 @@ static void bbconfig_parse_opts(int argc, char *argv[], int config_only) {
  * Set options that must be set before opening logs or loading configuration
  * @param argc Arguments count
  * @param argv Argument values
+ * @param runmode The running mode of the program
  */
-void init_early_config(int argc, char **argv) {
+void init_early_config(int argc, char **argv, int runmode) {
   /* clear existing configuration and reset pointers */
   memset(&bb_status, 0, sizeof bb_status);
   /* set program name */
@@ -392,11 +395,7 @@ void init_early_config(int argc, char **argv) {
   bb_status.bb_socket = -1;
   bb_status.appcount = 0;
   bb_status.x_pid = 0;
-  if (strcmp(bb_status.program_name, "optirun") == 0) {
-    bb_status.runmode = BB_RUN_APP;
-  } else {
-    bb_status.runmode = BB_RUN_SERVER;
-  }
+  bb_status.runmode = runmode;
 }
 
 /**

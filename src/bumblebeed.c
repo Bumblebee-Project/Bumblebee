@@ -325,7 +325,7 @@ int bbconfig_parse_options(int opt, char *value) {
   return 1;
 }
 int main(int argc, char* argv[]) {
-  init_early_config(argc, argv);
+  init_early_config(argc, argv, BB_RUN_SERVER);
 
   /* Setup signal handling before anything else. Note that messages are not
    * shown until init_config has set bb_status.verbosity
