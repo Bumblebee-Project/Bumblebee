@@ -27,6 +27,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
+#include <getopt.h>
 #include "bbconfig.h"
 #include "bbsocket.h"
 #include "bblogger.h"
@@ -153,6 +154,47 @@ static int run_app(int argc, char *argv[]) {
     exitcode = run_fallback(argv + optind);
   }
   return exitcode;
+}
+
+/**
+ * Returns the option string for this program
+ * @return An option string which can be used for getopt
+ */
+char *bbconfig_get_optstr(void) {
+  return BBCONFIG_COMMON_OPTSTR "c:";
+}
+/**
+ * Returns the long options for this program
+ * @return A option struct which can be used for getopt_long
+ */
+struct option *bbconfig_get_lopts(void) {
+  static struct option longOpts[] = {
+    {"failsafe", 1, 0, OPT_FAILSAFE},
+    {"vgl-compress", 1, 0, 'c'},
+    BBCONFIG_COMMON_LOPTS
+  };
+  return longOpts;
+}
+
+/**
+ * Parses local command line options
+ * @param opt The short option
+ * @param value Value for the option if any
+ * @return 1 if the option has been processed, 0 otherwise
+ */
+int bbconfig_parse_options(int opt, char *value) {
+    switch (opt) {
+      case 'c'://vglclient method
+        set_string_value(&bb_config.vgl_compress, value);
+        break;
+      case OPT_FAILSAFE: // for optirun
+        bb_config.fallback_start = boolean_value(value);
+        break;
+      default:
+        /* no options parsed */
+        return 0;
+    }
+    return 1;
 }
 
 int main(int argc, char *argv[]) {

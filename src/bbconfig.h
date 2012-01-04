@@ -24,10 +24,36 @@
  */
 
 #include <unistd.h> //for pid_t
+#include <limits.h> //for CHAR_MAX
 
 /* Daemon states */
 #define BB_DAEMON 1
 #define BB_NODEAMON 0
+
+/* common command line params */
+#define BBCONFIG_COMMON_OPTSTR "+qvd:s:l:C:hV"
+#define BBCONFIG_COMMON_LOPTS \
+    {"quiet", 0, 0, 'q'},\
+    {"silent", 0, 0, 'q'},\
+    {"verbose", 0, 0, 'v'},\
+    {"display", 1, 0, 'd'},\
+    {"socket", 1, 0, 's'},\
+    {"ldpath", 1, 0, 'l'},\
+    {"config", 1, 0, 'C'},\
+    {"help", 1, 0, 'h'},\
+    {"version", 0, 0, 'V'},
+
+char *bbconfig_get_optstr(void);
+struct option *bbconfig_get_lopts(void);
+int bbconfig_parse_options(int opt, char *value);
+
+/* use a value that cannot be a valid char for getopt */
+enum {
+  OPT_DRIVER = CHAR_MAX + 1,
+  OPT_FAILSAFE,
+};
+
+int boolean_value(char *val);
 
 /* Verbosity levels */
 enum verbosity_level {
@@ -112,3 +138,5 @@ void set_bb_error(char * msg);
  * Takes a pointer to a char pointer, resizing and copying the string value to it.
  */
 void set_string_value(char ** configstring, char * newvalue);
+
+struct option *config_get_longopts(struct option *longopts, size_t items);

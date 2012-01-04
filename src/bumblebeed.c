@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <getopt.h>
 #include "bbconfig.h"
 #include "bbsocket.h"
 #include "bblogger.h"
@@ -267,6 +268,62 @@ static void main_loop(void) {
   }
 }
 
+/**
+ * Returns the option string for this program
+ * @return An option string which can be used for getopt
+ */
+char *bbconfig_get_optstr(void) {
+  return BBCONFIG_COMMON_OPTSTR "Dx:g:m:k:";
+}
+/**
+ * Returns the long options for this program
+ * @return A option struct which can be used for getopt_long
+ */
+struct option *bbconfig_get_lopts(void) {
+  static struct option longOpts[] = {
+    {"daemon", 0, 0, 'D'},
+    {"xconf", 1, 0, 'x'},
+    {"group", 1, 0, 'g'},
+    {"module-path", 1, 0, 'm'},
+    {"driver-module", 1, 0, 'k'},
+    {"driver", 1, 0, OPT_DRIVER},
+    BBCONFIG_COMMON_LOPTS
+  };
+  return longOpts;
+}
+
+/**
+ * Parses local command line options
+ * @param opt The short option
+ * @param value Value for the option if any
+ * @return 1 if the option has been processed, 0 otherwise
+ */
+int bbconfig_parse_options(int opt, char *value) {
+  switch (opt) {
+    case 'D'://daemonize
+      bb_status.runmode = BB_RUN_DAEMON;
+      break;
+    case 'x'://xorg.conf path
+      set_string_value(&bb_config.x_conf_file, value);
+      break;
+    case 'g'://group name to use
+      set_string_value(&bb_config.gid_name, value);
+      break;
+    case 'm'://modulepath
+      set_string_value(&bb_config.mod_path, value);
+      break;
+    case OPT_DRIVER://driver
+      set_string_value(&bb_config.driver, value);
+      break;
+    case 'k'://kernel module
+      set_string_value(&bb_config.module_name, value);
+      break;
+    default:
+      /* no options parsed */
+      return 0;
+  }
+  return 1;
+}
 int main(int argc, char* argv[]) {
   init_early_config(argc, argv);
 

@@ -29,7 +29,6 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <libgen.h>
-#include <limits.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -58,12 +57,6 @@ struct bb_key_value {
 static inline void bb_config_parse_err(const char* msg, const char* line) {
   bb_log(LOG_ERR, "Error parsing configuration: %s. line: %s\n", msg, line);
 }
-
-/* use a value that cannot be a valid char for getopt */
-enum {
-  OPT_DRIVER = CHAR_MAX + 1,
-  OPT_FAILSAFE,
-};
 
 static size_t strip_lead_trail_ws(char *dest, char *str, size_t len);
 
@@ -99,7 +92,7 @@ void set_string_value(char ** configstring, char * newvalue) {
  * @param value A value to be analyzed
  * @return 1 if the value resolves to a truth value, 0 otherwise
  */
-static int boolean_value(char *val) {
+int boolean_value(char *val) {
   /* treat void, an empty string, N, n and zero as false */
   if (!val || !*val || *val == 'N' || *val == 'n' || *val == '0') {
     return 0;
@@ -317,85 +310,69 @@ static void print_usage(int exit_val) {
   exit(exit_val);
 }
 
-/// Read the commandline parameters
-static void read_cmdline_config(int argc, char ** argv) {
+/**
+ * Parses common (shared) command line options
+ * @param opt The short option
+ * @param value Value for the option if any
+ * @return 1 if the option has been processed, 0 otherwise
+ */
+static int bbconfig_parse_common(int opt, char *value) {
+  switch (opt) {
+    case 'q'://quiet mode
+      bb_status.verbosity = VERB_NONE;
+      break;
+    case 'v'://increase verbosity level by one
+      if (bb_status.verbosity < VERB_ALL) {
+        bb_status.verbosity++;
+      }
+      break;
+    case 'd'://X display number
+      set_string_value(&bb_config.x_display, value);
+      break;
+    case 's'://Unix socket to use
+      set_string_value(&bb_config.socket_path, value);
+      break;
+    case 'l'://LD driver path
+      set_string_value(&bb_config.ld_path, value);
+      break;
+    case 'V'://print version
+      printf("Version: %s\n", GITVERSION);
+      exit(EXIT_SUCCESS);
+      break;
+    default:
+      /* no options parsed */
+      return 0;
+  }
+  return 1;
+}
+
+/**
+ * Parses commandline options
+ * @param argc The arguments count
+ * @param argv The arguments values
+ * @param config_only 1 if the config file is the only option to be parsed
+ */
+static void bbconfig_parse_opts(int argc, char *argv[], int config_only) {
   /* Parse the options, set flags as necessary */
-  int opt = 0;
+  int opt;
   optind = 0;
-  static const char *optString = "+Dqvx:d:s:g:l:c:C:Vh?m:k:";
-  static const struct option longOpts[] = {
-    {"daemon", 0, 0, 'D'},
-    {"quiet", 0, 0, 'q'},
-    {"silent", 0, 0, 'q'},
-    {"verbose", 0, 0, 'v'},
-    {"xconf", 1, 0, 'x'},
-    {"display", 1, 0, 'd'},
-    {"socket", 1, 0, 's'},
-    {"group", 1, 0, 'g'},
-    {"ldpath", 1, 0, 'l'},
-    {"vgl-compress", 1, 0, 'c'},
-    {"config", 1, 0, 'C'},
-    {"help", 1, 0, 'h'},
-    {"version", 0, 0, 'V'},
-    {"driver", 1, 0, OPT_DRIVER},
-    {"module-path", 1, 0, 'm'},
-    {"driver-module", 1, 0, 'k'},
-    {"failsafe", 1, 0, OPT_FAILSAFE},
-    {0, 0, 0, 0}
-  };
+  char *optString = bbconfig_get_optstr();
+  struct option *longOpts = bbconfig_get_lopts();
   while ((opt = getopt_long(argc, argv, optString, longOpts, 0)) != -1) {
-    switch (opt) {
-      case 'D'://daemonize
-        bb_status.runmode = BB_RUN_DAEMON;
-        break;
-      case 'q'://quiet mode
-        bb_status.verbosity = VERB_NONE;
-        break;
-      case 'v'://increase verbosity level by one
-        if (bb_status.verbosity < VERB_ALL) {
-          bb_status.verbosity++;
-        }
-        break;
-      case 'x'://xorg.conf path
-        set_string_value(&bb_config.x_conf_file, optarg);
-        break;
-      case 'd'://X display number
-        set_string_value(&bb_config.x_display, optarg);
-        break;
-      case 's'://Unix socket to use
-        set_string_value(&bb_config.socket_path, optarg);
-        break;
-      case 'g'://group name to use
-        set_string_value(&bb_config.gid_name, optarg);
-        break;
-      case 'l'://LD driver path
-        set_string_value(&bb_config.ld_path, optarg);
-        break;
-      case 'm'://modulepath
-        set_string_value(&bb_config.mod_path, optarg);
-        break;
-      case 'c'://vglclient method
-        set_string_value(&bb_config.vgl_compress, optarg);
-        break;
-      case 'C'://config file
-        set_string_value(&bb_config.bb_conf_file, optarg);
-        break;
-      case OPT_DRIVER://driver
-        set_string_value(&bb_config.driver, optarg);
-        break;
-      case 'k'://kernel module
-        set_string_value(&bb_config.module_name, optarg);
-        break;
-      case 'V'://print version
-        printf("Version: %s\n", GITVERSION);
-        exit(EXIT_SUCCESS);
-        break;
-      case OPT_FAILSAFE: // for optirun
-        bb_config.fallback_start = boolean_value(optarg);
-        break;
-      default:
-        print_usage(EXIT_FAILURE);
-        break;
+    if (opt == '?') {
+      /* if an option was not recognized */
+      print_usage(EXIT_FAILURE);
+    } if (opt == 'C') {
+      set_string_value(&bb_config.bb_conf_file, optarg);
+    } else if (!config_only) {
+      /* try to find local options first, then try common options */
+      if (bbconfig_parse_options(opt, optarg) ||
+              bbconfig_parse_common(opt, optarg)) {
+        /* option has been parsed, continue with the next options */
+        continue;
+      }
+      /* XXX is it possible to print the usage message earlier? */
+      print_usage(EXIT_FAILURE);
     }
   }
 }
@@ -447,18 +424,14 @@ void init_config(int argc, char **argv) {
   bb_config.fallback_start = CONF_FALLBACKSTART;
   bb_config.card_shutdown_state = CONF_SHUTDOWNSTATE;
 
-  /* temporary hack for fixing -v being interpreted as -vv because the cmdline
-   * config is read twice */
-  int verb_level_before = bb_status.verbosity;
-  // parse commandline configuration (for config file, if changed)
-  read_cmdline_config(argc, argv);
+  /* parse commandline configuration (for config file, if any) */
+  bbconfig_parse_opts(argc, argv, 1);
 
-  // parse config file
+  /* parse config file */
   read_configuration();
 
-  bb_status.verbosity = verb_level_before;
-  // parse commandline configuration again (so config file params are overwritten)
-  read_cmdline_config(argc, argv);
+  /* parse remaining command line options */
+  bbconfig_parse_opts(argc, argv, 0);
 }
 
 /**
