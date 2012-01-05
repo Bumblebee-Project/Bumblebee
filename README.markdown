@@ -26,8 +26,8 @@ Building
 Usage
 ------
 
-    sudo ./bumblebeed --daemon
-    ./optirun -- <application>
+    sudo bin/bumblebeed --daemon
+    bin/optirun -- <application>
     
 For more information, try --help on either of the two binaries.
 
