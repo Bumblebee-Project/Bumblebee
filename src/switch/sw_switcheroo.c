@@ -89,8 +89,8 @@ int switcheroo_is_available(struct switch_info info) {
   }
   if (strcmp("nouveau", info.driver)) {
     /* switcheroo cannot be used with drivers other than nouveau */
-    bb_log(LOG_DEBUG, "vga_switcheroo can only be used with the nouveau driver,"
-            " skipping method.\n");
+    bb_log(LOG_WARNING, "vga_switcheroo can only be used with the nouveau"
+            " driver, skipping method.\n");
     return 0;
   }
   return 1;
