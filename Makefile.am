@@ -5,8 +5,8 @@ AM_CPPFLAGS = ${regular_CPPFLAGS} ${libX11_CFLAGS} \
 		-DCONF_XORG='"$(sysconfdir)/bumblebee/xorg.conf.DRIVER"'
 AM_CFLAGS = ${regular_CFLAGS} -Wextra -funsigned-char -DGITVERSION="\"`git describe --tags`\""
 
-CLEANFILES = scripts/bumblebeed.service conf/bumblebee.conf
-EXTRA_DIST = scripts/bumblebeed.service.in conf/bumblebee.conf.in
+CLEANFILES = scripts/systemd/bumblebeed.service conf/bumblebee.conf
+EXTRA_DIST = scripts/systemd/bumblebeed.service.in conf/bumblebee.conf.in
 
 bin_PROGRAMS = bin/bumblebeed bin/optirun
 
@@ -36,5 +36,5 @@ do_subst = sed -e 's|[@]CONF_XDISP[@]|$(CONF_XDISP)|g' \
 conf/bumblebee.conf: conf/bumblebee.conf.in
 	$(do_subst) < $@.in > $@
 
-scripts/bumblebeed.service: scripts/bumblebeed.service.in
+scripts/systemd/bumblebeed.service: scripts/systemd/bumblebeed.service.in
 	$(do_subst) < $@.in > $@
