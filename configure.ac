@@ -7,19 +7,30 @@ AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_SRCDIR([src/bbsocket.c])
 #AC_CONFIG_HEADERS([config.h])
 
+# AC_DEFINE_SUBST(NAME, VALUE, DESCRIPTION)
+# -----------------------------------------
+AC_DEFUN([AC_DEFINE_SUBST], [
+AC_DEFINE_UNQUOTED([$1], [$2], [$3])
+AC_SUBST([$1], [$2])
+])
+
 # default configuration
-AC_DEFINE(CONF_XDISP, ":8", "X screen number")
-AC_DEFINE(CONF_LDPATH, "/usr/lib64/nvidia-current:/usr/lib/nvidia-current:/usr/lib32/nvidia-current:/usr/lib64/nvidia:/usr/lib/nvidia:/usr/lib32/nvidia", "ld path")
-AC_DEFINE(CONF_MODPATH, ["/usr/lib64/nvidia-current/xorg,/usr/lib/nvidia-current/xorg,/usr/lib32/nvidia-current/xorg,/usr/lib64/nvidia/xorg,/usr/lib/nvidia/xorg,/usr/lib32/nvidia/xorg,/usr/lib/i386-linux-gnu/xorg/extra-modules,/usr/lib/x86_64-linux-gnu/xorg/extra-modules,/usr/lib64/xorg/extra-modules,/usr/lib64/xorg/modules,/usr/lib/xorg/extra-modules,/usr/lib/xorg/modules,/usr/lib32/xorg/extra-modules,/usr/lib32/xorg/modules"], "ModulePath for xorg")
-AC_DEFINE(CONF_SOCKPATH, "/var/run/bumblebee.socket", "socket path")
-AC_DEFINE(CONF_GID, "bumblebee", "group to use when setting GID")
-AC_DEFINE(CONF_PM_METHOD, PM_AUTO, "Power management method")
-AC_DEFINE(CONF_STOPONEXIT, 1, "stop secondary X on exit of last optirun executable")
-AC_DEFINE(CONF_FALLBACKSTART, 1, "make optirun start applications normally if secondary is unavailable")
-AC_DEFINE(CONF_VGLCOMPRESS, "proxy", "vglclient transport method")
-AC_DEFINE(CONF_DRIVER, "", "nvidia driver to use (empty for autodetection)")
-AC_DEFINE(CONF_DRIVER_MODULE, "", "driver kernel module (empty defaults to autodetection)")
-AC_DEFINE(CONF_SHUTDOWNSTATE, 1, "state of card when shutting off daemon")
+# Don't be stupid by using values like "path/$(nuke_machine)", it gets expanded!
+AC_DEFINE_SUBST(CONF_XDISP, ":8", "X screen number")
+AC_DEFINE_SUBST(CONF_LDPATH, "/usr/lib64/nvidia-current:/usr/lib/nvidia-current:/usr/lib32/nvidia-current:/usr/lib64/nvidia:/usr/lib/nvidia:/usr/lib32/nvidia", "ld path")
+AC_DEFINE_SUBST(CONF_MODPATH, ["/usr/lib64/nvidia-current/xorg,/usr/lib/nvidia-current/xorg,/usr/lib32/nvidia-current/xorg,/usr/lib64/nvidia/xorg,/usr/lib/nvidia/xorg,/usr/lib32/nvidia/xorg,/usr/lib/i386-linux-gnu/xorg/extra-modules,/usr/lib/x86_64-linux-gnu/xorg/extra-modules,/usr/lib64/xorg/extra-modules,/usr/lib64/xorg/modules,/usr/lib/xorg/extra-modules,/usr/lib/xorg/modules,/usr/lib32/xorg/extra-modules,/usr/lib32/xorg/modules"], "ModulePath for xorg")
+AC_DEFINE_SUBST(CONF_SOCKPATH, "/var/run/bumblebee.socket", "socket path")
+AC_DEFINE_SUBST(CONF_GID, "bumblebee", "group to use when setting GID")
+AC_DEFINE_SUBST(CONF_PM_METHOD, "auto", "Power management method")
+AC_DEFINE_SUBST(CONF_STOPONEXIT, 1, "stop secondary X on exit of last optirun executable")
+AC_DEFINE_SUBST(CONF_FALLBACKSTART, 1, "make optirun start applications normally if secondary is unavailable")
+AC_DEFINE_SUBST(CONF_VGLCOMPRESS, "proxy", "vglclient transport method")
+AC_DEFINE_SUBST(CONF_DRIVER, "", "nvidia driver to use (empty for autodetection)")
+AC_DEFINE_SUBST(CONF_DRIVER_MODULE, "", "driver kernel module (empty defaults to autodetection)")
+AC_DEFINE_SUBST(CONF_SHUTDOWNSTATE, 1, "state of card when shutting off daemon")
+AC_DEFINE_SUBST(CONF_XORG, "$sysconfdir/bumblebee/xorg.conf.DRIVER", "path to xorg.conf with DRIVER replaced")
+
+AC_DEFINE_SUBST(CONFIG_FILE, "$sysconfdir/bumblebee/bumblebee.conf", "Location of bumblebee.conf")
 
 # non-config related compile-time defines
 AC_DEFINE(DAEMON_NAME, "bumblebeed", "daemon name")
@@ -43,5 +54,5 @@ AC_SUBST([regular_CFLAGS])
 # Checks for header files.
 PKG_CHECK_MODULES([libX11], [x11])
 
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile conf/bumblebee.conf])
 AC_OUTPUT

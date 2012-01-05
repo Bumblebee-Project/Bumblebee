@@ -12,3 +12,4 @@ Makefile.in
 /stamp-h1
 
 /bin/
+/conf/bumblebee.conf

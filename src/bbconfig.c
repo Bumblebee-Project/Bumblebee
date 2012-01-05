@@ -191,6 +191,23 @@ static size_t strip_lead_trail_ws(char *dest, char *str, size_t len) {
 }
 
 /**
+ * Converts a string to the internal representation of a PM method
+ * @param value The string to be converted
+ * @return An index in the PM methods array
+ */
+static enum bb_pm_method bb_pm_method_from_string(char *value) {
+  /* loop backwards through all possible values. If no valid value is found,
+   * assume the first element ("none") */
+  enum bb_pm_method method_index = PM_METHODS_COUNT;
+  while (method_index-- > 0) {
+    if (strcmp(value, bb_pm_method_string[method_index]) == 0) {
+      break;
+    }
+  }
+  return method_index;
+}
+
+/**
  *  Read the configuration file.
  *
  *  @return 0 on success.
@@ -227,14 +244,7 @@ static int read_configuration(void) {
         set_string_value(&bb_config.vgl_compress, kvp.value);
         bb_log(LOG_DEBUG, "value set: vgl_compress = %s\n", bb_config.vgl_compress);
       } else if (strcmp(kvp.key, "PM_METHOD") == 0) {
-        /* loop backwards through all possible values. If no valid value is
-         * found, assume the first element ("none") */
-        int method_index = PM_METHODS_COUNT;
-        while (--method_index >= 0) {
-          if (strcmp(kvp.value, bb_pm_method_string[method_index]) == 0) {
-            break;
-          }
-        }
+        enum bb_pm_method method_index = bb_pm_method_from_string(kvp.value);
         bb_config.pm_method = method_index;
         bb_log(LOG_DEBUG, "value set: pm_method = %s\n",
                 bb_pm_method_string[method_index]);
@@ -418,7 +428,7 @@ void init_config(int argc, char **argv) {
   // default to auto-detect
   set_string_value(&bb_config.driver, "");
   set_string_value(&bb_config.module_name, CONF_DRIVER_MODULE);
-  bb_config.pm_method = CONF_PM_METHOD;
+  bb_config.pm_method = bb_pm_method_from_string(CONF_PM_METHOD);
   bb_config.stop_on_exit = CONF_STOPONEXIT;
   bb_config.fallback_start = CONF_FALLBACKSTART;
   bb_config.card_shutdown_state = CONF_SHUTDOWNSTATE;
