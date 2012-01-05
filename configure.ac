@@ -47,6 +47,7 @@ AC_SUBST([regular_CPPFLAGS])
 AC_SUBST([regular_CFLAGS])
 
 # Checks for libraries.
+AC_CHECK_LIB([bsd], [pidfile_open])
 
 # Checks for header files.
 PKG_CHECK_MODULES([libX11], [x11])

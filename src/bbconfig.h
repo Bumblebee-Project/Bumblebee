@@ -52,6 +52,7 @@ enum {
   OPT_DRIVER = CHAR_MAX + 1,
   OPT_FAILSAFE,
   OPT_STATUS,
+  OPT_PIDFILE,
 };
 
 int boolean_value(char *val);
@@ -117,6 +118,7 @@ struct bb_config_struct {
                                     * If empty, driver will be used. This is
                                     * for Ubuntu which uses nvidia-current */
     int card_shutdown_state;
+    char *pid_file; /* pid file for storing the daemons PID */
 };
 
 extern struct bb_status_struct bb_status;

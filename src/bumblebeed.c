@@ -31,6 +31,7 @@
 #include <string.h>
 #include <errno.h>
 #include <getopt.h>
+#include <bsd/libutil.h>
 #include "bbconfig.h"
 #include "bbsocket.h"
 #include "bblogger.h"
@@ -291,6 +292,7 @@ struct option *bbconfig_get_lopts(void) {
     {"module-path", 1, 0, 'm'},
     {"driver-module", 1, 0, 'k'},
     {"driver", 1, 0, OPT_DRIVER},
+    {"pidfile", 1, 0, OPT_PIDFILE},
     BBCONFIG_COMMON_LOPTS
   };
   return longOpts;
@@ -322,6 +324,9 @@ int bbconfig_parse_options(int opt, char *value) {
     case 'k'://kernel module
       set_string_value(&bb_config.module_name, value);
       break;
+    case OPT_PIDFILE:
+      set_string_value(&bb_config.pid_file, value);
+      break;
     default:
       /* no options parsed */
       return 0;
@@ -329,6 +334,9 @@ int bbconfig_parse_options(int opt, char *value) {
   return 1;
 }
 int main(int argc, char* argv[]) {
+  struct pidfh *pfh = NULL;
+  pid_t otherpid;
+
   init_early_config(argc, argv, BB_RUN_SERVER);
 
   /* Setup signal handling before anything else. Note that messages are not
@@ -352,15 +360,31 @@ int main(int argc, char* argv[]) {
     return (EXIT_FAILURE);
   }
 
+  /* only write PID if a pid file has been set */
+  if (bb_config.pid_file[0]) {
+    pfh = pidfile_open(bb_config.pid_file, 0644, &otherpid);
+    if (pfh == NULL) {
+      if (errno == EEXIST) {
+        bb_log(LOG_ERR, "Daemon already running, pid %d", otherpid);
+      } else {
+        bb_log(LOG_ERR, "Cannot open or write pidfile %s.", bb_config.pid_file);
+      }
+      bb_closelog();
+      exit(EXIT_FAILURE);
+    }
+  }
+
   /* Change GID and mask according to configuration */
   if ((bb_config.gid_name != 0) && (bb_config.gid_name[0] != 0)) {
     int retval = bb_chgid();
     if (retval != EXIT_SUCCESS) {
       bb_closelog();
+      pidfile_remove(pfh);
       exit(retval);
     }
   }
 
+  pidfile_write(pfh);
   bb_log(LOG_DEBUG, "%s version %s starting...\n", bb_status.program_name, GITVERSION);
 
   /* Daemonized if daemon flag is activated */
@@ -368,6 +392,7 @@ int main(int argc, char* argv[]) {
     int retval = daemonize();
     if (retval != EXIT_SUCCESS) {
       bb_closelog();
+      pidfile_remove(pfh);
       exit(retval);
     }
   }
@@ -386,6 +411,7 @@ int main(int argc, char* argv[]) {
     stop_secondary();
   }
   bb_closelog();
+  pidfile_remove(pfh);
   bb_stop_all(); //stop any started processes that are left
   return (EXIT_SUCCESS);
 }
