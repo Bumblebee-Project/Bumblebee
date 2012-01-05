@@ -28,9 +28,6 @@ AC_DEFINE_SUBST(CONF_VGLCOMPRESS, "proxy", "vglclient transport method")
 AC_DEFINE_SUBST(CONF_DRIVER, "", "nvidia driver to use (empty for autodetection)")
 AC_DEFINE_SUBST(CONF_DRIVER_MODULE, "", "driver kernel module (empty defaults to autodetection)")
 AC_DEFINE_SUBST(CONF_SHUTDOWNSTATE, 1, "state of card when shutting off daemon")
-AC_DEFINE_SUBST(CONF_XORG, "$sysconfdir/bumblebee/xorg.conf.DRIVER", "path to xorg.conf with DRIVER replaced")
-
-AC_DEFINE_SUBST(CONFIG_FILE, "$sysconfdir/bumblebee/bumblebee.conf", "Location of bumblebee.conf")
 
 # non-config related compile-time defines
 AC_DEFINE(DAEMON_NAME, "bumblebeed", "daemon name")
@@ -54,5 +51,5 @@ AC_SUBST([regular_CFLAGS])
 # Checks for header files.
 PKG_CHECK_MODULES([libX11], [x11])
 
-AC_CONFIG_FILES([Makefile conf/bumblebee.conf])
+AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
