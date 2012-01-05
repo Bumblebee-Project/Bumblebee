@@ -62,15 +62,16 @@ int module_is_loaded(char *module_name) {
  * seconds, give up
  *
  * @param module_name The name of the kernel module to be loaded
+ * @param driver The name of the driver to be loaded
  * @return 1 if the driver is succesfully loaded, 0 otherwise
  */
-int module_load(char *module_name) {
+int module_load(char *module_name, char *driver) {
   if (module_is_loaded(module_name) == 0) {
     /* the module has not loaded yet, try to load it */
-    bb_log(LOG_INFO, "Loading %s module\n", module_name);
+    bb_log(LOG_INFO, "Loading driver %s (module %s)\n", driver, module_name);
     char *mod_argv[] = {
       "modprobe",
-      module_name,
+      driver,
       NULL
     };
     bb_run_fork_wait(mod_argv, 10);

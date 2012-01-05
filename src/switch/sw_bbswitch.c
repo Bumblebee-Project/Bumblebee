@@ -94,7 +94,7 @@ int bbswitch_is_available(struct switch_info info) {
   }
   /* module is not loaded yet. Only try to load it if explicitly requested */
   if (strcmp(info.configured_pm, "bbswitch") == 0) {
-    if (module_load("bbswitch")) {
+    if (module_load("bbswitch", "bbswitch")) {
       /* hurrah, bbswitch could be loaded which means that the module is
        * available and that the card is supported */
       return 1;

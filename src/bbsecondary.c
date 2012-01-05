@@ -115,7 +115,8 @@ void start_secondary(void) {
    * the configured one */
   if (strcasecmp(bb_config.driver, driver)) {
     char *module_name = bb_config.module_name;
-    if (!module_load(module_name)) {
+    char *driver_name = bb_config.driver;
+    if (!module_load(module_name, driver_name)) {
       set_bb_error("Could not load GPU driver");
       return;
     }

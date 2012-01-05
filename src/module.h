@@ -21,6 +21,6 @@
 #pragma once
 
 int module_is_loaded(char *module_name);
-int module_load(char *module_name);
+int module_load(char *module_name, char *driver);
 int module_unload(char *module_name);
 int module_is_available(char *module_name);
