@@ -251,12 +251,16 @@ void check_secondary(void) {
     set_string_value(&bb_config.driver, "nouveau");
     set_string_value(&bb_config.module_name, "nouveau");
     bb_log(LOG_DEBUG, "Detected nouveau driver\n");
-  } else if (module_is_available("nvidia") ||
-          module_is_available("nvidia-current")) {
-    /* Ubuntu and Mandriva use nvidia-current.ko. nvidia cannot be compiled into
-     * the kernel, so module_is_loaded makes module_is_available redundant */
+  } else if (module_is_available("nvidia")) {
     set_string_value(&bb_config.driver, "nvidia");
+    set_string_value(&bb_config.module_name, "nvidia");
     bb_log(LOG_DEBUG, "Detected nvidia driver\n");
+  } else if (module_is_available("nvidia-current")) {
+    /* Ubuntu and Mandriva use nvidia-current.ko. nvidia cannot be compiled into
+     * the kernel, so module_is_available makes module_is_loaded redundant */
+    set_string_value(&bb_config.driver, "nvidia-current");
+    set_string_value(&bb_config.module_name, "nvidia");
+    bb_log(LOG_DEBUG, "Detected nvidia driver (module nvidia-current)\n");
   } else if (module_is_available("nouveau")) {
     set_string_value(&bb_config.driver, "nouveau");
     set_string_value(&bb_config.module_name, "nouveau");
@@ -267,7 +271,8 @@ void check_secondary(void) {
     /* no module has been configured, set a sensible one based on driver */
     if (strcmp(bb_config.driver, "nvidia") == 0 &&
             module_is_available("nvidia-current")) {
-      set_string_value(&bb_config.module_name, "nvidia-current");
+      set_string_value(&bb_config.driver, "nvidia-current");
+      set_string_value(&bb_config.module_name, "nvidia");
     } else {
       set_string_value(&bb_config.module_name, bb_config.driver);
     }
