@@ -4,7 +4,7 @@ Description=Bumblebee C Daemon
 [Service]
 Type=simple
 CPUSchedulingPolicy=idle
-ExecStart=/usr/local/bin/bumblebeed
+ExecStart=@BINDIR@/bumblebeed
 Restart=always
 RestartSec=60
 

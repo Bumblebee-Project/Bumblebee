@@ -13,3 +13,4 @@ Makefile.in
 
 /bin/
 /conf/bumblebee.conf
+/scripts/bumblebeed.service
