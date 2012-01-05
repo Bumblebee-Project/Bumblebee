@@ -124,7 +124,7 @@ static int run_app(int argc, char *argv[]) {
               "-detach",
               0
             };
-            bb_run_fork(vglclient_args);
+            bb_run_fork(vglclient_args, 0);
           }
           char ** vglrun_args = malloc(sizeof (char *) * (9 + argc - optind));
           vglrun_args[0] = "vglrun";
@@ -139,7 +139,7 @@ static int run_app(int argc, char *argv[]) {
             vglrun_args[8 + r] = argv[optind + r];
           }
           vglrun_args[8 + r] = 0;
-          exitcode = bb_run_fork(vglrun_args);
+          exitcode = bb_run_fork(vglrun_args, 0);
           free(vglrun_args);
           socketClose(&bb_status.bb_socket);
           break;

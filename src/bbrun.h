@@ -25,7 +25,7 @@
 #include <sys/types.h>
 
 /* Forks and runs the given application. */
-int bb_run_fork(char** argv);
+int bb_run_fork(char** argv, int hide_stderr);
 
 /// Forks and runs the given application, using an LD_LIBRARY_PATH.
 pid_t bb_run_fork_ld(char** argv, char * ldpath);

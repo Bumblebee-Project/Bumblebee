@@ -29,6 +29,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdio.h>
 #include "bbrun.h"
 #include "bblogger.h"
 
@@ -124,13 +125,17 @@ static void check_handler(void) {
   }
 }//check_handler
 
+static void bb_run_exec_hide_stderr(char **argv);
+
 /**
  * Forks and runs the given application and waits for the process to finish
  *
  * @param argv The arguments values, the first one is the program
+ * @param hide_stderr non-zero if the stderr output of the client needs to be
+ * discarded, zero otherwise
  * @return Exit code of the program (between 0 and 255) or -1 on failure
  */
-int bb_run_fork(char **argv) {
+int bb_run_fork(char **argv, int hide_stderr) {
   int exitcode = -1;
 
   check_handler();
@@ -138,7 +143,11 @@ int bb_run_fork(char **argv) {
   pid_t pid = fork();
   if (pid == 0) {
     /* child process after fork */
-    bb_run_exec(argv);
+    if (hide_stderr) {
+      bb_run_exec_hide_stderr(argv);
+    } else {
+      bb_run_exec(argv);
+    }
   } else if (pid > 0) {
     /* parent process after fork */
     int status = 0;
@@ -295,12 +304,35 @@ void bb_stop_all(void) {
   }
 }
 
-/// Attempts to run the given application, replacing the current process
-
-void bb_run_exec(char ** argv) {
+/**
+ * Attempts to run the given application, replacing the current process
+ * @param argv The program to be run
+ */
+void bb_run_exec(char **argv) {
   execvp(argv[0], argv);
   bb_log(LOG_ERR, "Error running \"%s\": %s\n", argv[0], strerror(errno));
   exit(42);
+}
+
+/**
+ * Attempts to run the given application, replacing the current process but hide
+ * any stderr output from the executed program
+ * @param argv The program to be run
+ */
+static void bb_run_exec_hide_stderr(char **argv) {
+  int old_stderr, exec_err;
+
+  bb_log(LOG_DEBUG, "Hiding stderr for execution of %s\n", argv[0]);
+  /* stderr fd no = 2 */
+  old_stderr = dup(2);
+  close(2);
+  execvp(argv[0], argv);
+  /* note: the below lines are only executed if execvp fails */
+  exec_err = errno;
+  dup2(old_stderr, 2);
+  close(old_stderr);
+  bb_log(LOG_ERR, "command execution failed: %s\n", strerror(exec_err));
+  exit(exec_err);
 }
 
 /**
