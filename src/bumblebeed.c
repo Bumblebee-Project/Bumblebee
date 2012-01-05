@@ -40,6 +40,7 @@
 
 /**
  * Change GID and umask of the daemon
+ * @return EXIT_SUCCESS if the gid could be changed, EXIT_FAILURE otherwise
  */
 static int bb_chgid(void) {
   /* Change the Group ID of bumblebee */
@@ -50,26 +51,28 @@ static int bb_chgid(void) {
     int error_num = errno;
     bb_log(LOG_ERR, "%s\n", strerror(error_num));
     bb_log(LOG_ERR, "There is no \"%s\" group\n", bb_config.gid_name);
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
   if (setgid(gp->gr_gid) != 0) {
     bb_log(LOG_ERR, "Could not set the GID of bumblebee: %s\n", strerror(errno));
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
   /* Change the file mode mask */
   umask(027);
-  return 0;
+  return EXIT_SUCCESS;
 }
 
 /**
- *  Fork to the background, and exit parent.
+ * Fork to the background, and exit parent.
+ * @return EXIT_SUCCESS if the daemon could fork, EXIT_FAILURE otherwise. Note
+ * that the parent exits and the child continues to run
  */
-static void daemonize(void) {
+static int daemonize(void) {
   /* Fork off the parent process */
   pid_t bb_pid = fork();
   if (bb_pid < 0) {
     bb_log(LOG_ERR, "Could not fork to background\n");
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
 
   /* If we got a good PID, then we can exit the parent process. */
@@ -81,19 +84,20 @@ static void daemonize(void) {
   pid_t bb_sid = setsid();
   if (bb_sid < 0) {
     bb_log(LOG_ERR, "Could not set SID: %s\n", strerror(errno));
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
 
   /* Change the current working directory */
   if ((chdir("/")) < 0) {
     bb_log(LOG_ERR, "Could not change to root directory: %s\n", strerror(errno));
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
   }
 
   /* Close out the standard file descriptors */
   close(STDIN_FILENO);
   close(STDOUT_FILENO);
   close(STDERR_FILENO);
+  return EXIT_SUCCESS;
 }
 
 /**
@@ -350,14 +354,22 @@ int main(int argc, char* argv[]) {
 
   /* Change GID and mask according to configuration */
   if ((bb_config.gid_name != 0) && (bb_config.gid_name[0] != 0)) {
-    bb_chgid();
+    int retval = bb_chgid();
+    if (retval != EXIT_SUCCESS) {
+      bb_closelog();
+      exit(retval);
+    }
   }
 
   bb_log(LOG_DEBUG, "%s version %s starting...\n", bb_status.program_name, GITVERSION);
 
   /* Daemonized if daemon flag is activated */
   if (bb_status.runmode == BB_RUN_DAEMON) {
-    daemonize();
+    int retval = daemonize();
+    if (retval != EXIT_SUCCESS) {
+      bb_closelog();
+      exit(retval);
+    }
   }
 
   /* Initialize communication socket, enter main loop */
