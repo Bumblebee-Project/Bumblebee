@@ -480,10 +480,10 @@ void config_dump(void) {
 int config_validate(void) {
   int error = 0;
   if (*bb_config.driver) {
-    char *mod = bb_config.module_name;
+    char *mod = bb_config.driver;
     if (!module_is_available(mod)) {
       error = 1;
-      bb_log(LOG_ERR, "Kernel module '%s' is not found.\n", mod);
+      bb_log(LOG_ERR, "Driver '%s' is not found.\n", mod);
     }
   } else {
     bb_log(LOG_ERR, "Invalid configuration: no driver configured.\n");
