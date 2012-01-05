@@ -245,7 +245,10 @@ void check_secondary(void) {
             " '%s'\n", bb_config.driver);
   } else if (strlen(CONF_DRIVER)) {
     /* if the default driver is set, use that */
-    bb_log(LOG_DEBUG, "Using compile default driver '%s'", CONF_DRIVER);
+    set_string_value(&bb_config.driver, CONF_DRIVER);
+    set_string_value(&bb_config.module_name, CONF_DRIVER_MODULE);
+    bb_log(LOG_DEBUG, "Using compile default driver '%s' (module %s)",
+            CONF_DRIVER, CONF_DRIVER_MODULE);
   } else if (module_is_loaded("nouveau")) {
     /* loaded drivers take precedence over ones available for modprobing */
     set_string_value(&bb_config.driver, "nouveau");
