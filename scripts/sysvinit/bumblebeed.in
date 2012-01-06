@@ -22,23 +22,45 @@ NAME=bumblebeed
 BIN='@BINDIR@/bumblebeed'
 PIDFILE=/var/run/$NAME.pid
 
+# returns 0 if running, non-zero otherwise
+status() {
+	local pid
+	# program is not running
+	[ -s "$PIDFILE" ] || return 3
+
+	pid="$(cat "$PIDFILE" 2>/dev/null)"
+
+	# process is not running, pid file not properly cleared
+	kill -0 "$pid" || return 1
+
+	# process is running
+	return 0
+}
+
 start() {
+	# program is not installed
+	[ -x "$BIN" ] || return 5
+
+	# return if already started
+	status && return 0 || true
 	"$BIN" --daemon
+	status && return 0 || return 1
 }
 
 stop() {
 	local retries=10
-	local pid="$(cat "$PIDFILE" 2>/dev/null)"
 
-	# empty pid, exit
-	[ -n "$pid" ] || return 1
+	# not running, we're done
+	status || return 0
 
 	# first ask the daemon nicely to quit
 	kill "$pid" || true
 	# and check whether it listened
 	while [ $retries -gt 0 ]; do
 		retries=$(retries - 1)
-		kill -0 "$pid" && return 0 || true
+
+		# process has gone, return success
+		status || return 0
 		# wait for half a minut before polling again
 		sleep .5
 	done
@@ -61,10 +83,10 @@ case "$1" in
 	restart
 	;;
   status)
-	# not implemented
+	status
 	;;
   *)
-	echo "Usage: $0 {start|stop|restart}"
+	echo "Usage: $0 {start|stop|restart|status}"
 	exit 1
 	;;
 esac
