@@ -384,7 +384,6 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  pidfile_write(pfh);
   bb_log(LOG_DEBUG, "%s version %s starting...\n", bb_status.program_name, GITVERSION);
 
   /* Daemonized if daemon flag is activated */
@@ -396,6 +395,9 @@ int main(int argc, char* argv[]) {
       exit(retval);
     }
   }
+
+  /* write PID after daemonizing */
+  pidfile_write(pfh);
 
   /* Initialize communication socket, enter main loop */
   bb_status.bb_socket = socketServer(bb_config.socket_path, SOCK_NOBLOCK);
