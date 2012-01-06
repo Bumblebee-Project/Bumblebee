@@ -6,8 +6,10 @@ AM_CPPFLAGS = ${regular_CPPFLAGS} ${libX11_CFLAGS} \
 		-DCONF_PID_FILE='"/var/run/bumblebeed.pid"'
 AM_CFLAGS = ${regular_CFLAGS} -Wextra -funsigned-char -DGITVERSION="\"`git describe --tags`\""
 
-CLEANFILES = scripts/systemd/bumblebeed.service conf/bumblebee.conf
-EXTRA_DIST = scripts/systemd/bumblebeed.service.in conf/bumblebee.conf.in
+scriptsdir = scripts
+scripts_SCRIPTS = scripts/sysvinit/bumblebeed scripts/systemd/bumblebeed.service
+CLEANFILES = $(scripts_SCRIPTS) conf/bumblebee.conf
+EXTRA_DIST = scripts/sysvinit/bumblebeed.in scripts/systemd/bumblebeed.service.in conf/bumblebee.conf.in
 
 bin_PROGRAMS = bin/bumblebeed bin/optirun
 
@@ -39,4 +41,7 @@ conf/bumblebee.conf: conf/bumblebee.conf.in
 	$(do_subst) < $@.in > $@
 
 scripts/systemd/bumblebeed.service: scripts/systemd/bumblebeed.service.in
+	$(do_subst) < $@.in > $@
+
+scripts/sysvinit/bumblebeed: scripts/sysvinit/bumblebeed.in
 	$(do_subst) < $@.in > $@

@@ -13,4 +13,5 @@ Makefile.in
 
 /bin/
 /conf/bumblebee.conf
-/scripts/bumblebeed.service
+/scripts/systemd/bumblebeed.service
+/scripts/sysvinit/bumblebeed

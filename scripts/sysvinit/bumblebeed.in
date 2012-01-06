@@ -1,0 +1,70 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          bumblebeed
+# Required-Start:    $localfs $syslog nvidia-kernel
+# Required-Stop:     $localfs $syslog nvidia-kernel
+# Should-Start:      kdm gdm
+# Should-Stop:       kdm gdm
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Bumblebee supporting nVidia Optimus cards
+# Description:       Daemon responsible for handling power management for
+#                    nVidia Optimus cards and handling optirun requests which
+#                    allows the discrete card to be used
+### END INIT INFO
+
+# Bumblebee daemon handler script. Distro-independent script to start/stop
+# daemon. Should be runnable in any distro but won't give any feedback.
+
+# Avoid bashism since this script runs using /bin/sh, not /bin/bash!
+
+NAME=bumblebeed
+BIN='@BINDIR@/bumblebeed'
+PIDFILE=/var/run/$NAME.pid
+
+start() {
+	"$BIN" --daemon
+}
+
+stop() {
+	local retries=10
+	local pid="$(cat "$PIDFILE" 2>/dev/null)"
+
+	# empty pid, exit
+	[ -n "$pid" ] || return 1
+
+	# first ask the daemon nicely to quit
+	kill "$pid" || true
+	# and check whether it listened
+	while [ $retries -gt 0 ]; do
+		retries=$(retries - 1)
+		kill -0 "$pid" && return 0 || true
+		# wait for half a minut before polling again
+		sleep .5
+	done
+	# failed to stop or timeout
+	return 1
+}
+
+restart() {
+	stop && start
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart)
+	restart
+	;;
+  status)
+	# not implemented
+	;;
+  *)
+	echo "Usage: $0 {start|stop|restart}"
+	exit 1
+	;;
+esac
