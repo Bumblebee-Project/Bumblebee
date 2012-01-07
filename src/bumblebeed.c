@@ -333,6 +333,7 @@ int bbconfig_parse_options(int opt, char *value) {
   }
   return 1;
 }
+
 int main(int argc, char* argv[]) {
   struct pidfh *pfh = NULL;
   pid_t otherpid;
@@ -365,9 +366,9 @@ int main(int argc, char* argv[]) {
     pfh = pidfile_open(bb_config.pid_file, 0644, &otherpid);
     if (pfh == NULL) {
       if (errno == EEXIST) {
-        bb_log(LOG_ERR, "Daemon already running, pid %d", otherpid);
+        bb_log(LOG_ERR, "Daemon already running, pid %d\n", otherpid);
       } else {
-        bb_log(LOG_ERR, "Cannot open or write pidfile %s.", bb_config.pid_file);
+        bb_log(LOG_ERR, "Cannot open or write pidfile %s.\n", bb_config.pid_file);
       }
       bb_closelog();
       exit(EXIT_FAILURE);
