@@ -32,6 +32,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <glib.h>
 #include "bbconfig.h"
 #include "bblogger.h"
 #include "module.h"
@@ -391,6 +392,55 @@ static void bbconfig_parse_opts(int argc, char *argv[], int config_only) {
 }
 
 /**
+ * Parse configuration file given by bb_config.bb_conf_file
+ */
+static int bbconfig_parse_conf(void) {
+    //Old behavior
+    return read_configuration();
+    /* WIP to implement Glib parser
+    bb_log(LOG_DEBUG, "Reading file: %s\n", bb_config.bb_conf_file);
+    GKeyFile *bbcfg;
+    GKeyFileFlags flags = G_KEY_FILE_NONE;
+    GError *err = NULL;
+
+    bbcfg = g_key_file_new();
+    if(!g_key_file_load_from_file(bbcfg, bb_config.bb_conf_file, flags, &err)) {
+        bb_log(LOG_WARNING, "Could not open configuration file: %s\n", bb_config.bb_conf_file);
+        bb_log(LOG_WARNING, "Using default configuration");
+        return 0;
+    }
+
+    // Server settings
+    if (NULL != g_key_file_get_string(bbcfg, "server", "VGL_DISPLAY", &err)) {
+        bb_config.x_display = g_key_file_get_string(bbcfg, "server", "VGL_DISPLAY", &err);
+    }
+    if (NULL != g_key_file_get_string(bbcfg, "server", "DRIVER", &err)) {
+        bb_config.driver = g_key_file_get_string(bbcfg, "server", "driver", NULL);
+    }
+    if (NULL != g_key_file_get_string(bbcfg, "server", "BUMBLEBEE_GROUP", &err)) {
+        bb_config.gid_name = g_key_file_get_string(bbcfg, "server", "BUMBLEBEE_GROUP", &err);
+    }
+    if (NULL != g_key_file_get_string(bbcfg, "server", "CARD_SHUTDOWN_STATE", &err)) {
+        bb_config.card_shutdown_state = g_key_file_get_boolean(bbcfg, "server", "CARD_SHUTDOWN_STATE", NULL);
+    }
+
+    // Driver settings
+    if (NULL != g_key_file_get_string(bbcfg, bb_config.driver, "VGL_DISPLAY", &err)) {
+        bb_config.x_display = g_key_file_get_string(bbcfg, "server", "VGL_DISPLAY", NULL);
+    }
+    if (NULL != g_key_file_get_string(bbcfg, "server", "VGL_DISPLAY", NULL)) {
+        bb_config.x_display = g_key_file_get_string(bbcfg, "server", "VGL_DISPLAY", NULL);
+    }
+    if (NULL != g_key_file_get_string(bbcfg, "server", "VGL_DISPLAY", NULL)) {
+        bb_config.x_display = g_key_file_get_string(bbcfg, "server", "VGL_DISPLAY", NULL);
+    }
+    if (NULL != g_key_file_get_string(bbcfg, "server", "VGL_DISPLAY", NULL)) {
+        bb_config.x_display = g_key_file_get_string(bbcfg, "server", "VGL_DISPLAY", NULL);
+    }
+    /*  */
+}
+
+/**
  * Set options that must be set before opening logs or loading configuration
  * @param argc Arguments count
  * @param argv Argument values
@@ -439,7 +489,8 @@ void init_config(int argc, char **argv) {
   bbconfig_parse_opts(argc, argv, 1);
 
   /* parse config file */
-  read_configuration();
+  //read_configuration();
+  bbconfig_parse_conf();
 
   /* parse remaining command line options */
   bbconfig_parse_opts(argc, argv, 0);
