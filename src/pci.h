@@ -29,9 +29,7 @@ struct pci_bus_id {
   unsigned char func; /* 0 - 7 */
 };
 
-int pci_parse_bus_id_str(char *str);
 int pci_parse_bus_id(struct pci_bus_id *dest, int bus_id_numeric);
-int pci_stringify_bus_id(char *dest, int bus_id);
 int pci_get_class(struct pci_bus_id *bus_id);
 struct pci_bus_id *pci_find_gfx_by_vendor(int vendor_id);
 size_t pci_get_driver(char *dest, struct pci_bus_id *bus_id, size_t len);

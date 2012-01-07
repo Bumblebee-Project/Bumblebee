@@ -26,41 +26,6 @@
 #include <string.h>
 
 /**
- * Converts a string like 02:00.1 or 02:00.1 (bus:slot.func) to a number which
- * in binary looks like BBBB BBBB SSSS SFFF
- * @param str The string to be converted
- * @return A number representating the PCI Bus ID or -1 if an invalid value is
- * given
- */
-int pci_parse_bus_id_str(char *str) {
-  int bus, slot, func;
-  /* match hex 0x00 - 0xFF, followed by a colon, followed by another 0x00 - 0x1F
-   * finishing with either a dot or colon and a 0 - 7
-   */
-  if (sscanf(str, "%2x:%2x%*[:.]%1o", &bus, &slot, &func) == 3) {
-    if (slot <= 0x1F) {
-      return (bus << 8) + (slot << 3) + func;
-    }
-  }
-  return -1;
-}
-
-/**
- * Builds a Bus ID like 02:f0.1 from a binary representation
- * @param dest The string to store the Bus ID in with a size of at least 8
- * @param bus_id The binary Bus ID
- * @return 1 if bus_id is valid, 0 otherwise
- */
-int pci_stringify_bus_id(char *dest, int bus_id) {
-  if (bus_id >= 0 && bus_id < 0x10000) {
-    sprintf(dest, "%02x:%02x.%o", bus_id >> 8, (bus_id >> 3) & 0x1f,
-            bus_id & 0x7);
-    return 1;
-  }
-  return 0;
-}
-
-/**
  * Builds a Bus ID like 02:f0.1 from a binary representation
  * @param dest The struct to store the Bus ID in
  * @param bus_id The binary Bus ID
