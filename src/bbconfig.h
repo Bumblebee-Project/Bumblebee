@@ -41,7 +41,8 @@
     {"ldpath", 1, 0, 'l'},\
     {"config", 1, 0, 'C'},\
     {"help", 1, 0, 'h'},\
-    {"version", 0, 0, 'V'},
+    {"version", 0, 0, 'V'},\
+    {0, 0, 0, 0}
 
 const char *bbconfig_get_optstr(void);
 const struct option *bbconfig_get_lopts(void);
