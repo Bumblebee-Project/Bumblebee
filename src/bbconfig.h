@@ -43,8 +43,8 @@
     {"help", 1, 0, 'h'},\
     {"version", 0, 0, 'V'},
 
-char *bbconfig_get_optstr(void);
-struct option *bbconfig_get_lopts(void);
+const char *bbconfig_get_optstr(void);
+const struct option *bbconfig_get_lopts(void);
 int bbconfig_parse_options(int opt, char *value);
 
 /* use a value that cannot be a valid char for getopt */

@@ -370,8 +370,8 @@ static void bbconfig_parse_opts(int argc, char *argv[], int config_only) {
   /* Parse the options, set flags as necessary */
   int opt;
   optind = 0;
-  char *optString = bbconfig_get_optstr();
-  struct option *longOpts = bbconfig_get_lopts();
+  const char *optString = bbconfig_get_optstr();
+  const struct option *longOpts = bbconfig_get_lopts();
   while ((opt = getopt_long(argc, argv, optString, longOpts, 0)) != -1) {
     if (opt == '?') {
       /* if an option was not recognized */

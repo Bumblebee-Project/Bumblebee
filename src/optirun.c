@@ -160,14 +160,14 @@ static int run_app(int argc, char *argv[]) {
  * Returns the option string for this program
  * @return An option string which can be used for getopt
  */
-char *bbconfig_get_optstr(void) {
+const char *bbconfig_get_optstr(void) {
   return BBCONFIG_COMMON_OPTSTR "c:";
 }
 /**
  * Returns the long options for this program
  * @return A option struct which can be used for getopt_long
  */
-struct option *bbconfig_get_lopts(void) {
+const struct option *bbconfig_get_lopts(void) {
   static struct option longOpts[] = {
     {"failsafe", 1, 0, OPT_FAILSAFE},
     {"vgl-compress", 1, 0, 'c'},

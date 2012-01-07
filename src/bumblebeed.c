@@ -277,14 +277,14 @@ static void main_loop(void) {
  * Returns the option string for this program
  * @return An option string which can be used for getopt
  */
-char *bbconfig_get_optstr(void) {
+const char *bbconfig_get_optstr(void) {
   return BBCONFIG_COMMON_OPTSTR "Dx:g:m:k:";
 }
 /**
  * Returns the long options for this program
  * @return A option struct which can be used for getopt_long
  */
-struct option *bbconfig_get_lopts(void) {
+const struct option *bbconfig_get_lopts(void) {
   static struct option longOpts[] = {
     {"daemon", 0, 0, 'D'},
     {"xconf", 1, 0, 'x'},
