@@ -50,7 +50,7 @@ AC_SUBST([regular_CFLAGS])
 AC_CHECK_LIB([bsd], [pidfile_open])
 
 # Checks for header files.
-PKG_CHECK_MODULES([libX11], [x11])
+PKG_CHECK_MODULES([libX11], [x11 glib-2.0 libbsd])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
