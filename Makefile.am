@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-AM_CPPFLAGS = ${regular_CPPFLAGS} ${libX11_CFLAGS} \
+AM_CPPFLAGS = ${regular_CPPFLAGS} ${bbdDEPS_CFLAGS} \
 		-DCONFIG_FILE='"$(sysconfdir)/bumblebee/bumblebee.conf"' \
 		-DCONF_XORG='"$(sysconfdir)/bumblebee/xorg.conf.DRIVER"' \
 		-DCONF_PID_FILE='"/var/run/bumblebeed.pid"'
@@ -16,9 +16,10 @@ EXTRA_DIST = scripts/sysvinit/bumblebeed.in scripts/systemd/bumblebeed.service.i
 bin_PROGRAMS = bin/bumblebeed bin/optirun
 
 bin_optirun_SOURCES = src/module.c src/bbconfig.c src/bblogger.c src/bbrun.c src/bbsocket.c src/optirun.c
+bin_optirun_LDADD= ${bbdDEPS_LIBS}
 bin_bumblebeed_SOURCES = src/pci.c src/bbconfig.c src/bblogger.c src/bbrun.c src/bbsocket.c src/module.c src/bbsecondary.c \
 	src/switch/switching.c src/switch/sw_bbswitch.c src/switch/sw_switcheroo.c src/bumblebeed.c
-bin_bumblebeed_LDADD = ${libX11_LIBS} ${libbsd_LIBS}
+bin_bumblebeed_LDADD = ${bbdDEPS_LIBS}
 
 bumblebeedconfdir=$(sysconfdir)/bumblebee
 bumblebeedconf_DATA = conf/bumblebee.conf conf/xorg.conf.nouveau conf/xorg.conf.nvidia
