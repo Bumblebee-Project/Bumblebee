@@ -448,8 +448,8 @@ static int bbconfig_parse_conf(void) {
         bb_config.mod_path = g_key_file_get_string(bbcfg, bb_config.driver, "MODULE_PATH", &err);
     }
     if (NULL != g_key_file_get_string(bbcfg, bb_config.driver, "PM_METHOD", &err)) {
-         enum bb_pm_method index = bb_pm_method_from_string(g_key_file_get_string(bbcfg, bb_config.driver, "PM_METHOD", &err));
-         bb_config.pm_method = index;
+         enum bb_pm_method pm_method_index = bb_pm_method_from_string(g_key_file_get_string(bbcfg, bb_config.driver, "PM_METHOD", &err));
+         bb_config.pm_method = pm_method_index;
     }
     if (NULL != g_key_file_get_string(bbcfg, bb_config.driver, "X_CONFFILE", &err)) {
         bb_config.x_conf_file = g_key_file_get_string(bbcfg, bb_config.driver, "X_CONFFILE", &err);
