@@ -35,9 +35,6 @@
 #include "pci.h"
 #include "module.h"
 
-/* PCI Bus ID of the discrete video card, -1 means invalid */
-int pci_bus_id = -1;
-
 /**
  * Substitutes DRIVER in the passed path
  * @param x_conf_file A path to be processed
@@ -101,7 +98,7 @@ void start_secondary(void) {
     return;
   }
 
-  if (pci_get_driver(driver, pci_bus_id, sizeof driver)) {
+  if (pci_get_driver(driver, pci_bus_id_discrete, sizeof driver)) {
     /* if the loaded driver does not equal the driver from config, unload it */
     if (strcasecmp(bb_config.driver, driver)) {
       if (!module_unload(driver)) {
@@ -126,8 +123,8 @@ void start_secondary(void) {
   if (!bb_is_running(bb_status.x_pid)) {
     char pci_id[12];
     static char *x_conf_file;
-    snprintf(pci_id, 12, "PCI:%02x:%02x:%o", pci_bus_id >> 8, (pci_bus_id >> 3)
-            & 0x1f, pci_bus_id & 0x7);
+    snprintf(pci_id, 12, "PCI:%02x:%02x:%o", pci_bus_id_discrete->bus,
+            pci_bus_id_discrete->slot, pci_bus_id_discrete->func);
     if (!x_conf_file) {
       x_conf_file = xorg_path_w_driver(bb_config.x_conf_file, bb_config.driver);
     }
@@ -205,12 +202,12 @@ void stop_secondary() {
         return;
       }
       /* unload the driver loaded by the graphica card */
-      if (pci_get_driver(driver,pci_bus_id, sizeof driver)) {
+      if (pci_get_driver(driver, pci_bus_id_discrete, sizeof driver)) {
         module_unload(driver);
       }
 
       //only turn card off if no drivers are loaded
-      if (pci_get_driver(NULL, pci_bus_id, 0)) {
+      if (pci_get_driver(NULL, pci_bus_id_discrete, 0)) {
         bb_log(LOG_DEBUG, "Drivers are still loaded, unable to disable card\n");
         return;
       }

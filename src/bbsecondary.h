@@ -31,7 +31,7 @@
 #define XORG_BINARY "Xorg"
 
 /* PCI Bus ID of the discrete video card */
-int pci_bus_id;
+struct pci_bus_id *pci_bus_id_discrete;
 
 /// Start the X server by fork-exec, turn card on if needed.
 void start_secondary(void);

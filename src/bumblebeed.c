@@ -353,7 +353,7 @@ int main(int argc, char* argv[]) {
 
   /* first load the config to make the logging verbosity level available */
   init_config(argc, argv);
-  pci_bus_id = pci_find_gfx_by_vendor(PCI_VENDOR_ID_NVIDIA);
+  pci_bus_id_discrete = pci_find_gfx_by_vendor(PCI_VENDOR_ID_NVIDIA);
   check_secondary();
   /* dump the config after detecting the driver */
   config_dump();
