@@ -409,8 +409,14 @@ static int bbconfig_parse_conf(void) {
         bb_log(LOG_WARNING, "Using default configuration");
         return 0;
     }
+    // Client setting
+    // [client]
+    if (NULL != g_key_file_get_string(bbcfg, "client", "VGL_COMPRESS", &err)) {
+        bb_config.vgl_compress = g_key_file_get_string(bbcfg, "client", "VGL_COMPRESS", &err);
+    }
 
     // Server settings
+    // [server]
     if (NULL != g_key_file_get_string(bbcfg, "server", "VGL_DISPLAY", &err)) {
         bb_config.x_display = g_key_file_get_string(bbcfg, "server", "VGL_DISPLAY", &err);
     }
@@ -425,17 +431,19 @@ static int bbconfig_parse_conf(void) {
     }
 
     // Driver settings
-    if (NULL != g_key_file_get_string(bbcfg, bb_config.driver, "VGL_DISPLAY", &err)) {
-        bb_config.x_display = g_key_file_get_string(bbcfg, "server", "VGL_DISPLAY", NULL);
+    // [nouveua] or [nvidia]
+    if (NULL != g_key_file_get_string(bbcfg, bb_config.driver, "DRIVER_MODULE", &err)) {
+        bb_config.module_name = g_key_file_get_string(bbcfg, bb_config.driver, "DRIVER_MODULE", &err);
     }
-    if (NULL != g_key_file_get_string(bbcfg, "server", "VGL_DISPLAY", NULL)) {
-        bb_config.x_display = g_key_file_get_string(bbcfg, "server", "VGL_DISPLAY", NULL);
+    if (NULL != g_key_file_get_string(bbcfg, bb_config.driver, "NV_LIBRARY_PATH", &err)) {
+        bb_config.ld_path = g_key_file_get_string(bbcfg, bb_config.driver, "NV_LIBRARY_PATH", &err);
     }
-    if (NULL != g_key_file_get_string(bbcfg, "server", "VGL_DISPLAY", NULL)) {
-        bb_config.x_display = g_key_file_get_string(bbcfg, "server", "VGL_DISPLAY", NULL);
+    if (NULL != g_key_file_get_string(bbcfg, bb_config.driver, "PM_METHOD", &err)) {
+         enum bb_pm_method index = bb_pm_method_from_string(g_key_file_get_string(bbcfg, bb_config.driver, "PM_METHOD", &err));
+         bb_config.pm_method = index;
     }
-    if (NULL != g_key_file_get_string(bbcfg, "server", "VGL_DISPLAY", NULL)) {
-        bb_config.x_display = g_key_file_get_string(bbcfg, "server", "VGL_DISPLAY", NULL);
+    if (NULL != g_key_file_get_string(bbcfg, bb_config.driver, "X_CONFFILE", &err)) {
+        bb_config.x_conf_file = g_key_file_get_string(bbcfg, bb_config.driver, "X_CONFFILE", &err);
     }
     /*  */
 }
