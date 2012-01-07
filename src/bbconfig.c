@@ -397,7 +397,7 @@ static void bbconfig_parse_opts(int argc, char *argv[], int config_only) {
 static int bbconfig_parse_conf(void) {
     //Old behavior
     return read_configuration();
-    /* WIP to implement Glib parser
+
     bb_log(LOG_DEBUG, "Reading file: %s\n", bb_config.bb_conf_file);
     GKeyFile *bbcfg;
     GKeyFileFlags flags = G_KEY_FILE_NONE;
@@ -409,7 +409,7 @@ static int bbconfig_parse_conf(void) {
         bb_log(LOG_WARNING, "Using default configuration");
         return 0;
     }
-    // Client setting
+    // Client settings
     // [client]
     if (NULL != g_key_file_get_string(bbcfg, "client", "VGL_COMPRESS", &err)) {
         bb_config.vgl_compress = g_key_file_get_string(bbcfg, "client", "VGL_COMPRESS", &err);
@@ -420,6 +420,9 @@ static int bbconfig_parse_conf(void) {
     if (NULL != g_key_file_get_string(bbcfg, "server", "VGL_DISPLAY", &err)) {
         bb_config.x_display = g_key_file_get_string(bbcfg, "server", "VGL_DISPLAY", &err);
     }
+    if (NULL != g_key_file_get_string(bbcfg, "server", "STOP_SERVICE_ON_EXIT", &err)) {
+        bb_config.stop_on_exit = g_key_file_get_boolean(bbcfg, "server", "STOP_SERVICE_ON_EXIT", &err);
+    }
     if (NULL != g_key_file_get_string(bbcfg, "server", "DRIVER", &err)) {
         bb_config.driver = g_key_file_get_string(bbcfg, "server", "driver", NULL);
     }
@@ -428,6 +431,9 @@ static int bbconfig_parse_conf(void) {
     }
     if (NULL != g_key_file_get_string(bbcfg, "server", "CARD_SHUTDOWN_STATE", &err)) {
         bb_config.card_shutdown_state = g_key_file_get_boolean(bbcfg, "server", "CARD_SHUTDOWN_STATE", NULL);
+    }
+    if (NULL != g_key_file_get_string(bbcfg, "server", "FALLBACK_START", &err)) {
+        bb_config.fallback_start = g_key_file_get_boolean(bbcfg, "server", "FALLBACK_START", &err);
     }
 
     // Driver settings
@@ -438,6 +444,9 @@ static int bbconfig_parse_conf(void) {
     if (NULL != g_key_file_get_string(bbcfg, bb_config.driver, "NV_LIBRARY_PATH", &err)) {
         bb_config.ld_path = g_key_file_get_string(bbcfg, bb_config.driver, "NV_LIBRARY_PATH", &err);
     }
+    if (NULL != g_key_file_get_string(bbcfg, bb_config.driver, "MODULE_PATH", &err)) {
+        bb_config.mod_path = g_key_file_get_string(bbcfg, bb_config.driver, "MODULE_PATH", &err);
+    }
     if (NULL != g_key_file_get_string(bbcfg, bb_config.driver, "PM_METHOD", &err)) {
          enum bb_pm_method index = bb_pm_method_from_string(g_key_file_get_string(bbcfg, bb_config.driver, "PM_METHOD", &err));
          bb_config.pm_method = index;
@@ -445,7 +454,6 @@ static int bbconfig_parse_conf(void) {
     if (NULL != g_key_file_get_string(bbcfg, bb_config.driver, "X_CONFFILE", &err)) {
         bb_config.x_conf_file = g_key_file_get_string(bbcfg, bb_config.driver, "X_CONFFILE", &err);
     }
-    /*  */
 }
 
 /**
