@@ -331,7 +331,7 @@ static void bb_run_exec_hide_stderr(char **argv) {
   exec_err = errno;
   dup2(old_stderr, 2);
   close(old_stderr);
-  bb_log(LOG_ERR, "command execution failed: %s\n", strerror(exec_err));
+  bb_log(LOG_ERR, "Error running \"%s\": %s\n", argv[0], strerror(exec_err));
   exit(exec_err);
 }
 
