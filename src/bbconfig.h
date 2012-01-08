@@ -30,6 +30,10 @@
 #define BB_DAEMON 1
 #define BB_NODEAMON 0
 
+// Parsing rounds
+#define P_FIRST 1
+#define P_SECOND 2
+
 /* common command line params */
 #define BBCONFIG_COMMON_OPTSTR "+qvd:s:l:C:hV"
 #define BBCONFIG_COMMON_LOPTS \
@@ -146,3 +150,7 @@ void set_string_value(char ** configstring, char * newvalue);
 struct option *config_get_longopts(struct option *longopts, size_t items);
 
 void print_usage(int exit_val);
+
+void bbconfig_parse_opts(int argc, char *argv[], int conf_round);
+
+int bbconfig_parse_conf(void);

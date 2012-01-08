@@ -356,11 +356,11 @@ static int bbconfig_parse_common(int opt, char *value) {
     case 'q'://quiet mode
       bb_status.verbosity = VERB_NONE;
       break;
-    case 'v'://increase verbosity level by one
+    /*case 'v'://increase verbosity level by one
       if (bb_status.verbosity < VERB_ALL) {
         bb_status.verbosity++;
       }
-      break;
+      break;*/
     case 'd'://X display number
       set_string_value(&bb_config.x_display, value);
       break;
@@ -387,7 +387,7 @@ static int bbconfig_parse_common(int opt, char *value) {
  * @param argv The arguments values
  * @param config_only 1 if the config file is the only option to be parsed
  */
-static void bbconfig_parse_opts(int argc, char *argv[], int config_only) {
+void bbconfig_parse_opts(int argc, char *argv[], int conf_round) {
   /* Parse the options, set flags as necessary */
   int opt;
   optind = 0;
@@ -397,17 +397,27 @@ static void bbconfig_parse_opts(int argc, char *argv[], int config_only) {
     if (opt == '?') {
       /* if an option was not recognized */
       print_usage(EXIT_FAILURE);
-    } if (opt == 'C') {
-      set_string_value(&bb_config.bb_conf_file, optarg);
-    } else if (!config_only) {
+    }
+    if (conf_round == P_FIRST) {
+        switch (opt) {
+            case 'C':
+                set_string_value(&bb_config.bb_conf_file, optarg);
+                break;
+            case 'v':
+                if (bb_status.verbosity < VERB_ALL) {
+                    bb_status.verbosity++;
+                }
+                break;
+            default:
+                break;
+        }
+    } else if (conf_round == P_SECOND) {
       /* try to find local options first, then try common options */
       if (bbconfig_parse_options(opt, optarg) ||
               bbconfig_parse_common(opt, optarg)) {
         /* option has been parsed, continue with the next options */
         continue;
       }
-      /* XXX is it possible to print the usage message earlier? */
-      print_usage(EXIT_FAILURE);
     }
   }
 }
@@ -417,7 +427,7 @@ static void bbconfig_parse_opts(int argc, char *argv[], int config_only) {
  *
  * @return 0 on success
  */
-static int bbconfig_parse_conf(void) {
+int bbconfig_parse_conf(void) {
     //Old behavior
     //return read_configuration();
 
@@ -499,6 +509,7 @@ static int bbconfig_parse_conf(void) {
     if (NULL != g_key_file_get_value(bbcfg, section, key, &err)) {
         bb_config.x_conf_file = g_key_file_get_string(bbcfg, section, key, &err);
     }
+    return 0;
 }
 
 /**
@@ -546,15 +557,17 @@ void init_config(int argc, char **argv) {
   bb_config.card_shutdown_state = bb_bool_from_string(CONF_TURNOFFATEXIT);
   set_string_value(&bb_config.pid_file, CONF_PID_FILE);
 
-  /* parse commandline configuration (for config file, if any) */
+/*
+  // parse commandline configuration (for config file, if any)
   bbconfig_parse_opts(argc, argv, 1);
 
-  /* parse config file */
+  //parse config file
   //read_configuration();
   bbconfig_parse_conf();
 
-  /* parse remaining command line options */
+  // parse remaining command line options
   bbconfig_parse_opts(argc, argv, 0);
+/**/
 }
 
 /**

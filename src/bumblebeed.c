@@ -358,7 +358,10 @@ int main(int argc, char* argv[]) {
     bb_log(LOG_ERR, "No nVidia graphics card found, quitting.\n");
     return (EXIT_FAILURE);
   }
+  bbconfig_parse_opts(argc, argv, P_FIRST);
   check_secondary();
+  bbconfig_parse_conf();
+  bbconfig_parse_opts(argc, argv, P_SECOND);
   /* dump the config after detecting the driver */
   config_dump();
   if (config_validate() != 0) {

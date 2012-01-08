@@ -216,6 +216,9 @@ int main(int argc, char *argv[]) {
 
   /* Initializing configuration */
   init_config(argc, argv);
+  bbconfig_parse_opts(argc, argv, P_FIRST);
+  bbconfig_parse_conf();
+  bbconfig_parse_opts(argc,argv, P_SECOND);
   config_dump();
 
   bb_log(LOG_DEBUG, "%s version %s starting...\n", bb_status.program_name, GITVERSION);
