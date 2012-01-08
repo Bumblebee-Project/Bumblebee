@@ -32,12 +32,12 @@ do_subst = sed -e 's|[@]CONF_XDISP[@]|$(CONF_XDISP)|g' \
 	-e 's|[@]CONF_SOCKPATH[@]|$(CONF_SOCKPATH)|g' \
 	-e 's|[@]CONF_GID[@]|$(CONF_GID)|g' \
 	-e 's|[@]CONF_PM_METHOD[@]|$(CONF_PM_METHOD)|g' \
-	-e 's|[@]CONF_STOPONEXIT[@]|$(CONF_STOPONEXIT)|g' \
+	-e 's|[@]CONF_KEEPONEXIT[@]|$(CONF_KEEPONEXIT)|g' \
 	-e 's|[@]CONF_FALLBACKSTART[@]|$(CONF_FALLBACKSTART)|g' \
 	-e 's|[@]CONF_VGLCOMPRESS[@]|$(CONF_VGLCOMPRESS)|g' \
 	-e 's|[@]CONF_DRIVER[@]|$(CONF_DRIVER)|g' \
 	-e 's|[@]CONF_DRIVER_MODULE[@]|$(CONF_DRIVER_MODULE)|g' \
-	-e 's|[@]CONF_SHUTDOWNSTATE[@]|$(CONF_SHUTDOWNSTATE)|g' \
+	-e 's|[@]CONF_TURNOFFATEXIT[@]|$(CONF_TURNOFFATEXIT)|g' \
 	-e 's|[@]BINDIR[@]|$(bindir)|g' \
 	-e 's|[@]CONF_XORG[@]|$(sysconfdir)/bumblebee/xorg.conf.DRIVER|g' \
 	-e 's|[@]CONF_PID_FILE[@]|/var/run/bumblebeed.pid|g'

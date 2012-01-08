@@ -49,10 +49,23 @@ const char *bb_pm_method_string[PM_METHODS_COUNT] = {
 struct bb_status_struct bb_status;
 struct bb_config_struct bb_config;
 
+//@Deprecated
 struct bb_key_value {
   char key[BUFFER_SIZE];
   char value[BUFFER_SIZE];
 };
+
+/**
+ * Returns a gboolean from true/false strings
+ * @return TRUE if str="true", FALSE otherwise
+ */
+static gboolean bb_bool_from_string(char* str) {
+    if (strcmp(str, "true") == 0) {
+        return TRUE;
+    } else {
+        return FALSE;
+    }
+}
 
 /**
  * Little function to log parsing errors
@@ -528,9 +541,9 @@ void init_config(int argc, char **argv) {
   set_string_value(&bb_config.driver, "");
   set_string_value(&bb_config.module_name, CONF_DRIVER_MODULE);
   bb_config.pm_method = bb_pm_method_from_string(CONF_PM_METHOD);
-  bb_config.stop_on_exit = CONF_STOPONEXIT;
-  bb_config.fallback_start = CONF_FALLBACKSTART;
-  bb_config.card_shutdown_state = CONF_SHUTDOWNSTATE;
+  bb_config.stop_on_exit = bb_bool_from_string(CONF_KEEPONEXIT);
+  bb_config.fallback_start = bb_bool_from_string(CONF_FALLBACKSTART);
+  bb_config.card_shutdown_state = bb_bool_from_string(CONF_TURNOFFATEXIT);
   set_string_value(&bb_config.pid_file, CONF_PID_FILE);
 
   /* parse commandline configuration (for config file, if any) */

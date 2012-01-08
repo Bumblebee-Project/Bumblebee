@@ -3,42 +3,42 @@
 [bumblebeed]
 
 # The secondary Xorg server DISPLAY number
-VirtualDisplay=:8
+VirtualDisplay=@CONF_XDISP@
 
 # Should the unused Xorg server be kept running? Set this to true if waiting
 # for X to be ready is too long and don't need power management at all.
-KeepUnusedXServer=false
+KeepUnusedXServer=@CONF_KEEPONEXIT@
 
 # The name of the Bumbleblee server group name (GID name)
-ServerGroup=bumblebee
+ServerGroup=@CONF_GID@
 
 # Card power state at exit. Set to false if the card shoud be ON when Bumblebee
 # server exits.
-TurnCardOffAtExit=false
+TurnCardOffAtExit=@CONF_TURNOFFATEXIT@
 
 # The default behavior of '-f' option on optirun. If set to "true", '-f' will
 # be ignored.
 NoEcoModeOverride=false
 
 # The Driver used by Bumblebee server. (See specific sections below)
-Driver=nouveau
+Driver=@CONF_DRIVER_MODULE@
 
 ## Client options. Will take effect on the next optirun executed.
 [optirun]
 
 # The method used for VirtualGL to transport frames between X servers.
 # Possible values are "proxy", "rgb", "yuv" and "jpeg"
-VGLTransport=proxy
+VGLTransport=@CONF_VGLCOMPRESS@
 
 # Should the program run under optirun even if Bumblebee server or nvidia card is not available?
-AllowFallbackToIGC=false
+AllowFallbackToIGC=@CONF_FALLBACKSTART@
 
 ## Section with nvidia driver specific options. This will be parsed if
 ## Driver=nvidia
 [nvidia]
-KernelDriver=nvidia-current
+KernelDriver=@CONF_DRIVER_MODULE@
 Module=nvidia
-PMMethod=bbswitch
+PMMethod=@CONF_PM_METHOD@
 LibraryPath=/usr/lib/nvidia-bumblebee
 XorgModulePath=/usr/lib/nvidia-bumblebee/xorg/modules
 XorgConfFile=/etc/bumblebee/xorg.conf.nvidia
@@ -47,90 +47,6 @@ XorgConfFile=/etc/bumblebee/xorg.conf.nvidia
 ## Driver=nouveau
 [nouveau]
 KernelDriver=nouveau
-PMMethod=bbswitch
+PMMethod=@CONF_PM_METHOD@
 XorgConfFile=/etc/bumblebee/xorg.conf.nouveau
 
-
-#######################################################################
-#   DEPRECATED BELOW
-#######################################################################
-
-### Bumblebee daemon/client configuration file.
-# Boolean options accept 'true' or 'false'
-# Lines starting with a '#' are comments and ignored. If you change an option, do
-# not forget to remove the sharp sign (#) preceding the directive.
-
-###
-### Modifications made here will need a daemon restart to take effect.
-###
-
-# If set to 'true', the X server is stopped after the last optirun client. If set
-# to 'false', the card will always be enabled after the first optirun instance.
-# This option might be removed in the future as it was a workaround for an old
-# bug. You usually do not want to set this to 'false'.
-#STOP_SERVICE_ON_EXIT=@CONF_STOPONEXIT@
-
-# Display for the nVidia X Server, choose a higher display (e.g. :5) if you use
-# Fast User Switching which starts incrementing from :0 (:0, :1, :2, ...).
-#VGL_DISPLAY=@CONF_XDISP@
-
-# Driver to be used. This value is autodetected, but if you want to force
-# Bumblebee to use a specific driver, uncomment this line and specify the
-# driver (nvidia or nouveau). See also NV_LIBRARY_PATH
-#DRIVER=@CONF_DRIVER@
-
-## Nvidia driver configuration
-# Kernel module which loads the driver. This option should only be used if the
-# name of the driver and kernel module differs, and if the name of the kernel
-# module is not "nvidia-current" nor "nvidia" for DRIVER=nvidia. An empty value
-# copies the value of DRIVER or for nvidia, "nvidia" or "nvidia-current".
-#DRIVER_MODULE=@CONF_DRIVER_MODULE@
-
-# The Xorg configuration to be used, leaving it empty will base the file on the
-# driver name, which is usually /etc/bumblebee/xorg.conf.DRIVER.
-#X_CONFFILE=@CONF_XORG@
-
-# If nvidia is set as driver the daemon will need a way to figure out where to
-# find the nvidia libraries. This option also sets the LD_LIBRARY_PATH env var
-# for optirun programs to allow the graphics library to be found. This option
-# is not needed for nouveau. Multiple directories can be specified by
-# separating the values with a colon.
-#NV_LIBRARY_PATH=@CONF_LDPATH@
-
-# An override for the path to Xorg modules. If you're using the nvidia driver,
-# you need to put the directory containing nvidia_drv.so in it, a comma and
-# the default Xorg modules directory. Multiple paths are separated by commas
-#MODULE_PATH=@CONF_MODPATH@
-
-# The group that is allowed to use Bumblebee. Note that the user needs to
-# re-login for group membership changes to apply.
-#BUMBLEBEE_GROUP=@CONF_GID@
-
-# Enable power management with the specified method. Possible values are
-# none - disable power management, just what the legacy ENABLE_POWER_MANAGEMENT
-#        option (which is removed) did
-# auto - try to detect available methods (default if unspecified)
-# bbswitch - only try the bbswitch kernel module
-# switcheroo - only try vga_switcheroo which can only be used with nouveau
-# if a method is not available, PM will be disabled. See also:
-# https://github.com/Bumblebee-Project/Bumblebee/wiki/Comparison-of-PM-methods
-#PM_METHOD=@CONF_PM_METHOD@
-
-# If set to '0', the discrete card will stay disabled after shutdown of the
-# Bumblebee daemon. Do not set this value to '0' when uninstalling. Usually
-# you want to keep this value at '1'.
-#CARD_SHUTDOWN_STATE=@CONF_SHUTDOWNSTATE@
-
-###
-### The below only affects optirun, restarting the daemon is not necessary
-###
-
-# Image transport from bumblebee X server to screen.
-# Possible values: proxy, jpeg, rgb, xv or yuv
-#VGL_COMPRESS=@CONF_VGLCOMPRESS@
-
-# Fall back on using the Intel graphics card if the nVidia one is not available.
-# If disabled, optirun will quit after displaying an error message. A value of
-# '1' will make a program still be executed even if the Bumblebee daemon is not
-# available.
-#FALLBACK_START=@CONF_FALLBACKSTART@
