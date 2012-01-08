@@ -1,46 +1,59 @@
-## Server options
+## Server options. Any change made in this section will need a server restart
+#to take effect.
 [bumblebeed]
-# remember that client does not have to be optirun, a client is any program that communicates through the protocol, which can be Bumblebee UI for example. "Keep" makes more sense for a power-saving behavior.
-KeepUnusedXServer=false
-# GID looks like a number, but we really talk about names
-ServerGroup=bumblebee
-# Card power state at exit
-# if it's true, it'll make on/off -> on. If false, on/off -> off
-TurnCardOffAtExit=false
-# Should default behavior on Battery power be forced? This will allow for the use of "-f" option in optirun. STAGED FOR 3.1, not 3.0
- # unless it is a policy or sth, it should be overridable by default, OK
-NoEcoModeOverride=false
-# VGL refers to the technology, keeping it as now (fine for me btw, alt: SECONDARY_DISPLAY)? (V_DISPLAY for virtual)
+
+# The secondary Xorg server DISPLAY number
 VirtualDisplay=:8
-# wait, driver can be "nvidia-current" as it refers to the kernel module filename. Shouldn't we use Module here? No, This is the driver used by bumblebeed. Based on this it will use the driver-DRIVER section for the relevant options
+
+# Should the unused Xorg server be kept running? Set this to true if waiting
+# for X to be ready is too long and don't need power management at all.
+KeepUnusedXServer=false
+
+# The name of the Bumbleblee server group name (GID name)
+ServerGroup=bumblebee
+
+# Card power state at exit. Set to false if the card shoud be ON when Bumblebee
+# server exits.
+TurnCardOffAtExit=false
+
+# The default behavior of '-f' option on optirun. If set to "true", '-f' will
+# be ignored.
+NoEcoModeOverride=false
+
+# The Driver used by Bumblebee server. (See specific sections below)
 Driver=nouveau
-## Client options
+
+## Client options. Will take effect on the next optirun executed.
 [optirun]
-# This is really specific to VGL and can't be used in other programs for sure. Will eventually be deprecated.
+
+# The method used for VirtualGL to transport frames between X servers.
+# Possible values are "proxy", "rgb", "yuv" and "jpeg"
 VGLTransport=proxy
-# "start if server is unavailable" --- **magic words machine** -> (the below can be improved as well)
-AlwaysRunProgram=false
-# proposals for the above:
+
+# Should the program run under optirun even if Bumblebee server or nvidia card is not available?
 AllowFallbackToIGC=false
-## Section with nvidia specific options
+
+## Section with nvidia driver specific options. This will be parsed if
+## Driver=nvidia
 [nvidia]
-#Just to be sure none confuses this drver with the one in bbd section
 KernelDriver=nvidia-current
 Module=nvidia
 PMMethod=bbswitch
 LibraryPath=/usr/lib/nvidia-bumblebee
-# for clarity prepend Xorg
 XorgModulePath=/usr/lib/nvidia-bumblebee/xorg/modules
 XorgConfFile=/etc/bumblebee/xorg.conf.nvidia
-## Section with nouveau specific options
+
+## Section with nouveau driver specific options. This will be parsed if
+## Driver=nouveau
 [nouveau]
 KernelDriver=nouveau
 PMMethod=bbswitch
-# not needed but can be added
-LibraryPath=/usr/lib/
-XorgModulePath=/usr/lib/....
 XorgConfFile=/etc/bumblebee/xorg.conf.nouveau
 
+
+#######################################################################
+#   DEPRECATED BELOW
+#######################################################################
 
 ### Bumblebee daemon/client configuration file.
 # Boolean options accept 'true' or 'false'
@@ -67,7 +80,6 @@ XorgConfFile=/etc/bumblebee/xorg.conf.nouveau
 #DRIVER=@CONF_DRIVER@
 
 ## Nvidia driver configuration
-[nvidia]
 # Kernel module which loads the driver. This option should only be used if the
 # name of the driver and kernel module differs, and if the name of the kernel
 # module is not "nvidia-current" nor "nvidia" for DRIVER=nvidia. An empty value
