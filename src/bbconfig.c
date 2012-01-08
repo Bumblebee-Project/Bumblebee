@@ -406,53 +406,74 @@ static int bbconfig_parse_conf(void) {
     bbcfg = g_key_file_new();
     if(!g_key_file_load_from_file(bbcfg, bb_config.bb_conf_file, flags, &err)) {
         bb_log(LOG_WARNING, "Could not open configuration file: %s\n", bb_config.bb_conf_file);
-        bb_log(LOG_WARNING, "Using default configuration");
-        return 0;
+        bb_log(LOG_WARNING, "Using default configuration\n");
+        return 1;
     }
+
+    // First check for a key existence then parse it with appropriate format
+    // Use false as default for boolean arguments
+
+    char* section;
+    char* key;
     // Client settings
-    // [client]
-    if (NULL != g_key_file_get_string(bbcfg, "client", "VGL_COMPRESS", &err)) {
-        bb_config.vgl_compress = g_key_file_get_string(bbcfg, "client", "VGL_COMPRESS", &err);
+    // [optirun]
+    section = "optirun";
+    key = "VGLTransport";
+    if (NULL != g_key_file_get_value(bbcfg, section, key, &err)) {
+        bb_config.vgl_compress = g_key_file_get_string(bbcfg, section, key, &err);
+    }
+    key = "AllowFallbackToIGC";
+    if (NULL != g_key_file_get_value(bbcfg, section, key, &err)) {
+        bb_config.fallback_start = g_key_file_get_boolean(bbcfg, section, "VGLTransport", &err);
     }
 
     // Server settings
-    // [server]
-    if (NULL != g_key_file_get_string(bbcfg, "server", "VGL_DISPLAY", &err)) {
-        bb_config.x_display = g_key_file_get_string(bbcfg, "server", "VGL_DISPLAY", &err);
+    // [bumblebeed]
+    section = "bumblebeed";
+    key = "VirtualDisplay";
+    if (NULL != g_key_file_get_value(bbcfg, section, key, &err)) {
+        bb_config.x_display = g_key_file_get_string(bbcfg, section, key, &err);
     }
-    if (NULL != g_key_file_get_string(bbcfg, "server", "STOP_SERVICE_ON_EXIT", &err)) {
-        bb_config.stop_on_exit = g_key_file_get_boolean(bbcfg, "server", "STOP_SERVICE_ON_EXIT", &err);
+    key = "KeepUnusedXServer";
+    if (NULL != g_key_file_get_value(bbcfg, section, key, &err)) {
+        bb_config.stop_on_exit = g_key_file_get_boolean(bbcfg, section, key, &err);
     }
-    if (NULL != g_key_file_get_string(bbcfg, "server", "DRIVER", &err)) {
-        bb_config.driver = g_key_file_get_string(bbcfg, "server", "driver", NULL);
+    key = "Driver";
+    if (NULL != g_key_file_get_value(bbcfg, section, key, &err)) {
+        bb_config.driver = g_key_file_get_string(bbcfg, section, key, &err);
     }
-    if (NULL != g_key_file_get_string(bbcfg, "server", "BUMBLEBEE_GROUP", &err)) {
-        bb_config.gid_name = g_key_file_get_string(bbcfg, "server", "BUMBLEBEE_GROUP", &err);
+    key = "ServerGroup";
+    if (NULL != g_key_file_get_value(bbcfg, section, key, &err)) {
+        bb_config.gid_name = g_key_file_get_string(bbcfg, section, key, &err);
     }
-    if (NULL != g_key_file_get_string(bbcfg, "server", "CARD_SHUTDOWN_STATE", &err)) {
-        bb_config.card_shutdown_state = g_key_file_get_boolean(bbcfg, "server", "CARD_SHUTDOWN_STATE", NULL);
-    }
-    if (NULL != g_key_file_get_string(bbcfg, "server", "FALLBACK_START", &err)) {
-        bb_config.fallback_start = g_key_file_get_boolean(bbcfg, "server", "FALLBACK_START", &err);
+    key = "TurnCardOffAtExit";
+    if (NULL != g_key_file_get_value(bbcfg, section, key, &err)) {
+        bb_config.card_shutdown_state = g_key_file_get_boolean(bbcfg, section, key, &err);
     }
 
     // Driver settings
     // [nouveua] or [nvidia]
-    if (NULL != g_key_file_get_string(bbcfg, bb_config.driver, "DRIVER_MODULE", &err)) {
-        bb_config.module_name = g_key_file_get_string(bbcfg, bb_config.driver, "DRIVER_MODULE", &err);
+    section = bb_config.driver;
+    key = "KernelDriver";
+    if (NULL != g_key_file_get_value(bbcfg, section, key, &err)) {
+        bb_config.module_name = g_key_file_get_string(bbcfg, section, key, &err);
     }
-    if (NULL != g_key_file_get_string(bbcfg, bb_config.driver, "NV_LIBRARY_PATH", &err)) {
-        bb_config.ld_path = g_key_file_get_string(bbcfg, bb_config.driver, "NV_LIBRARY_PATH", &err);
+    key = "LibraryPath";
+    if (NULL != g_key_file_get_value(bbcfg, section, key, &err)) {
+        bb_config.ld_path = g_key_file_get_string(bbcfg, section, key, &err);
     }
-    if (NULL != g_key_file_get_string(bbcfg, bb_config.driver, "MODULE_PATH", &err)) {
-        bb_config.mod_path = g_key_file_get_string(bbcfg, bb_config.driver, "MODULE_PATH", &err);
+    key = "XorgModulePath";
+    if (NULL != g_key_file_get_value(bbcfg, section, key, &err)) {
+        bb_config.mod_path = g_key_file_get_string(bbcfg, section, key, &err);
     }
-    if (NULL != g_key_file_get_string(bbcfg, bb_config.driver, "PM_METHOD", &err)) {
-         enum bb_pm_method pm_method_index = bb_pm_method_from_string(g_key_file_get_string(bbcfg, bb_config.driver, "PM_METHOD", &err));
+    key = "PMMethod";
+    if (NULL != g_key_file_get_value(bbcfg, section, key, &err)) {
+         enum bb_pm_method pm_method_index = bb_pm_method_from_string(g_key_file_get_string(bbcfg, section, key, &err));
          bb_config.pm_method = pm_method_index;
     }
-    if (NULL != g_key_file_get_string(bbcfg, bb_config.driver, "X_CONFFILE", &err)) {
-        bb_config.x_conf_file = g_key_file_get_string(bbcfg, bb_config.driver, "X_CONFFILE", &err);
+    key = "XorgConfFile";
+    if (NULL != g_key_file_get_value(bbcfg, section, key, &err)) {
+        bb_config.x_conf_file = g_key_file_get_string(bbcfg, section, key, &err);
     }
 }
 

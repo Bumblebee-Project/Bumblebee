@@ -1,17 +1,60 @@
+## Server options
+[bumblebeed]
+# remember that client does not have to be optirun, a client is any program that communicates through the protocol, which can be Bumblebee UI for example. "Keep" makes more sense for a power-saving behavior.
+KeepUnusedXServer=false
+# GID looks like a number, but we really talk about names
+ServerGroup=bumblebee
+# Card power state at exit
+# if it's true, it'll make on/off -> on. If false, on/off -> off
+TurnCardOffAtExit=false
+# Should default behavior on Battery power be forced? This will allow for the use of "-f" option in optirun. STAGED FOR 3.1, not 3.0
+ # unless it is a policy or sth, it should be overridable by default, OK
+NoEcoModeOverride=false
+# VGL refers to the technology, keeping it as now (fine for me btw, alt: SECONDARY_DISPLAY)? (V_DISPLAY for virtual)
+VirtualDisplay=:8
+# wait, driver can be "nvidia-current" as it refers to the kernel module filename. Shouldn't we use Module here? No, This is the driver used by bumblebeed. Based on this it will use the driver-DRIVER section for the relevant options
+Driver=nouveau
+## Client options
+[optirun]
+# This is really specific to VGL and can't be used in other programs for sure. Will eventually be deprecated.
+VGLTransport=proxy
+# "start if server is unavailable" --- **magic words machine** -> (the below can be improved as well)
+AlwaysRunProgram=false
+# proposals for the above:
+AllowFallbackToIGC=false
+## Section with nvidia specific options
+[nvidia]
+#Just to be sure none confuses this drver with the one in bbd section
+KernelDriver=nvidia-current
+Module=nvidia
+PMMethod=bbswitch
+LibraryPath=/usr/lib/nvidia-bumblebee
+# for clarity prepend Xorg
+XorgModulePath=/usr/lib/nvidia-bumblebee/xorg/modules
+XorgConfFile=/etc/bumblebee/xorg.conf.nvidia
+## Section with nouveau specific options
+[nouveau]
+KernelDriver=nouveau
+PMMethod=bbswitch
+# not needed but can be added
+LibraryPath=/usr/lib/
+XorgModulePath=/usr/lib/....
+XorgConfFile=/etc/bumblebee/xorg.conf.nouveau
+
+
 ### Bumblebee daemon/client configuration file.
-# Boolean options accept '1' and '0'. Do not use true/false. N/Y is
-# deprecated and will be removed in the future.
-# Lines starting with a # are comments and ignored. If you change an option, do
+# Boolean options accept 'true' or 'false'
+# Lines starting with a '#' are comments and ignored. If you change an option, do
 # not forget to remove the sharp sign (#) preceding the directive.
 
 ###
 ### Modifications made here will need a daemon restart to take effect.
 ###
 
-# If set to '1', the X server is stopped after the last optirun client. If set
-# to '0', the card will always be enabled after the first optirun instance.
+# If set to 'true', the X server is stopped after the last optirun client. If set
+# to 'false', the card will always be enabled after the first optirun instance.
 # This option might be removed in the future as it was a workaround for an old
-# bug. You usually do not want to set this to 0.
+# bug. You usually do not want to set this to 'false'.
 #STOP_SERVICE_ON_EXIT=@CONF_STOPONEXIT@
 
 # Display for the nVidia X Server, choose a higher display (e.g. :5) if you use
@@ -22,6 +65,9 @@
 # Bumblebee to use a specific driver, uncomment this line and specify the
 # driver (nvidia or nouveau). See also NV_LIBRARY_PATH
 #DRIVER=@CONF_DRIVER@
+
+## Nvidia driver configuration
+[nvidia]
 # Kernel module which loads the driver. This option should only be used if the
 # name of the driver and kernel module differs, and if the name of the kernel
 # module is not "nvidia-current" nor "nvidia" for DRIVER=nvidia. An empty value
