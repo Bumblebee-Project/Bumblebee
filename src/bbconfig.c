@@ -411,7 +411,8 @@ static int bbconfig_parse_conf(void) {
     }
 
     // First check for a key existence then parse it with appropriate format
-    // Use false as default for boolean arguments
+    // Use false as default for boolean arguments.
+    // TODO:optirun/bumblebeed must be parsed according to RUN_MODE
 
     char* section;
     char* key;
