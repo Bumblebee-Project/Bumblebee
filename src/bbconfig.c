@@ -396,7 +396,7 @@ static void bbconfig_parse_opts(int argc, char *argv[], int config_only) {
  */
 static int bbconfig_parse_conf(void) {
     //Old behavior
-    return read_configuration();
+    //return read_configuration();
 
     bb_log(LOG_DEBUG, "Reading file: %s\n", bb_config.bb_conf_file);
     GKeyFile *bbcfg;
@@ -436,7 +436,7 @@ static int bbconfig_parse_conf(void) {
     }
     key = "KeepUnusedXServer";
     if (NULL != g_key_file_get_value(bbcfg, section, key, &err)) {
-        bb_config.stop_on_exit = g_key_file_get_boolean(bbcfg, section, key, &err);
+        bb_config.stop_on_exit = !g_key_file_get_boolean(bbcfg, section, key, &err);
     }
     key = "Driver";
     if (NULL != g_key_file_get_value(bbcfg, section, key, &err)) {
@@ -448,7 +448,7 @@ static int bbconfig_parse_conf(void) {
     }
     key = "TurnCardOffAtExit";
     if (NULL != g_key_file_get_value(bbcfg, section, key, &err)) {
-        bb_config.card_shutdown_state = g_key_file_get_boolean(bbcfg, section, key, &err);
+        bb_config.card_shutdown_state = !g_key_file_get_boolean(bbcfg, section, key, &err);
     }
 
     // Driver settings
