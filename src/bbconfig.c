@@ -54,7 +54,10 @@ struct bb_key_value {
   char value[BUFFER_SIZE];
 };
 
-/* Little function to log parsing errors */
+/**
+ * Little function to log parsing errors
+ * @Deprecated
+ */
 static inline void bb_config_parse_err(const char* msg, const char* line) {
   bb_log(LOG_ERR, "Error parsing configuration: %s. line: %s\n", msg, line);
 }
@@ -63,6 +66,7 @@ static size_t strip_lead_trail_ws(char *dest, char *str, size_t len);
 
 /**
  * Takes a pointer to a char pointer, resizing and copying the string value to it.
+ * @Deprecated
  */
 void set_string_value(char ** configstring, char * newvalue) {
   //free the string if it already existed.
@@ -92,6 +96,7 @@ void set_string_value(char ** configstring, char * newvalue) {
  * Determines the boolean value for a given string
  * @param value A value to be analyzed
  * @return 1 if the value resolves to a truth value, 0 otherwise
+ * @Deprecated
  */
 int boolean_value(char *val) {
   /* treat void, an empty string, N, n and zero as false */
@@ -107,6 +112,7 @@ int boolean_value(char *val) {
  * @param line String to be broken into a key-value pair
  * @param kvpair A pointer to a key/value struct to store data in
  * @return 0 success, non-zero on failure
+ * @Deprecated
  */
 static int bb_get_key_value(const char *line, struct bb_key_value *kvpair) {
   char *equals_pos = strstr(line, "=");
@@ -160,6 +166,7 @@ static int bb_get_key_value(const char *line, struct bb_key_value *kvpair) {
  * @param len Maximum number of bytes to be copied
  * @return The length of the trimmed string. This may be larger than len if the
  * buffer is too small
+ * @Deprecated
  */
 static size_t strip_lead_trail_ws(char *dest, char *str, size_t len) {
   char *end;
@@ -212,6 +219,7 @@ static enum bb_pm_method bb_pm_method_from_string(char *value) {
  *  Read the configuration file.
  *
  *  @return 0 on success.
+ *  @Deprecated
  */
 static int read_configuration(void) {
   bb_log(LOG_DEBUG, "Reading configuration file: %s\n", bb_config.bb_conf_file);
@@ -393,6 +401,8 @@ static void bbconfig_parse_opts(int argc, char *argv[], int config_only) {
 
 /**
  * Parse configuration file given by bb_config.bb_conf_file
+ *
+ * @return 0 on success
  */
 static int bbconfig_parse_conf(void) {
     //Old behavior
