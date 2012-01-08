@@ -424,7 +424,7 @@ static int bbconfig_parse_conf(void) {
     }
     key = "AllowFallbackToIGC";
     if (NULL != g_key_file_get_value(bbcfg, section, key, &err)) {
-        bb_config.fallback_start = g_key_file_get_boolean(bbcfg, section, "VGLTransport", &err);
+        bb_config.fallback_start = g_key_file_get_boolean(bbcfg, section, key, &err);
     }
 
     // Server settings
