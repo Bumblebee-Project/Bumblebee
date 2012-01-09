@@ -378,7 +378,7 @@ void init_config(int argc, char **argv) {
   set_string_value(&bb_config.vgl_compress, CONF_VGLCOMPRESS);
   // default to auto-detect
   set_string_value(&bb_config.driver, "");
-  set_string_value(&bb_config.module_name, CONF_DRIVER_MODULE);
+  set_string_value(&bb_config.module_name, "");
   bb_config.pm_method = bb_pm_method_from_string(CONF_PM_METHOD);
   bb_config.stop_on_exit = bb_bool_from_string(CONF_KEEPONEXIT);
   bb_config.fallback_start = bb_bool_from_string(CONF_FALLBACKSTART);
@@ -423,11 +423,11 @@ void config_dump(void) {
  */
 int config_validate(void) {
   int error = 0;
-  if (*bb_config.driver) {
-    char *mod = bb_config.driver;
+  if (*bb_config.module_name) {
+    char *mod = bb_config.module_name;
     if (!module_is_available(mod)) {
       error = 1;
-      bb_log(LOG_ERR, "Driver '%s' is not found.\n", mod);
+      bb_log(LOG_ERR, "Module '%s' is not found.\n", mod);
     }
   } else {
     bb_log(LOG_ERR, "Invalid configuration: no driver configured.\n");
