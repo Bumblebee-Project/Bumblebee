@@ -189,7 +189,7 @@ int bbconfig_parse_options(int opt, char *value) {
         set_string_value(&bb_config.vgl_compress, value);
         break;
       case OPT_FAILSAFE: // for optirun
-        bb_config.fallback_start = boolean_value(value);
+        bb_config.fallback_start = bb_bool_from_string(value);
         break;
       case OPT_STATUS:
         bb_status.runmode = BB_RUN_STATUS;

@@ -25,6 +25,7 @@
 
 #include <unistd.h> //for pid_t
 #include <limits.h> //for CHAR_MAX
+#include <glib.h>
 
 /* Daemon states */
 #define BB_DAEMON 1
@@ -59,8 +60,6 @@ enum {
   OPT_STATUS,
   OPT_PIDFILE,
 };
-
-int boolean_value(char *val);
 
 /* Verbosity levels */
 enum verbosity_level {
@@ -154,3 +153,5 @@ void print_usage(int exit_val);
 void bbconfig_parse_opts(int argc, char *argv[], int conf_round);
 
 int bbconfig_parse_conf(void);
+
+gboolean bb_bool_from_string(char* str);

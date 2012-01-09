@@ -32,7 +32,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <glib.h>
 #include "bbconfig.h"
 #include "bblogger.h"
 #include "module.h"
@@ -49,33 +48,17 @@ const char *bb_pm_method_string[PM_METHODS_COUNT] = {
 struct bb_status_struct bb_status;
 struct bb_config_struct bb_config;
 
-//@Deprecated
-struct bb_key_value {
-  char key[BUFFER_SIZE];
-  char value[BUFFER_SIZE];
-};
-
 /**
  * Returns a gboolean from true/false strings
  * @return TRUE if str="true", FALSE otherwise
  */
-static gboolean bb_bool_from_string(char* str) {
+gboolean bb_bool_from_string(char* str) {
     if (strcmp(str, "true") == 0) {
         return TRUE;
     } else {
         return FALSE;
     }
 }
-
-/**
- * Little function to log parsing errors
- * @Deprecated
- */
-static inline void bb_config_parse_err(const char* msg, const char* line) {
-  bb_log(LOG_ERR, "Error parsing configuration: %s. line: %s\n", msg, line);
-}
-
-static size_t strip_lead_trail_ws(char *dest, char *str, size_t len);
 
 /**
  * Takes a pointer to a char pointer, resizing and copying the string value to it.
@@ -105,112 +88,6 @@ void set_string_value(char ** configstring, char * newvalue) {
 }//set_string_value
 
 /**
- * Determines the boolean value for a given string
- * @param value A value to be analyzed
- * @return 1 if the value resolves to a truth value, 0 otherwise
- * @Deprecated
- */
-int boolean_value(char *val) {
-  /* treat void, an empty string, N, n and zero as false */
-  if (!val || !*val || *val == 'N' || *val == 'n' || *val == '0') {
-    return 0;
-  }
-  return 1;
-}
-
-/**
- * Takes a line and breaks it into a key-value pair
- *
- * @param line String to be broken into a key-value pair
- * @param kvpair A pointer to a key/value struct to store data in
- * @return 0 success, non-zero on failure
- * @Deprecated
- */
-static int bb_get_key_value(const char *line, struct bb_key_value *kvpair) {
-  char *equals_pos = strstr(line, "=");
-  if (!equals_pos) {
-    bb_config_parse_err("expected an =-sign.", line);
-    return 1;
-  }
-
-  // the length of the key and value including null byte must be smaller than
-  // BUFFER_SIZE
-  int key_len = equals_pos - line;
-  if (key_len >= BUFFER_SIZE) {
-    bb_config_parse_err("key name too long", line);
-    return 1;
-  }
-  int val_len = strlen(line) - key_len - strlen("=");
-  if (val_len >= BUFFER_SIZE) {
-    bb_config_parse_err("value too long", line);
-    return 1;
-  }
-
-  // consider only the leading part of the line for key
-  memcpy(kvpair->key, line, key_len);
-  kvpair->key[key_len] = 0;
-  strip_lead_trail_ws(kvpair->key, kvpair->key, BUFFER_SIZE);
-  // the remainder can directly be trimmed for value
-  strip_lead_trail_ws(kvpair->value,
-      (char*) line + key_len + strlen("="), BUFFER_SIZE);
-
-  // remove the single or double quotes around a value
-  char value_first_char = *kvpair->value;
-  val_len = strlen(kvpair->value);
-  if (val_len >= 2 && (value_first_char == '\'' || value_first_char == '"')) {
-    if (kvpair->value[val_len - 1] == value_first_char) {
-      // bye last quote
-      kvpair->value[val_len - 1] = 0;
-      // hello value without quote
-      memmove(kvpair->value, kvpair->value + 1, val_len + 1);
-    }
-    // XXX perhaps log than an incorrect value was found like "val?
-  }
-  return 0;
-}
-
-/**
- * Strips leading and trailing whitespaces from a string. The original string
- * is modified, trailing spaces are removed
- *
- * @param dest String in which the trimmed result is to be stored
- * @param str String to be cleared of leading and trailing whitespaces
- * @param len Maximum number of bytes to be copied
- * @return The length of the trimmed string. This may be larger than len if the
- * buffer is too small
- * @Deprecated
- */
-static size_t strip_lead_trail_ws(char *dest, char *str, size_t len) {
-  char *end;
-  /* the length of the trimmed string */
-  size_t actual_len;
-
-  // Remove leading spaces
-  while (isspace(*str)) {
-    str++;
-  }
-  // all whitespace
-  if (len == 0 || *str == 0) {
-    *dest = 0;
-    return 0;
-  }
-  // Remove trailing spaces
-  end = str + strlen(str) - 1;
-  while ((end > str) && (isspace(*end))) {
-    end--;
-  }
-  actual_len = end - str + 1;
-
-  // if the string is smaller. cast to hide compiler notice, len is always > 0
-  len = actual_len < len ? actual_len : (unsigned) len - 1;
-  memmove(dest, str, len);
-  // Add null terminator to end
-  dest[len] = 0;
-
-  return actual_len;
-}
-
-/**
  * Converts a string to the internal representation of a PM method
  * @param value The string to be converted
  * @return An index in the PM methods array
@@ -225,76 +102,6 @@ static enum bb_pm_method bb_pm_method_from_string(char *value) {
     }
   }
   return method_index;
-}
-
-/**
- *  Read the configuration file.
- *
- *  @return 0 on success.
- *  @Deprecated
- */
-static int read_configuration(void) {
-  bb_log(LOG_DEBUG, "Reading configuration file: %s\n", bb_config.bb_conf_file);
-  FILE *cf = fopen(bb_config.bb_conf_file, "r");
-  if (cf == 0) { /* An error ocurred */
-    bb_log(LOG_ERR, "Error in config file: %s\n", strerror(errno));
-    bb_log(LOG_INFO, "Using default configuration\n");
-    return 1;
-  }
-  char line[BUFFER_SIZE];
-  while (fgets(line, sizeof line, cf) != NULL) {
-    strip_lead_trail_ws(line, line, BUFFER_SIZE);
-    /* Ignore empty lines and comments */
-    if ((line[0] != '#') && (line[0] != '\0')) {
-      /* Parse configuration based on the run mode */
-      struct bb_key_value kvp;
-      /* skip lines that could not be parsed */
-      if (bb_get_key_value(line, &kvp))
-        continue;
-
-      if (strcmp(kvp.key, "VGL_DISPLAY") == 0) {
-        set_string_value(&bb_config.x_display, kvp.value);
-        bb_log(LOG_DEBUG, "value set: x_display = %s\n", bb_config.x_display);
-      } else if (strcmp(kvp.key, "STOP_SERVICE_ON_EXIT") == 0) {
-        bb_config.stop_on_exit = boolean_value(kvp.value);
-        bb_log(LOG_DEBUG, "value set: stop_on_exit = %d\n", bb_config.stop_on_exit);
-      } else if (strcmp(kvp.key, "X_CONFFILE") == 0) {
-        set_string_value(&bb_config.x_conf_file, kvp.value);
-        bb_log(LOG_DEBUG, "value set: x_conf_file = %s\n", bb_config.x_conf_file);
-      } else if (strcmp(kvp.key, "VGL_COMPRESS") == 0) {
-        set_string_value(&bb_config.vgl_compress, kvp.value);
-        bb_log(LOG_DEBUG, "value set: vgl_compress = %s\n", bb_config.vgl_compress);
-      } else if (strcmp(kvp.key, "PM_METHOD") == 0) {
-        enum bb_pm_method method_index = bb_pm_method_from_string(kvp.value);
-        bb_config.pm_method = method_index;
-        bb_log(LOG_DEBUG, "value set: pm_method = %s\n",
-                bb_pm_method_string[method_index]);
-      } else if (strcmp(kvp.key, "FALLBACK_START") == 0) {
-        bb_config.fallback_start = boolean_value(kvp.value);
-        bb_log(LOG_DEBUG, "value set: fallback_start = %d\n", bb_config.fallback_start);
-      } else if (strcmp(kvp.key, "BUMBLEBEE_GROUP") == 0) {
-        set_string_value(&bb_config.gid_name, kvp.value);
-        bb_log(LOG_DEBUG, "value set: gid_name = %s\n", bb_config.gid_name);
-      } else if (strcmp(kvp.key, "DRIVER") == 0) {
-        set_string_value(&bb_config.driver, kvp.value);
-        bb_log(LOG_DEBUG, "value set: driver = %s\n", bb_config.driver);
-      } else if (strcmp(kvp.key, "DRIVER_MODULE") == 0) {
-        set_string_value(&bb_config.module_name, kvp.value);
-        bb_log(LOG_DEBUG, "value set: module_name = %s\n", bb_config.module_name);
-      } else if (strcmp(kvp.key, "NV_LIBRARY_PATH") == 0) {
-        set_string_value(&bb_config.ld_path, kvp.value);
-        bb_log(LOG_DEBUG, "value set: ld_path = %s\n", bb_config.ld_path);
-      } else if (strcmp(kvp.key, "MODULE_PATH") == 0) {
-        set_string_value(&bb_config.mod_path, kvp.value);
-        bb_log(LOG_DEBUG, "value set: mod_path = %s\n", bb_config.mod_path);
-      } else if (strcmp(kvp.key, "CARD_SHUTDOWN_STATE") == 0) {
-        bb_config.card_shutdown_state = boolean_value(kvp.value);
-        bb_log(LOG_DEBUG, "value set: card_shutdown_state = %d\n", bb_config.card_shutdown_state);
-      }
-    }
-  }
-  fclose(cf);
-  return 0;
 }
 
 /// Prints a single line, for use by print_usage, with alignment.
@@ -355,11 +162,6 @@ static int bbconfig_parse_common(int opt, char *value) {
     case 'q'://quiet mode
       bb_status.verbosity = VERB_NONE;
       break;
-    /*case 'v'://increase verbosity level by one
-      if (bb_status.verbosity < VERB_ALL) {
-        bb_status.verbosity++;
-      }
-      break;*/
     case 'd'://X display number
       set_string_value(&bb_config.x_display, value);
       break;
@@ -439,6 +241,7 @@ int bbconfig_parse_conf(void) {
     if(!g_key_file_load_from_file(bbcfg, bb_config.bb_conf_file, flags, &err)) {
         bb_log(LOG_WARNING, "Could not open configuration file: %s\n", bb_config.bb_conf_file);
         bb_log(LOG_WARNING, "Using default configuration\n");
+        g_free(bbcfg);
         return 1;
     }
 
@@ -509,6 +312,8 @@ int bbconfig_parse_conf(void) {
     if (NULL != g_key_file_get_value(bbcfg, section, key, NULL)) {
         bb_config.x_conf_file = g_key_file_get_string(bbcfg, section, key, NULL);
     }
+    g_free(bbcfg);
+    g_free(err);
     return 0;
 }
 
@@ -556,18 +361,6 @@ void init_config(int argc, char **argv) {
   bb_config.fallback_start = bb_bool_from_string(CONF_FALLBACKSTART);
   bb_config.card_shutdown_state = bb_bool_from_string(CONF_TURNOFFATEXIT);
   set_string_value(&bb_config.pid_file, CONF_PID_FILE);
-
-/*
-  // parse commandline configuration (for config file, if any)
-  bbconfig_parse_opts(argc, argv, 1);
-
-  //parse config file
-  //read_configuration();
-  bbconfig_parse_conf();
-
-  // parse remaining command line options
-  bbconfig_parse_opts(argc, argv, 0);
-/**/
 }
 
 /**
