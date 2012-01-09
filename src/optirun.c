@@ -216,9 +216,16 @@ int main(int argc, char *argv[]) {
 
   /* Initializing configuration */
   init_config(argc, argv);
-  bbconfig_parse_opts(argc, argv, P_FIRST);
-  bbconfig_parse_conf();
-  bbconfig_parse_opts(argc,argv, P_SECOND);
+  bbconfig_parse_opts(argc, argv, PARSE_STAGE_PRECONF);
+  GKeyFile *bbcfg = bbconfig_parse_conf();
+  /* XXX load the driver (or even better, the ldpath) through the protocol!
+   * This will now not work for nvidia because nvidia sucks and the ldpath
+   * cannot be detected from the driver */
+  if (bbcfg) {
+    bbconfig_parse_conf_driver(bbcfg, bb_config.driver);
+    g_key_file_free(bbcfg);
+  }
+  bbconfig_parse_opts(argc, argv, PARSE_STAGE_OTHER);
   config_dump();
 
   bb_log(LOG_DEBUG, "%s version %s starting...\n", bb_status.program_name, GITVERSION);

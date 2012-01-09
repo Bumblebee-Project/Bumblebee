@@ -211,7 +211,7 @@ void bbconfig_parse_opts(int argc, char *argv[], int conf_round) {
       /* if an option was not recognized */
       print_usage(EXIT_FAILURE);
     }
-    if (conf_round == P_FIRST) {
+    if (conf_round == PARSE_STAGE_PRECONF) {
         switch (opt) {
             case 'C':
                 set_string_value(&bb_config.bb_conf_file, optarg);
@@ -224,7 +224,13 @@ void bbconfig_parse_opts(int argc, char *argv[], int conf_round) {
             default:
                 break;
         }
-    } else if (conf_round == P_SECOND) {
+    } else if (conf_round == PARSE_STAGE_DRIVER) {
+      switch (opt) {
+        case OPT_DRIVER:
+          set_string_value(&bb_config.driver, optarg);
+          break;
+      }
+    } else if (conf_round == PARSE_STAGE_OTHER) {
       /* try to find local options first, then try common options */
       if (bbconfig_parse_options(opt, optarg) ||
               bbconfig_parse_common(opt, optarg)) {
@@ -238,9 +244,9 @@ void bbconfig_parse_opts(int argc, char *argv[], int conf_round) {
 /**
  * Parse configuration file given by bb_config.bb_conf_file
  *
- * @return 0 on success
+ * @return A pointer to an GKeyFile object or NULL on failure
  */
-int bbconfig_parse_conf(void) {
+GKeyFile *bbconfig_parse_conf(void) {
     //Old behavior
     //return read_configuration();
 
@@ -255,7 +261,7 @@ int bbconfig_parse_conf(void) {
         bb_log(LOG_WARNING, "Using default configuration\n");
         g_error_free(err);
         g_key_file_free(bbcfg);
-        return 1;
+        return NULL;
     }
 
     // First check for a key existence then parse it with appropriate format
@@ -306,10 +312,28 @@ int bbconfig_parse_conf(void) {
     if (g_key_file_has_key(bbcfg, section, key, NULL)) {
         bb_config.card_shutdown_state = !g_key_file_get_boolean(bbcfg, section, key, NULL);
     }
+    return bbcfg;
+}
 
-    // Driver settings
-    // [nouveua] or [nvidia]
-    section = bb_config.driver;
+/**
+ * Loads driver settings from an open GKeyFile
+ * @param bbcfg A pointer to a GKeyFile
+ * @param driver The string containing the driver to be loaded
+ */
+void bbconfig_parse_conf_driver(GKeyFile *bbcfg, char *driver) {
+  GError *err = NULL;
+  char *key, *section;
+
+  section = malloc(strlen("driver-") + strlen(driver) + 1);
+  if (section == NULL) {
+    /* why can't we just assume that there is always enough memory available?
+     * If there is no memory, the program cannot do anything useful anyway. */
+    bb_log(LOG_WARNING, "Driver settings could not be loaded: out of memory\n");
+    return;
+  }
+  strcpy(section, "driver-");
+  strcat(section, driver);
+
     key = "KernelDriver";
     if (g_key_file_has_key(bbcfg, section, key, NULL)) {
         free_and_set_value(&bb_config.module_name, g_key_file_get_string(bbcfg, section, key, NULL));
@@ -333,11 +357,10 @@ int bbconfig_parse_conf(void) {
     if (g_key_file_has_key(bbcfg, section, key, NULL)) {
         free_and_set_value(&bb_config.x_conf_file, g_key_file_get_string(bbcfg, section, key, NULL));
     }
-    g_key_file_free(bbcfg);
     if (err != NULL) {
       g_error_free(err);
     }
-    return 0;
+  free(section);
 }
 
 /**

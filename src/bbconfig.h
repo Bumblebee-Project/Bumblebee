@@ -32,8 +32,11 @@
 #define BB_NODEAMON 0
 
 // Parsing rounds
-#define P_FIRST 1
-#define P_SECOND 2
+enum {
+  PARSE_STAGE_PRECONF,
+  PARSE_STAGE_DRIVER,
+  PARSE_STAGE_OTHER,
+};
 
 /* common command line params */
 #define BBCONFIG_COMMON_OPTSTR "+qvd:s:l:C:hV"
@@ -154,6 +157,7 @@ void print_usage(int exit_val);
 
 void bbconfig_parse_opts(int argc, char *argv[], int conf_round);
 
-int bbconfig_parse_conf(void);
+GKeyFile *bbconfig_parse_conf(void);
+void bbconfig_parse_conf_driver(GKeyFile *bbcfg, char *driver);
 
 gboolean bb_bool_from_string(char* str);

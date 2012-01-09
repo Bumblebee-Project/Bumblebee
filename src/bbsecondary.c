@@ -276,8 +276,12 @@ void check_secondary(void) {
       set_string_value(&bb_config.module_name, bb_config.driver);
     }
   }
+}
 
-  //check switch availability, warn if not availble
+/**
+ * Check for the availability of a PM method, warn if none is available
+ */
+void check_pm_method(void) {
   if (bb_config.pm_method == PM_DISABLED) {
     bb_log(LOG_INFO, "PM is disabled, not performing detection.\n");
   } else {
