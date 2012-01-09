@@ -141,6 +141,8 @@ int config_validate(void);
  */
 void set_bb_error(char * msg);
 
+void free_and_set_value(char **configstring, char *newvalue);
+
 /**
  * Takes a pointer to a char pointer, resizing and copying the string value to it.
  */
