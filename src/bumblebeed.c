@@ -118,7 +118,7 @@ static void handle_signal(int sig) {
     case SIGTERM:
       bb_log(LOG_WARNING, "Received %s signal.\n", strsignal(sig));
       socketClose(&bb_status.bb_socket); //closing the socket terminates the server
-      bb_run_stopwaiting();//speed up shutdown by not waiting for processes anymore
+      bb_run_stopwaiting(); //speed up shutdown by not waiting for processes anymore
       break;
     default:
       bb_log(LOG_WARNING, "Unhandled signal %s\n", strsignal(sig));
@@ -198,7 +198,7 @@ static void handle_socket(struct clientsocket * C) {
 static void main_loop(void) {
   int optirun_socket_fd;
   struct clientsocket *client;
-  struct clientsocket *last = 0;// the last client
+  struct clientsocket *last = 0; // the last client
 
   bb_log(LOG_INFO, "Started main loop\n");
   /* Listen for Optirun conections and act accordingly */
@@ -280,6 +280,7 @@ static void main_loop(void) {
 const char *bbconfig_get_optstr(void) {
   return BBCONFIG_COMMON_OPTSTR "Dx:g:m:k:";
 }
+
 /**
  * Returns the long options for this program
  * @return A option struct which can be used for getopt_long

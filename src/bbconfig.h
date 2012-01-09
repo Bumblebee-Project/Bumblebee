@@ -31,11 +31,11 @@
 #define BB_DAEMON 1
 #define BB_NODEAMON 0
 
-// Parsing rounds
+/* Parsing rounds */
 enum {
-  PARSE_STAGE_PRECONF,
-  PARSE_STAGE_DRIVER,
-  PARSE_STAGE_OTHER,
+    PARSE_STAGE_PRECONF,
+    PARSE_STAGE_DRIVER,
+    PARSE_STAGE_OTHER,
 };
 
 /* common command line params */
@@ -58,10 +58,10 @@ int bbconfig_parse_options(int opt, char *value);
 
 /* use a value that cannot be a valid char for getopt */
 enum {
-  OPT_DRIVER = CHAR_MAX + 1,
-  OPT_FAILSAFE,
-  OPT_STATUS,
-  OPT_PIDFILE,
+    OPT_DRIVER = CHAR_MAX + 1,
+    OPT_FAILSAFE,
+    OPT_STATUS,
+    OPT_PIDFILE,
 };
 
 /* Verbosity levels */

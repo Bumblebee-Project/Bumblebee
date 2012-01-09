@@ -56,7 +56,7 @@ static char *xorg_path_w_driver(char *x_conf_file, char *driver) {
   }
   path_length = strlen(x_conf_file) +
           driver_occurences * (strlen(driver_keyword) - 1);
- 
+
   /* allocate some memory including null byte and make it an empty string */
   path = malloc(path_length + 1);
   if (!path) {
@@ -80,9 +80,11 @@ static char *xorg_path_w_driver(char *x_conf_file, char *driver) {
   return path;
 }
 
-/// Start the X server by fork-exec, turn card on and load driver if needed.
-/// If after this method finishes X is running, it was successfull.
-/// If it somehow fails, X should not be running after this method finishes.
+/**
+ * Start the X server by fork-exec, turn card on and load driver if needed.
+ * If after this method finishes X is running, it was successfull.
+ * If it somehow fails, X should not be running after this method finishes.
+ */
 void start_secondary(void) {
   char driver[BUFFER_SIZE] = {0};
   /* enable card if the switcher is available */
@@ -143,7 +145,7 @@ void start_secondary(void) {
       NULL
     };
     if (!*bb_config.mod_path) {
-      x_argv[10] = 0;//remove -modulepath if not set
+      x_argv[10] = 0; //remove -modulepath if not set
     }
     bb_status.x_pid = bb_run_fork_ld(x_argv, bb_config.ld_path);
   }
@@ -180,7 +182,9 @@ void start_secondary(void) {
   }
 }//start_secondary
 
-/// Kill the second X server if any, turn card off if requested.
+/**
+ * Kill the second X server if any, turn card off if requested.
+ */
 void stop_secondary() {
   char driver[BUFFER_SIZE];
   // kill X if it is running
@@ -218,7 +222,10 @@ void stop_secondary() {
   }
 }//stop_secondary
 
-/// Returns 0 if card is off, 1 if card is on, -1 if not-switchable.
+/**
+ * Check the status of the discrete card
+ * @return 0 if card is off, 1 if card is on, -1 if not-switchable.
+ */
 int status_secondary(void) {
   switch (switch_status()) {
     case SWITCH_ON:
@@ -231,10 +238,9 @@ int status_secondary(void) {
   }
 }
 
-/// Checks what methods are available and what drivers are installed.
-/// Sets sane defaults for the current environment, also prints
-/// debug messages including the found hardware/software.
-/// Will print warning message if no switching method is found.
+/**
+ * Check what drivers are available and autodetect if possible
+ */
 void check_secondary(void) {
   /* determine driver to be used */
   if (*bb_config.driver) {
@@ -279,7 +285,7 @@ void check_secondary(void) {
 }
 
 /**
- * Check for the availability of a PM method, warn if none is available
+ * Check for the availability of a PM method, warn if no method is available
  */
 void check_pm_method(void) {
   if (bb_config.pm_method == PM_DISABLED) {

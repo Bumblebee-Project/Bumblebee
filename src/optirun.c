@@ -163,6 +163,7 @@ static int run_app(int argc, char *argv[]) {
 const char *bbconfig_get_optstr(void) {
   return BBCONFIG_COMMON_OPTSTR "c:";
 }
+
 /**
  * Returns the long options for this program
  * @return A option struct which can be used for getopt_long
@@ -184,21 +185,21 @@ const struct option *bbconfig_get_lopts(void) {
  * @return 1 if the option has been processed, 0 otherwise
  */
 int bbconfig_parse_options(int opt, char *value) {
-    switch (opt) {
-      case 'c'://vglclient method
-        set_string_value(&bb_config.vgl_compress, value);
-        break;
-      case OPT_FAILSAFE: // for optirun
-        bb_config.fallback_start = bb_bool_from_string(value);
-        break;
-      case OPT_STATUS:
-        bb_status.runmode = BB_RUN_STATUS;
-        break;
-      default:
-        /* no options parsed */
-        return 0;
-    }
-    return 1;
+  switch (opt) {
+    case 'c'://vglclient method
+      set_string_value(&bb_config.vgl_compress, value);
+      break;
+    case OPT_FAILSAFE: // for optirun
+      bb_config.fallback_start = bb_bool_from_string(value);
+      break;
+    case OPT_STATUS:
+      bb_status.runmode = BB_RUN_STATUS;
+      break;
+    default:
+      /* no options parsed */
+      return 0;
+  }
+  return 1;
 }
 
 int main(int argc, char *argv[]) {

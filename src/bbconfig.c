@@ -38,11 +38,11 @@
 
 /* config values for PM methods, edit bb_pm_method in bbconfig.h as well! */
 const char *bb_pm_method_string[PM_METHODS_COUNT] = {
-    "none",
-    "auto",
-     /* the below names are used in switch/switching.c */
-    "bbswitch",
-    "switcheroo",
+  "none",
+  "auto",
+  /* the below names are used in switch/switching.c */
+  "bbswitch",
+  "switcheroo",
 };
 
 struct bb_status_struct bb_status;
@@ -53,11 +53,11 @@ struct bb_config_struct bb_config;
  * @return TRUE if str="true", FALSE otherwise
  */
 gboolean bb_bool_from_string(char* str) {
-    if (strcmp(str, "true") == 0) {
-        return TRUE;
-    } else {
-        return FALSE;
-    }
+  if (strcmp(str, "true") == 0) {
+    return TRUE;
+  } else {
+    return FALSE;
+  }
 }
 
 /**
@@ -82,13 +82,13 @@ void set_string_value(char ** configstring, char * newvalue) {
     *configstring = 0;
   }
   //malloc a new buffer of strlen, plus one for the terminating null byte
-  *configstring = malloc(strlen(newvalue)+1);
+  *configstring = malloc(strlen(newvalue) + 1);
   if (*configstring != 0) {
     //copy the string if successful
     strcpy(*configstring, newvalue);
   } else {
     //something, somewhere, went terribly wrong
-    bb_log(LOG_ERR, "Could not allocate %i bytes for new config value, setting to empty string!\n", strlen(newvalue)+1);
+    bb_log(LOG_ERR, "Could not allocate %i bytes for new config value, setting to empty string!\n", strlen(newvalue) + 1);
     *configstring = malloc(1);
     if (*configstring == 0) {
       bb_log(LOG_ERR, "FATAL: Could not allocate even 1 byte for config value!\n");
@@ -116,8 +116,12 @@ static enum bb_pm_method bb_pm_method_from_string(char *value) {
   return method_index;
 }
 
-/// Prints a single line, for use by print_usage, with alignment.
-static void print_usage_line(char * opt, char * desc) {
+/**
+ * Prints a single line, for use by print_usage, with alignment
+ * @param opt Name of option to be displayed
+ * @param desc Description of option
+ */
+static void print_usage_line(char *opt, char *desc) {
   printf("  %-35s%s\n", opt, desc);
 }
 
@@ -127,7 +131,7 @@ static void print_usage_line(char * opt, char * desc) {
  */
 void print_usage(int exit_val) {
   int is_optirun = bb_status.runmode == BB_RUN_APP ||
-    bb_status.runmode == BB_RUN_STATUS;
+          bb_status.runmode == BB_RUN_STATUS;
   printf("%s version %s\n\n", bb_status.program_name, GITVERSION);
   if (is_optirun) {
     printf("Usage: %s [options] [--] [application to run] [application options]\n", bb_status.program_name);
@@ -212,18 +216,18 @@ void bbconfig_parse_opts(int argc, char *argv[], int conf_round) {
       print_usage(EXIT_FAILURE);
     }
     if (conf_round == PARSE_STAGE_PRECONF) {
-        switch (opt) {
-            case 'C':
-                set_string_value(&bb_config.bb_conf_file, optarg);
-                break;
-            case 'v':
-                if (bb_status.verbosity < VERB_ALL) {
-                    bb_status.verbosity++;
-                }
-                break;
-            default:
-                break;
-        }
+      switch (opt) {
+        case 'C':
+          set_string_value(&bb_config.bb_conf_file, optarg);
+          break;
+        case 'v':
+          if (bb_status.verbosity < VERB_ALL) {
+            bb_status.verbosity++;
+          }
+          break;
+        default:
+          break;
+      }
     } else if (conf_round == PARSE_STAGE_DRIVER) {
       switch (opt) {
         case OPT_DRIVER:
@@ -247,72 +251,72 @@ void bbconfig_parse_opts(int argc, char *argv[], int conf_round) {
  * @return A pointer to an GKeyFile object or NULL on failure
  */
 GKeyFile *bbconfig_parse_conf(void) {
-    //Old behavior
-    //return read_configuration();
+  //Old behavior
+  //return read_configuration();
 
-    bb_log(LOG_DEBUG, "Reading file: %s\n", bb_config.bb_conf_file);
-    GKeyFile *bbcfg;
-    GKeyFileFlags flags = G_KEY_FILE_NONE;
-    GError *err = NULL;
+  bb_log(LOG_DEBUG, "Reading file: %s\n", bb_config.bb_conf_file);
+  GKeyFile *bbcfg;
+  GKeyFileFlags flags = G_KEY_FILE_NONE;
+  GError *err = NULL;
 
-    bbcfg = g_key_file_new();
-    if(!g_key_file_load_from_file(bbcfg, bb_config.bb_conf_file, flags, &err)) {
-        bb_log(LOG_WARNING, "Could not open configuration file: %s\n", bb_config.bb_conf_file);
-        bb_log(LOG_WARNING, "Using default configuration\n");
-        g_error_free(err);
-        g_key_file_free(bbcfg);
-        return NULL;
-    }
+  bbcfg = g_key_file_new();
+  if (!g_key_file_load_from_file(bbcfg, bb_config.bb_conf_file, flags, &err)) {
+    bb_log(LOG_WARNING, "Could not open configuration file: %s\n", bb_config.bb_conf_file);
+    bb_log(LOG_WARNING, "Using default configuration\n");
+    g_error_free(err);
+    g_key_file_free(bbcfg);
+    return NULL;
+  }
 
-    // First check for a key existence then parse it with appropriate format
-    // Use false as default for boolean arguments.
-    // TODO:optirun/bumblebeed must be parsed according to RUN_MODE
+  // First check for a key existence then parse it with appropriate format
+  // Use false as default for boolean arguments.
+  // TODO:optirun/bumblebeed must be parsed according to RUN_MODE
 
-    char* section;
-    char* key;
-    // Client settings
-    // [optirun]
-    section = "optirun";
-    key = "VGLTransport";
-    if (g_key_file_has_key(bbcfg, section, key, NULL)) {
-        free_and_set_value(&bb_config.vgl_compress, g_key_file_get_string(bbcfg, section, key, NULL));
-    }
-    key = "AllowFallbackToIGC";
-    if (g_key_file_has_key(bbcfg, section, key, NULL)) {
-        bb_config.fallback_start = g_key_file_get_boolean(bbcfg, section, key, NULL);
-    }
+  char* section;
+  char* key;
+  // Client settings
+  // [optirun]
+  section = "optirun";
+  key = "VGLTransport";
+  if (g_key_file_has_key(bbcfg, section, key, NULL)) {
+    free_and_set_value(&bb_config.vgl_compress, g_key_file_get_string(bbcfg, section, key, NULL));
+  }
+  key = "AllowFallbackToIGC";
+  if (g_key_file_has_key(bbcfg, section, key, NULL)) {
+    bb_config.fallback_start = g_key_file_get_boolean(bbcfg, section, key, NULL);
+  }
 
-    // Server settings
-    // [bumblebeed]
-    section = "bumblebeed";
-    key = "VirtualDisplay";
-    if (g_key_file_has_key(bbcfg, section, key, NULL)) {
-        free_and_set_value(&bb_config.x_display, g_key_file_get_string(bbcfg, section, key, NULL));
+  // Server settings
+  // [bumblebeed]
+  section = "bumblebeed";
+  key = "VirtualDisplay";
+  if (g_key_file_has_key(bbcfg, section, key, NULL)) {
+    free_and_set_value(&bb_config.x_display, g_key_file_get_string(bbcfg, section, key, NULL));
+  }
+  key = "KeepUnusedXServer";
+  if (g_key_file_has_key(bbcfg, section, key, NULL)) {
+    bb_config.stop_on_exit = !g_key_file_get_boolean(bbcfg, section, key, NULL);
+  }
+  key = "Driver";
+  if (g_key_file_has_key(bbcfg, section, key, NULL)) {
+    char *driver = g_key_file_get_string(bbcfg, section, key, NULL);
+    /* empty driv */
+    if (*driver != 0) {
+      free_and_set_value(&bb_config.driver, driver);
+      bb_log(LOG_INFO, "Configured driver: %s\n", bb_config.driver);
+    } else {
+      g_free(driver);
     }
-    key = "KeepUnusedXServer";
-    if (g_key_file_has_key(bbcfg, section, key, NULL)) {
-        bb_config.stop_on_exit = !g_key_file_get_boolean(bbcfg, section, key, NULL);
-    }
-    key = "Driver";
-    if (g_key_file_has_key(bbcfg, section, key, NULL)) {
-      char *driver = g_key_file_get_string(bbcfg, section, key, NULL);
-      /* empty driv */
-      if (*driver != 0) {
-        free_and_set_value(&bb_config.driver, driver);
-        bb_log(LOG_INFO, "Configured driver: %s\n", bb_config.driver);
-      } else {
-        g_free(driver);
-      }
-    }
-    key = "ServerGroup";
-    if (g_key_file_has_key(bbcfg, section, key, NULL)) {
-        free_and_set_value(&bb_config.gid_name, g_key_file_get_string(bbcfg, section, key, NULL));
-    }
-    key = "TurnCardOffAtExit";
-    if (g_key_file_has_key(bbcfg, section, key, NULL)) {
-        bb_config.card_shutdown_state = !g_key_file_get_boolean(bbcfg, section, key, NULL);
-    }
-    return bbcfg;
+  }
+  key = "ServerGroup";
+  if (g_key_file_has_key(bbcfg, section, key, NULL)) {
+    free_and_set_value(&bb_config.gid_name, g_key_file_get_string(bbcfg, section, key, NULL));
+  }
+  key = "TurnCardOffAtExit";
+  if (g_key_file_has_key(bbcfg, section, key, NULL)) {
+    bb_config.card_shutdown_state = !g_key_file_get_boolean(bbcfg, section, key, NULL);
+  }
+  return bbcfg;
 }
 
 /**
@@ -334,32 +338,32 @@ void bbconfig_parse_conf_driver(GKeyFile *bbcfg, char *driver) {
   strcpy(section, "driver-");
   strcat(section, driver);
 
-    key = "KernelDriver";
-    if (g_key_file_has_key(bbcfg, section, key, NULL)) {
-        free_and_set_value(&bb_config.module_name, g_key_file_get_string(bbcfg, section, key, NULL));
-    }
-    key = "LibraryPath";
-    if (g_key_file_has_key(bbcfg, section, key, NULL)) {
-        free_and_set_value(&bb_config.ld_path, g_key_file_get_string(bbcfg, section, key, NULL));
-    }
-    key = "XorgModulePath";
-    if (g_key_file_has_key(bbcfg, section, key, NULL)) {
-        free_and_set_value(&bb_config.mod_path, g_key_file_get_string(bbcfg, section, key, NULL));
-    }
-    key = "PMMethod";
-    if (g_key_file_has_key(bbcfg, section, key, NULL)) {
-      char *val = g_key_file_get_string(bbcfg, section, key, NULL);
-      enum bb_pm_method pm_method_index = bb_pm_method_from_string(val);
-      bb_config.pm_method = pm_method_index;
-      g_free(val);
-    }
-    key = "XorgConfFile";
-    if (g_key_file_has_key(bbcfg, section, key, NULL)) {
-        free_and_set_value(&bb_config.x_conf_file, g_key_file_get_string(bbcfg, section, key, NULL));
-    }
-    if (err != NULL) {
-      g_error_free(err);
-    }
+  key = "KernelDriver";
+  if (g_key_file_has_key(bbcfg, section, key, NULL)) {
+    free_and_set_value(&bb_config.module_name, g_key_file_get_string(bbcfg, section, key, NULL));
+  }
+  key = "LibraryPath";
+  if (g_key_file_has_key(bbcfg, section, key, NULL)) {
+    free_and_set_value(&bb_config.ld_path, g_key_file_get_string(bbcfg, section, key, NULL));
+  }
+  key = "XorgModulePath";
+  if (g_key_file_has_key(bbcfg, section, key, NULL)) {
+    free_and_set_value(&bb_config.mod_path, g_key_file_get_string(bbcfg, section, key, NULL));
+  }
+  key = "PMMethod";
+  if (g_key_file_has_key(bbcfg, section, key, NULL)) {
+    char *val = g_key_file_get_string(bbcfg, section, key, NULL);
+    enum bb_pm_method pm_method_index = bb_pm_method_from_string(val);
+    bb_config.pm_method = pm_method_index;
+    g_free(val);
+  }
+  key = "XorgConfFile";
+  if (g_key_file_has_key(bbcfg, section, key, NULL)) {
+    free_and_set_value(&bb_config.x_conf_file, g_key_file_get_string(bbcfg, section, key, NULL));
+  }
+  if (err != NULL) {
+    g_error_free(err);
+  }
   free(section);
 }
 
@@ -374,7 +378,7 @@ void init_early_config(int argc, char **argv, int runmode) {
   memset(&bb_status, 0, sizeof bb_status);
   /* set program name */
   set_string_value(&bb_status.program_name, basename(argv[0]));
-  set_string_value(&bb_status.errors, "");//we start without errors, yay!
+  set_string_value(&bb_status.errors, ""); //we start without errors, yay!
   bb_status.verbosity = VERB_WARN;
   bb_status.bb_socket = -1;
   bb_status.appcount = 0;
@@ -427,7 +431,7 @@ void config_dump(void) {
     bb_log(LOG_DEBUG, " ModulePath: %s\n", bb_config.mod_path);
     bb_log(LOG_DEBUG, " GID name: %s\n", bb_config.gid_name);
     bb_log(LOG_DEBUG, " Power method: %s\n",
-      bb_pm_method_string[bb_config.pm_method]);
+            bb_pm_method_string[bb_config.pm_method]);
     bb_log(LOG_DEBUG, " Stop X on exit: %i\n", bb_config.stop_on_exit);
     bb_log(LOG_DEBUG, " Driver: %s\n", bb_config.driver);
     bb_log(LOG_DEBUG, " Driver module: %s\n", bb_config.module_name);
