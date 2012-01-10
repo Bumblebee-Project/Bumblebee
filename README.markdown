@@ -16,7 +16,25 @@ Build Requirements
 - glib-2.0 and development headers
 - libx11 and development headers
 - libbsd and development headers
-- [bbswitch](https://github.com/Bumblebee-Project/bbswitch) (optional, for PM)
+
+Runtime dependencies
+--------------------
+
+If you want to use `optirun` for running applications with the discrete nVidia
+card, you will also need:
+
+- [virtualgl](http://virtualgl.org/)
+- Driver for nvidia graphics card: [nouveau](http://nouveau.freedesktop.org/)
+  or the proprietary nvidia driver. Don't install it directly from nvidia.com
+  as it will break 3D capabilities on the Intel graphics card and therefore
+  affect the display of frames from the nvidia card.
+
+If you want to make use of Power Management, you will need:
+
+- [bbswitch](https://github.com/Bumblebee-Project/bbswitch)
+- If you're brave and want to try the `switcheroo` method, install at least the
+  [optimus patch](http://lekensteyn.nl/files/nouveau-switcheroo-optimus.patch).
+  Note that suspend is not yet supported by this method.
 
 Building
 ---------
