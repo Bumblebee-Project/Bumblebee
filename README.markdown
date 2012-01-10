@@ -15,6 +15,7 @@ Build Requirements
 - autotools (2.68+ recommended)
 - glib-2.0 and development headers
 - libx11 and development headers
+- libbsd and development headers
 - [bbswitch](https://github.com/Bumblebee-Project/bbswitch) (optional, for PM)
 
 Building
