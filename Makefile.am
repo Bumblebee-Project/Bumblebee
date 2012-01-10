@@ -1,8 +1,10 @@
 # -*- Makefile -*-
 
+bumblebeedconfdir=$(sysconfdir)/bumblebee
+
 AM_CPPFLAGS = ${regular_CPPFLAGS} \
-		-DCONFIG_FILE='"$(sysconfdir)/bumblebee/bumblebee.conf"' \
-		-DCONF_XORG='"$(sysconfdir)/bumblebee/xorg.conf.DRIVER"' \
+		-DCONFIG_FILE='"$(bumblebeedconfdir)/bumblebee.conf"' \
+		-DCONF_XORG='"$(bumblebeedconfdir)/xorg.conf.DRIVER"' \
 		-DCONF_PID_FILE='"/var/run/bumblebeed.pid"'
 AM_CFLAGS = ${regular_CFLAGS} \
 		${x11_CFLAGS} ${libbsd_CFLAGS} ${glib_CFLAGS} \
@@ -23,7 +25,6 @@ bin_bumblebeed_SOURCES = src/pci.c src/bbconfig.c src/bblogger.c src/bbrun.c src
 	src/switch/switching.c src/switch/sw_bbswitch.c src/switch/sw_switcheroo.c src/bumblebeed.c
 bin_bumblebeed_LDADD = ${x11_LIBS} ${libbsd_LIBS} ${glib_LIBS}
 
-bumblebeedconfdir=$(sysconfdir)/bumblebee
 bumblebeedconf_DATA = conf/bumblebee.conf conf/xorg.conf.nouveau conf/xorg.conf.nvidia
 
 do_subst = sed -e 's|[@]CONF_XDISP[@]|$(CONF_XDISP)|g' \
@@ -39,7 +40,8 @@ do_subst = sed -e 's|[@]CONF_XDISP[@]|$(CONF_XDISP)|g' \
 	-e 's|[@]CONF_DRIVER_MODULE[@]|$(CONF_DRIVER_MODULE)|g' \
 	-e 's|[@]CONF_TURNOFFATEXIT[@]|$(CONF_TURNOFFATEXIT)|g' \
 	-e 's|[@]BINDIR[@]|$(bindir)|g' \
-	-e 's|[@]CONF_XORG[@]|$(sysconfdir)/bumblebee/xorg.conf.DRIVER|g' \
+	-e 's|[@]BBCONFDIR[@]|$(bumblebeedconfdir)|g' \
+	-e 's|[@]CONF_XORG[@]|$(bumblebeedconfdir)/xorg.conf.DRIVER|g' \
 	-e 's|[@]CONF_PID_FILE[@]|/var/run/bumblebeed.pid|g'
 
 conf/bumblebee.conf: conf/bumblebee.conf.in
