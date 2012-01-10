@@ -153,7 +153,9 @@ void print_usage(int exit_val) {
     print_usage_line("--module-path / -m [PATH]", "ModulePath to use for xorg (nvidia-only).");
     print_usage_line("--driver-module / -k [NAME]", "Name of kernel module to be"
             " loaded if different from the driver");
+#ifdef WITH_PIDFILE
     print_usage_line("--pidfile", "File in which the PID is written");
+#endif
   }
   //common options
   print_usage_line("--quiet / --silent / -q", "Be quiet (sets verbosity to zero)");
@@ -408,7 +410,9 @@ void init_config(int argc, char **argv) {
   bb_config.stop_on_exit = bb_bool_from_string(CONF_KEEPONEXIT);
   bb_config.fallback_start = bb_bool_from_string(CONF_FALLBACKSTART);
   bb_config.card_shutdown_state = bb_bool_from_string(CONF_TURNOFFATEXIT);
-  set_string_value(&bb_config.pid_file, CONF_PID_FILE);
+#ifdef WITH_PIDFILE
+  set_string_value(&bb_config.pid_file, CONF_PIDFILE);
+#endif
 }
 
 /**
@@ -424,7 +428,9 @@ void config_dump(void) {
   bb_log(LOG_DEBUG, " Socket path: %s\n", bb_config.socket_path);
   if (bb_status.runmode == BB_RUN_SERVER || bb_status.runmode == BB_RUN_DAEMON) {
     /* daemon options */
+#ifdef WITH_PIDFILE
     bb_log(LOG_DEBUG, " pidfile: %s\n", bb_config.pid_file);
+#endif
     bb_log(LOG_DEBUG, " xorg.conf file: %s\n", bb_config.x_conf_file);
     bb_log(LOG_DEBUG, " ModulePath: %s\n", bb_config.mod_path);
     bb_log(LOG_DEBUG, " GID name: %s\n", bb_config.gid_name);

@@ -15,7 +15,7 @@ Build Requirements
 - autotools (2.68+ recommended)
 - glib-2.0 and development headers
 - libx11 and development headers
-- libbsd and development headers
+- libbsd and development headers (if pidfile support is enabled, default yes)
 
 Runtime dependencies
 --------------------

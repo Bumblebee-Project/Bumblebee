@@ -124,7 +124,9 @@ struct bb_config_struct {
                                     * If empty, driver will be used. This is
                                     * for Ubuntu which uses nvidia-current */
     int card_shutdown_state;
+#ifdef WITH_PIDFILE
     char *pid_file; /* pid file for storing the daemons PID */
+#endif
 };
 
 extern struct bb_status_struct bb_status;

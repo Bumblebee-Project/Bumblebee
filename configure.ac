@@ -32,6 +32,13 @@ AC_DEFINE_SUBST(CONF_FALLBACKSTART, "false", [make optirun start applications no
 AC_DEFINE_SUBST(CONF_VGLCOMPRESS, "proxy", [vglclient transport method])
 AC_DEFINE_SUBST(CONF_TURNOFFATEXIT, "false", [state of card when shutting off daemon])
 
+default_pidfile=/var/run/bumblebeed.pid
+AC_DEFINE_CONF(CONF_PIDFILE, [Path to the pidfile or $default_pidfile if empty], [
+if test "x" = "x$CONF_PIDFILE"; then
+	CONF_PIDFILE="$default_pidfile"
+fi
+])
+
 AC_DEFINE_CONF(CONF_PM_METHOD, [Power management method, valid values are auto (default), bbswitch, switcheroo and none], [
 case $CONF_PM_METHOD in
 auto|bbswitch|switcheroo|none) ;;
@@ -56,6 +63,16 @@ AC_DEFINE(DAEMON_NAME, "bumblebeed", "daemon name")
 AM_INIT_AUTOMAKE([1.10.2 -Wall foreign subdir-objects
 	tar-pax no-dist-gzip dist-xz])
 
+AC_ARG_WITH([pidfile],
+	[AS_HELP_STRING([--without-pidfile],
+	[support for pidfiles in the daemon @<:@default=yes@:>@])],
+	[],
+	[with_pidfile=yes])
+AS_IF([test "x$with_pidfile" != xno],
+	[AC_DEFINE(WITH_PIDFILE, [1], [Define if pidfiles should be available])
+	])
+AM_CONDITIONAL([WITH_PIDFILE], [test "x$with_pidfile" != xno])
+
 # Checks for programs.
 AC_PROG_CC
 AM_PROG_CC_C_O
@@ -73,7 +90,8 @@ AC_SUBST([regular_CFLAGS])
 # Checks for header files.
 PKG_CHECK_MODULES([x11], [x11])
 PKG_CHECK_MODULES([glib], [glib-2.0])
-PKG_CHECK_MODULES([libbsd], [libbsd >= 0.2.0])
+AS_IF([test "x$with_pidfile" != xno],
+	[PKG_CHECK_MODULES([libbsd], [libbsd >= 0.2.0])])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
