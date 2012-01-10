@@ -1,4 +1,5 @@
 *.o
+*.swp
 .deps/
 .dirstamp
 Makefile

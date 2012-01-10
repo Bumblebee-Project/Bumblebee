@@ -163,6 +163,7 @@ static int run_app(int argc, char *argv[]) {
 const char *bbconfig_get_optstr(void) {
   return BBCONFIG_COMMON_OPTSTR "c:";
 }
+
 /**
  * Returns the long options for this program
  * @return A option struct which can be used for getopt_long
@@ -184,21 +185,21 @@ const struct option *bbconfig_get_lopts(void) {
  * @return 1 if the option has been processed, 0 otherwise
  */
 int bbconfig_parse_options(int opt, char *value) {
-    switch (opt) {
-      case 'c'://vglclient method
-        set_string_value(&bb_config.vgl_compress, value);
-        break;
-      case OPT_FAILSAFE: // for optirun
-        bb_config.fallback_start = boolean_value(value);
-        break;
-      case OPT_STATUS:
-        bb_status.runmode = BB_RUN_STATUS;
-        break;
-      default:
-        /* no options parsed */
-        return 0;
-    }
-    return 1;
+  switch (opt) {
+    case 'c'://vglclient method
+      set_string_value(&bb_config.vgl_compress, value);
+      break;
+    case OPT_FAILSAFE: // for optirun
+      bb_config.fallback_start = bb_bool_from_string(value);
+      break;
+    case OPT_STATUS:
+      bb_status.runmode = BB_RUN_STATUS;
+      break;
+    default:
+      /* no options parsed */
+      return 0;
+  }
+  return 1;
 }
 
 int main(int argc, char *argv[]) {
@@ -216,9 +217,19 @@ int main(int argc, char *argv[]) {
 
   /* Initializing configuration */
   init_config(argc, argv);
+  bbconfig_parse_opts(argc, argv, PARSE_STAGE_PRECONF);
+  GKeyFile *bbcfg = bbconfig_parse_conf();
+  /* XXX load the driver (or even better, the ldpath) through the protocol!
+   * This will now not work for nvidia because nvidia sucks and the ldpath
+   * cannot be detected from the driver */
+  if (bbcfg) {
+    bbconfig_parse_conf_driver(bbcfg, bb_config.driver);
+    g_key_file_free(bbcfg);
+  }
+  bbconfig_parse_opts(argc, argv, PARSE_STAGE_OTHER);
   config_dump();
 
-  bb_log(LOG_DEBUG, "%s version %s starting...\n", bb_status.program_name, GITVERSION);
+  bb_log(LOG_DEBUG, "%s version %s starting...\n", "optirun", GITVERSION);
 
   /* Connect to listening daemon */
   bb_status.bb_socket = socketConnect(bb_config.socket_path, SOCK_NOBLOCK);

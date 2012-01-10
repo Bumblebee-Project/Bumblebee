@@ -25,10 +25,18 @@
 
 #include <unistd.h> //for pid_t
 #include <limits.h> //for CHAR_MAX
+#include <glib.h>
 
 /* Daemon states */
 #define BB_DAEMON 1
 #define BB_NODEAMON 0
+
+/* Parsing rounds */
+enum {
+    PARSE_STAGE_PRECONF,
+    PARSE_STAGE_DRIVER,
+    PARSE_STAGE_OTHER,
+};
 
 /* common command line params */
 #define BBCONFIG_COMMON_OPTSTR "+qvd:s:l:C:hV"
@@ -50,13 +58,11 @@ int bbconfig_parse_options(int opt, char *value);
 
 /* use a value that cannot be a valid char for getopt */
 enum {
-  OPT_DRIVER = CHAR_MAX + 1,
-  OPT_FAILSAFE,
-  OPT_STATUS,
-  OPT_PIDFILE,
+    OPT_DRIVER = CHAR_MAX + 1,
+    OPT_FAILSAFE,
+    OPT_STATUS,
+    OPT_PIDFILE,
 };
-
-int boolean_value(char *val);
 
 /* Verbosity levels */
 enum verbosity_level {
@@ -92,7 +98,6 @@ const char *bb_pm_method_string[PM_METHODS_COUNT];
 
 /* Structure containing the status of the application */
 struct bb_status_struct {
-    char * program_name; /// How this application was called.
     enum verbosity_level verbosity; ///Verbosity level of messages.
     int bb_socket; /// The socket file descriptor of the application.
     unsigned int appcount; /// Count applications using the X server.
@@ -119,7 +124,9 @@ struct bb_config_struct {
                                     * If empty, driver will be used. This is
                                     * for Ubuntu which uses nvidia-current */
     int card_shutdown_state;
+#ifdef WITH_PIDFILE
     char *pid_file; /* pid file for storing the daemons PID */
+#endif
 };
 
 extern struct bb_status_struct bb_status;
@@ -138,6 +145,8 @@ int config_validate(void);
  */
 void set_bb_error(char * msg);
 
+void free_and_set_value(char **configstring, char *newvalue);
+
 /**
  * Takes a pointer to a char pointer, resizing and copying the string value to it.
  */
@@ -146,3 +155,10 @@ void set_string_value(char ** configstring, char * newvalue);
 struct option *config_get_longopts(struct option *longopts, size_t items);
 
 void print_usage(int exit_val);
+
+void bbconfig_parse_opts(int argc, char *argv[], int conf_round);
+
+GKeyFile *bbconfig_parse_conf(void);
+void bbconfig_parse_conf_driver(GKeyFile *bbcfg, char *driver);
+
+gboolean bb_bool_from_string(char* str);

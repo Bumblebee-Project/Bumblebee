@@ -28,38 +28,48 @@
 #include <assert.h>
 #include <unistd.h>
 #include <getopt.h>
-#include <libgen.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <glib.h>
 #include "bbconfig.h"
 #include "bblogger.h"
 #include "module.h"
 
 /* config values for PM methods, edit bb_pm_method in bbconfig.h as well! */
 const char *bb_pm_method_string[PM_METHODS_COUNT] = {
-    "none",
-    "auto",
-     /* the below names are used in switch/switching.c */
-    "bbswitch",
-    "switcheroo",
+  "none",
+  "auto",
+  /* the below names are used in switch/switching.c */
+  "bbswitch",
+  "switcheroo",
 };
 
 struct bb_status_struct bb_status;
 struct bb_config_struct bb_config;
 
-struct bb_key_value {
-  char key[BUFFER_SIZE];
-  char value[BUFFER_SIZE];
-};
-
-/* Little function to log parsing errors */
-static inline void bb_config_parse_err(const char* msg, const char* line) {
-  bb_log(LOG_ERR, "Error parsing configuration: %s. line: %s\n", msg, line);
+/**
+ * Returns a gboolean from true/false strings
+ * @return TRUE if str="true", FALSE otherwise
+ */
+gboolean bb_bool_from_string(char* str) {
+  if (strcmp(str, "true") == 0) {
+    return TRUE;
+  } else {
+    return FALSE;
+  }
 }
 
-static size_t strip_lead_trail_ws(char *dest, char *str, size_t len);
+/**
+ * Sets a value for configstring and free() existing values
+ * @param configstring A pointer to the destination
+ * @param newvalue A string to be set
+ */
+void free_and_set_value(char **configstring, char *newvalue) {
+  if (*configstring != NULL) {
+    free(*configstring);
+  }
+  *configstring = newvalue;
+}
 
 /**
  * Takes a pointer to a char pointer, resizing and copying the string value to it.
@@ -71,13 +81,13 @@ void set_string_value(char ** configstring, char * newvalue) {
     *configstring = 0;
   }
   //malloc a new buffer of strlen, plus one for the terminating null byte
-  *configstring = malloc(strlen(newvalue)+1);
+  *configstring = malloc(strlen(newvalue) + 1);
   if (*configstring != 0) {
     //copy the string if successful
     strcpy(*configstring, newvalue);
   } else {
     //something, somewhere, went terribly wrong
-    bb_log(LOG_ERR, "Could not allocate %i bytes for new config value, setting to empty string!\n", strlen(newvalue)+1);
+    bb_log(LOG_ERR, "Could not allocate %i bytes for new config value, setting to empty string!\n", strlen(newvalue) + 1);
     *configstring = malloc(1);
     if (*configstring == 0) {
       bb_log(LOG_ERR, "FATAL: Could not allocate even 1 byte for config value!\n");
@@ -87,109 +97,6 @@ void set_string_value(char ** configstring, char * newvalue) {
     (*configstring)[0] = 0;
   }
 }//set_string_value
-
-/**
- * Determines the boolean value for a given string
- * @param value A value to be analyzed
- * @return 1 if the value resolves to a truth value, 0 otherwise
- */
-int boolean_value(char *val) {
-  /* treat void, an empty string, N, n and zero as false */
-  if (!val || !*val || *val == 'N' || *val == 'n' || *val == '0') {
-    return 0;
-  }
-  return 1;
-}
-
-/**
- * Takes a line and breaks it into a key-value pair
- *
- * @param line String to be broken into a key-value pair
- * @param kvpair A pointer to a key/value struct to store data in
- * @return 0 success, non-zero on failure
- */
-static int bb_get_key_value(const char *line, struct bb_key_value *kvpair) {
-  char *equals_pos = strstr(line, "=");
-  if (!equals_pos) {
-    bb_config_parse_err("expected an =-sign.", line);
-    return 1;
-  }
-
-  // the length of the key and value including null byte must be smaller than
-  // BUFFER_SIZE
-  int key_len = equals_pos - line;
-  if (key_len >= BUFFER_SIZE) {
-    bb_config_parse_err("key name too long", line);
-    return 1;
-  }
-  int val_len = strlen(line) - key_len - strlen("=");
-  if (val_len >= BUFFER_SIZE) {
-    bb_config_parse_err("value too long", line);
-    return 1;
-  }
-
-  // consider only the leading part of the line for key
-  memcpy(kvpair->key, line, key_len);
-  kvpair->key[key_len] = 0;
-  strip_lead_trail_ws(kvpair->key, kvpair->key, BUFFER_SIZE);
-  // the remainder can directly be trimmed for value
-  strip_lead_trail_ws(kvpair->value,
-      (char*) line + key_len + strlen("="), BUFFER_SIZE);
-
-  // remove the single or double quotes around a value
-  char value_first_char = *kvpair->value;
-  val_len = strlen(kvpair->value);
-  if (val_len >= 2 && (value_first_char == '\'' || value_first_char == '"')) {
-    if (kvpair->value[val_len - 1] == value_first_char) {
-      // bye last quote
-      kvpair->value[val_len - 1] = 0;
-      // hello value without quote
-      memmove(kvpair->value, kvpair->value + 1, val_len + 1);
-    }
-    // XXX perhaps log than an incorrect value was found like "val?
-  }
-  return 0;
-}
-
-/**
- * Strips leading and trailing whitespaces from a string. The original string
- * is modified, trailing spaces are removed
- *
- * @param dest String in which the trimmed result is to be stored
- * @param str String to be cleared of leading and trailing whitespaces
- * @param len Maximum number of bytes to be copied
- * @return The length of the trimmed string. This may be larger than len if the
- * buffer is too small
- */
-static size_t strip_lead_trail_ws(char *dest, char *str, size_t len) {
-  char *end;
-  /* the length of the trimmed string */
-  size_t actual_len;
-
-  // Remove leading spaces
-  while (isspace(*str)) {
-    str++;
-  }
-  // all whitespace
-  if (len == 0 || *str == 0) {
-    *dest = 0;
-    return 0;
-  }
-  // Remove trailing spaces
-  end = str + strlen(str) - 1;
-  while ((end > str) && (isspace(*end))) {
-    end--;
-  }
-  actual_len = end - str + 1;
-
-  // if the string is smaller. cast to hide compiler notice, len is always > 0
-  len = actual_len < len ? actual_len : (unsigned) len - 1;
-  memmove(dest, str, len);
-  // Add null terminator to end
-  dest[len] = 0;
-
-  return actual_len;
-}
 
 /**
  * Converts a string to the internal representation of a PM method
@@ -209,76 +116,11 @@ static enum bb_pm_method bb_pm_method_from_string(char *value) {
 }
 
 /**
- *  Read the configuration file.
- *
- *  @return 0 on success.
+ * Prints a single line, for use by print_usage, with alignment
+ * @param opt Name of option to be displayed
+ * @param desc Description of option
  */
-static int read_configuration(void) {
-  bb_log(LOG_DEBUG, "Reading configuration file: %s\n", bb_config.bb_conf_file);
-  FILE *cf = fopen(bb_config.bb_conf_file, "r");
-  if (cf == 0) { /* An error ocurred */
-    bb_log(LOG_ERR, "Error in config file: %s\n", strerror(errno));
-    bb_log(LOG_INFO, "Using default configuration\n");
-    return 1;
-  }
-  char line[BUFFER_SIZE];
-  while (fgets(line, sizeof line, cf) != NULL) {
-    strip_lead_trail_ws(line, line, BUFFER_SIZE);
-    /* Ignore empty lines and comments */
-    if ((line[0] != '#') && (line[0] != '\0')) {
-      /* Parse configuration based on the run mode */
-      struct bb_key_value kvp;
-      /* skip lines that could not be parsed */
-      if (bb_get_key_value(line, &kvp))
-        continue;
-
-      if (strcmp(kvp.key, "VGL_DISPLAY") == 0) {
-        set_string_value(&bb_config.x_display, kvp.value);
-        bb_log(LOG_DEBUG, "value set: x_display = %s\n", bb_config.x_display);
-      } else if (strcmp(kvp.key, "STOP_SERVICE_ON_EXIT") == 0) {
-        bb_config.stop_on_exit = boolean_value(kvp.value);
-        bb_log(LOG_DEBUG, "value set: stop_on_exit = %d\n", bb_config.stop_on_exit);
-      } else if (strcmp(kvp.key, "X_CONFFILE") == 0) {
-        set_string_value(&bb_config.x_conf_file, kvp.value);
-        bb_log(LOG_DEBUG, "value set: x_conf_file = %s\n", bb_config.x_conf_file);
-      } else if (strcmp(kvp.key, "VGL_COMPRESS") == 0) {
-        set_string_value(&bb_config.vgl_compress, kvp.value);
-        bb_log(LOG_DEBUG, "value set: vgl_compress = %s\n", bb_config.vgl_compress);
-      } else if (strcmp(kvp.key, "PM_METHOD") == 0) {
-        enum bb_pm_method method_index = bb_pm_method_from_string(kvp.value);
-        bb_config.pm_method = method_index;
-        bb_log(LOG_DEBUG, "value set: pm_method = %s\n",
-                bb_pm_method_string[method_index]);
-      } else if (strcmp(kvp.key, "FALLBACK_START") == 0) {
-        bb_config.fallback_start = boolean_value(kvp.value);
-        bb_log(LOG_DEBUG, "value set: fallback_start = %d\n", bb_config.fallback_start);
-      } else if (strcmp(kvp.key, "BUMBLEBEE_GROUP") == 0) {
-        set_string_value(&bb_config.gid_name, kvp.value);
-        bb_log(LOG_DEBUG, "value set: gid_name = %s\n", bb_config.gid_name);
-      } else if (strcmp(kvp.key, "DRIVER") == 0) {
-        set_string_value(&bb_config.driver, kvp.value);
-        bb_log(LOG_DEBUG, "value set: driver = %s\n", bb_config.driver);
-      } else if (strcmp(kvp.key, "DRIVER_MODULE") == 0) {
-        set_string_value(&bb_config.module_name, kvp.value);
-        bb_log(LOG_DEBUG, "value set: module_name = %s\n", bb_config.module_name);
-      } else if (strcmp(kvp.key, "NV_LIBRARY_PATH") == 0) {
-        set_string_value(&bb_config.ld_path, kvp.value);
-        bb_log(LOG_DEBUG, "value set: ld_path = %s\n", bb_config.ld_path);
-      } else if (strcmp(kvp.key, "MODULE_PATH") == 0) {
-        set_string_value(&bb_config.mod_path, kvp.value);
-        bb_log(LOG_DEBUG, "value set: mod_path = %s\n", bb_config.mod_path);
-      } else if (strcmp(kvp.key, "CARD_SHUTDOWN_STATE") == 0) {
-        bb_config.card_shutdown_state = boolean_value(kvp.value);
-        bb_log(LOG_DEBUG, "value set: card_shutdown_state = %d\n", bb_config.card_shutdown_state);
-      }
-    }
-  }
-  fclose(cf);
-  return 0;
-}
-
-/// Prints a single line, for use by print_usage, with alignment.
-static void print_usage_line(char * opt, char * desc) {
+static void print_usage_line(char *opt, char *desc) {
   printf("  %-35s%s\n", opt, desc);
 }
 
@@ -288,12 +130,13 @@ static void print_usage_line(char * opt, char * desc) {
  */
 void print_usage(int exit_val) {
   int is_optirun = bb_status.runmode == BB_RUN_APP ||
-    bb_status.runmode == BB_RUN_STATUS;
-  printf("%s version %s\n\n", bb_status.program_name, GITVERSION);
+          bb_status.runmode == BB_RUN_STATUS;
+  printf("%s version %s\n\n", "Bumblebee", GITVERSION);
   if (is_optirun) {
-    printf("Usage: %s [options] [--] [application to run] [application options]\n", bb_status.program_name);
+    printf("Usage: %s [options] [--] [application to run] [application options]"
+            "\n", "optirun");
   } else {
-    printf("Usage: %s [options]\n", bb_status.program_name);
+    printf("Usage: %s [options]\n", "bumblebeed");
   }
   printf(" Options:\n");
   if (is_optirun) {
@@ -310,7 +153,9 @@ void print_usage(int exit_val) {
     print_usage_line("--module-path / -m [PATH]", "ModulePath to use for xorg (nvidia-only).");
     print_usage_line("--driver-module / -k [NAME]", "Name of kernel module to be"
             " loaded if different from the driver");
+#ifdef WITH_PIDFILE
     print_usage_line("--pidfile", "File in which the PID is written");
+#endif
   }
   //common options
   print_usage_line("--quiet / --silent / -q", "Be quiet (sets verbosity to zero)");
@@ -334,11 +179,6 @@ static int bbconfig_parse_common(int opt, char *value) {
   switch (opt) {
     case 'q'://quiet mode
       bb_status.verbosity = VERB_NONE;
-      break;
-    case 'v'://increase verbosity level by one
-      if (bb_status.verbosity < VERB_ALL) {
-        bb_status.verbosity++;
-      }
       break;
     case 'd'://X display number
       set_string_value(&bb_config.x_display, value);
@@ -366,7 +206,7 @@ static int bbconfig_parse_common(int opt, char *value) {
  * @param argv The arguments values
  * @param config_only 1 if the config file is the only option to be parsed
  */
-static void bbconfig_parse_opts(int argc, char *argv[], int config_only) {
+void bbconfig_parse_opts(int argc, char *argv[], int conf_round) {
   /* Parse the options, set flags as necessary */
   int opt;
   optind = 0;
@@ -376,84 +216,157 @@ static void bbconfig_parse_opts(int argc, char *argv[], int config_only) {
     if (opt == '?') {
       /* if an option was not recognized */
       print_usage(EXIT_FAILURE);
-    } if (opt == 'C') {
-      set_string_value(&bb_config.bb_conf_file, optarg);
-    } else if (!config_only) {
+    }
+    if (conf_round == PARSE_STAGE_PRECONF) {
+      switch (opt) {
+        case 'C':
+          set_string_value(&bb_config.bb_conf_file, optarg);
+          break;
+        case 'v':
+          if (bb_status.verbosity < VERB_ALL) {
+            bb_status.verbosity++;
+          }
+          break;
+        default:
+          break;
+      }
+    } else if (conf_round == PARSE_STAGE_DRIVER) {
+      switch (opt) {
+        case OPT_DRIVER:
+          set_string_value(&bb_config.driver, optarg);
+          break;
+      }
+    } else if (conf_round == PARSE_STAGE_OTHER) {
       /* try to find local options first, then try common options */
       if (bbconfig_parse_options(opt, optarg) ||
               bbconfig_parse_common(opt, optarg)) {
         /* option has been parsed, continue with the next options */
         continue;
       }
-      /* XXX is it possible to print the usage message earlier? */
-      print_usage(EXIT_FAILURE);
     }
   }
 }
 
 /**
  * Parse configuration file given by bb_config.bb_conf_file
+ *
+ * @return A pointer to an GKeyFile object or NULL on failure
  */
-static int bbconfig_parse_conf(void) {
-    //Old behavior
-    return read_configuration();
+GKeyFile *bbconfig_parse_conf(void) {
+  //Old behavior
+  //return read_configuration();
 
-    bb_log(LOG_DEBUG, "Reading file: %s\n", bb_config.bb_conf_file);
-    GKeyFile *bbcfg;
-    GKeyFileFlags flags = G_KEY_FILE_NONE;
-    GError *err = NULL;
+  bb_log(LOG_DEBUG, "Reading file: %s\n", bb_config.bb_conf_file);
+  GKeyFile *bbcfg;
+  GKeyFileFlags flags = G_KEY_FILE_NONE;
+  GError *err = NULL;
 
-    bbcfg = g_key_file_new();
-    if(!g_key_file_load_from_file(bbcfg, bb_config.bb_conf_file, flags, &err)) {
-        bb_log(LOG_WARNING, "Could not open configuration file: %s\n", bb_config.bb_conf_file);
-        bb_log(LOG_WARNING, "Using default configuration");
-        return 0;
-    }
-    // Client settings
-    // [client]
-    if (NULL != g_key_file_get_string(bbcfg, "client", "VGL_COMPRESS", &err)) {
-        bb_config.vgl_compress = g_key_file_get_string(bbcfg, "client", "VGL_COMPRESS", &err);
-    }
+  bbcfg = g_key_file_new();
+  if (!g_key_file_load_from_file(bbcfg, bb_config.bb_conf_file, flags, &err)) {
+    bb_log(LOG_WARNING, "Could not open configuration file: %s\n", bb_config.bb_conf_file);
+    bb_log(LOG_WARNING, "Using default configuration\n");
+    g_error_free(err);
+    g_key_file_free(bbcfg);
+    return NULL;
+  }
 
-    // Server settings
-    // [server]
-    if (NULL != g_key_file_get_string(bbcfg, "server", "VGL_DISPLAY", &err)) {
-        bb_config.x_display = g_key_file_get_string(bbcfg, "server", "VGL_DISPLAY", &err);
-    }
-    if (NULL != g_key_file_get_string(bbcfg, "server", "STOP_SERVICE_ON_EXIT", &err)) {
-        bb_config.stop_on_exit = g_key_file_get_boolean(bbcfg, "server", "STOP_SERVICE_ON_EXIT", &err);
-    }
-    if (NULL != g_key_file_get_string(bbcfg, "server", "DRIVER", &err)) {
-        bb_config.driver = g_key_file_get_string(bbcfg, "server", "driver", NULL);
-    }
-    if (NULL != g_key_file_get_string(bbcfg, "server", "BUMBLEBEE_GROUP", &err)) {
-        bb_config.gid_name = g_key_file_get_string(bbcfg, "server", "BUMBLEBEE_GROUP", &err);
-    }
-    if (NULL != g_key_file_get_string(bbcfg, "server", "CARD_SHUTDOWN_STATE", &err)) {
-        bb_config.card_shutdown_state = g_key_file_get_boolean(bbcfg, "server", "CARD_SHUTDOWN_STATE", NULL);
-    }
-    if (NULL != g_key_file_get_string(bbcfg, "server", "FALLBACK_START", &err)) {
-        bb_config.fallback_start = g_key_file_get_boolean(bbcfg, "server", "FALLBACK_START", &err);
-    }
+  // First check for a key existence then parse it with appropriate format
+  // Use false as default for boolean arguments.
+  // TODO:optirun/bumblebeed must be parsed according to RUN_MODE
 
-    // Driver settings
-    // [nouveua] or [nvidia]
-    if (NULL != g_key_file_get_string(bbcfg, bb_config.driver, "DRIVER_MODULE", &err)) {
-        bb_config.module_name = g_key_file_get_string(bbcfg, bb_config.driver, "DRIVER_MODULE", &err);
+  char* section;
+  char* key;
+  // Client settings
+  // [optirun]
+  section = "optirun";
+  key = "VGLTransport";
+  if (g_key_file_has_key(bbcfg, section, key, NULL)) {
+    free_and_set_value(&bb_config.vgl_compress, g_key_file_get_string(bbcfg, section, key, NULL));
+  }
+  key = "AllowFallbackToIGC";
+  if (g_key_file_has_key(bbcfg, section, key, NULL)) {
+    bb_config.fallback_start = g_key_file_get_boolean(bbcfg, section, key, NULL);
+  }
+
+  // Server settings
+  // [bumblebeed]
+  section = "bumblebeed";
+  key = "VirtualDisplay";
+  if (g_key_file_has_key(bbcfg, section, key, NULL)) {
+    free_and_set_value(&bb_config.x_display, g_key_file_get_string(bbcfg, section, key, NULL));
+  }
+  key = "KeepUnusedXServer";
+  if (g_key_file_has_key(bbcfg, section, key, NULL)) {
+    bb_config.stop_on_exit = !g_key_file_get_boolean(bbcfg, section, key, NULL);
+  }
+  key = "Driver";
+  if (g_key_file_has_key(bbcfg, section, key, NULL)) {
+    char *driver = g_key_file_get_string(bbcfg, section, key, NULL);
+    /* empty driv */
+    if (*driver != 0) {
+      free_and_set_value(&bb_config.driver, driver);
+      bb_log(LOG_INFO, "Configured driver: %s\n", bb_config.driver);
+    } else {
+      g_free(driver);
     }
-    if (NULL != g_key_file_get_string(bbcfg, bb_config.driver, "NV_LIBRARY_PATH", &err)) {
-        bb_config.ld_path = g_key_file_get_string(bbcfg, bb_config.driver, "NV_LIBRARY_PATH", &err);
-    }
-    if (NULL != g_key_file_get_string(bbcfg, bb_config.driver, "MODULE_PATH", &err)) {
-        bb_config.mod_path = g_key_file_get_string(bbcfg, bb_config.driver, "MODULE_PATH", &err);
-    }
-    if (NULL != g_key_file_get_string(bbcfg, bb_config.driver, "PM_METHOD", &err)) {
-         enum bb_pm_method pm_method_index = bb_pm_method_from_string(g_key_file_get_string(bbcfg, bb_config.driver, "PM_METHOD", &err));
-         bb_config.pm_method = pm_method_index;
-    }
-    if (NULL != g_key_file_get_string(bbcfg, bb_config.driver, "X_CONFFILE", &err)) {
-        bb_config.x_conf_file = g_key_file_get_string(bbcfg, bb_config.driver, "X_CONFFILE", &err);
-    }
+  }
+  key = "ServerGroup";
+  if (g_key_file_has_key(bbcfg, section, key, NULL)) {
+    free_and_set_value(&bb_config.gid_name, g_key_file_get_string(bbcfg, section, key, NULL));
+  }
+  key = "TurnCardOffAtExit";
+  if (g_key_file_has_key(bbcfg, section, key, NULL)) {
+    bb_config.card_shutdown_state = !g_key_file_get_boolean(bbcfg, section, key, NULL);
+  }
+  return bbcfg;
+}
+
+/**
+ * Loads driver settings from an open GKeyFile
+ * @param bbcfg A pointer to a GKeyFile
+ * @param driver The string containing the driver to be loaded
+ */
+void bbconfig_parse_conf_driver(GKeyFile *bbcfg, char *driver) {
+  GError *err = NULL;
+  char *key, *section;
+
+  section = malloc(strlen("driver-") + strlen(driver) + 1);
+  if (section == NULL) {
+    /* why can't we just assume that there is always enough memory available?
+     * If there is no memory, the program cannot do anything useful anyway. */
+    bb_log(LOG_WARNING, "Driver settings could not be loaded: out of memory\n");
+    return;
+  }
+  strcpy(section, "driver-");
+  strcat(section, driver);
+
+  key = "KernelDriver";
+  if (g_key_file_has_key(bbcfg, section, key, NULL)) {
+    free_and_set_value(&bb_config.module_name, g_key_file_get_string(bbcfg, section, key, NULL));
+  }
+  key = "LibraryPath";
+  if (g_key_file_has_key(bbcfg, section, key, NULL)) {
+    free_and_set_value(&bb_config.ld_path, g_key_file_get_string(bbcfg, section, key, NULL));
+  }
+  key = "XorgModulePath";
+  if (g_key_file_has_key(bbcfg, section, key, NULL)) {
+    free_and_set_value(&bb_config.mod_path, g_key_file_get_string(bbcfg, section, key, NULL));
+  }
+  key = "PMMethod";
+  if (g_key_file_has_key(bbcfg, section, key, NULL)) {
+    char *val = g_key_file_get_string(bbcfg, section, key, NULL);
+    enum bb_pm_method pm_method_index = bb_pm_method_from_string(val);
+    bb_config.pm_method = pm_method_index;
+    g_free(val);
+  }
+  key = "XorgConfFile";
+  if (g_key_file_has_key(bbcfg, section, key, NULL)) {
+    free_and_set_value(&bb_config.x_conf_file, g_key_file_get_string(bbcfg, section, key, NULL));
+  }
+  if (err != NULL) {
+    g_error_free(err);
+  }
+  free(section);
 }
 
 /**
@@ -465,9 +378,7 @@ static int bbconfig_parse_conf(void) {
 void init_early_config(int argc, char **argv, int runmode) {
   /* clear existing configuration and reset pointers */
   memset(&bb_status, 0, sizeof bb_status);
-  /* set program name */
-  set_string_value(&bb_status.program_name, basename(argv[0]));
-  set_string_value(&bb_status.errors, "");//we start without errors, yay!
+  set_string_value(&bb_status.errors, ""); //we start without errors, yay!
   bb_status.verbosity = VERB_WARN;
   bb_status.bb_socket = -1;
   bb_status.appcount = 0;
@@ -486,30 +397,22 @@ void init_config(int argc, char **argv) {
   /* set defaults if not set already */
   set_string_value(&bb_config.x_display, CONF_XDISP);
   set_string_value(&bb_config.bb_conf_file, CONFIG_FILE);
-  set_string_value(&bb_config.ld_path, CONF_LDPATH);
-  set_string_value(&bb_config.mod_path, CONF_MODPATH);
+  set_string_value(&bb_config.ld_path, "");
+  set_string_value(&bb_config.mod_path, "");
   set_string_value(&bb_config.socket_path, CONF_SOCKPATH);
   set_string_value(&bb_config.gid_name, CONF_GID);
   set_string_value(&bb_config.x_conf_file, CONF_XORG);
   set_string_value(&bb_config.vgl_compress, CONF_VGLCOMPRESS);
   // default to auto-detect
   set_string_value(&bb_config.driver, "");
-  set_string_value(&bb_config.module_name, CONF_DRIVER_MODULE);
+  set_string_value(&bb_config.module_name, "");
   bb_config.pm_method = bb_pm_method_from_string(CONF_PM_METHOD);
-  bb_config.stop_on_exit = CONF_STOPONEXIT;
-  bb_config.fallback_start = CONF_FALLBACKSTART;
-  bb_config.card_shutdown_state = CONF_SHUTDOWNSTATE;
-  set_string_value(&bb_config.pid_file, CONF_PID_FILE);
-
-  /* parse commandline configuration (for config file, if any) */
-  bbconfig_parse_opts(argc, argv, 1);
-
-  /* parse config file */
-  //read_configuration();
-  bbconfig_parse_conf();
-
-  /* parse remaining command line options */
-  bbconfig_parse_opts(argc, argv, 0);
+  bb_config.stop_on_exit = bb_bool_from_string(CONF_KEEPONEXIT);
+  bb_config.fallback_start = bb_bool_from_string(CONF_FALLBACKSTART);
+  bb_config.card_shutdown_state = bb_bool_from_string(CONF_TURNOFFATEXIT);
+#ifdef WITH_PIDFILE
+  set_string_value(&bb_config.pid_file, CONF_PIDFILE);
+#endif
 }
 
 /**
@@ -525,12 +428,14 @@ void config_dump(void) {
   bb_log(LOG_DEBUG, " Socket path: %s\n", bb_config.socket_path);
   if (bb_status.runmode == BB_RUN_SERVER || bb_status.runmode == BB_RUN_DAEMON) {
     /* daemon options */
+#ifdef WITH_PIDFILE
     bb_log(LOG_DEBUG, " pidfile: %s\n", bb_config.pid_file);
+#endif
     bb_log(LOG_DEBUG, " xorg.conf file: %s\n", bb_config.x_conf_file);
     bb_log(LOG_DEBUG, " ModulePath: %s\n", bb_config.mod_path);
     bb_log(LOG_DEBUG, " GID name: %s\n", bb_config.gid_name);
     bb_log(LOG_DEBUG, " Power method: %s\n",
-      bb_pm_method_string[bb_config.pm_method]);
+            bb_pm_method_string[bb_config.pm_method]);
     bb_log(LOG_DEBUG, " Stop X on exit: %i\n", bb_config.stop_on_exit);
     bb_log(LOG_DEBUG, " Driver: %s\n", bb_config.driver);
     bb_log(LOG_DEBUG, " Driver module: %s\n", bb_config.module_name);
@@ -549,11 +454,11 @@ void config_dump(void) {
  */
 int config_validate(void) {
   int error = 0;
-  if (*bb_config.driver) {
-    char *mod = bb_config.driver;
+  if (*bb_config.module_name) {
+    char *mod = bb_config.module_name;
     if (!module_is_available(mod)) {
       error = 1;
-      bb_log(LOG_ERR, "Driver '%s' is not found.\n", mod);
+      bb_log(LOG_ERR, "Module '%s' is not found.\n", mod);
     }
   } else {
     bb_log(LOG_ERR, "Invalid configuration: no driver configured.\n");

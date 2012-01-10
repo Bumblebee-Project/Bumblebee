@@ -30,16 +30,16 @@
 /**
  * Checks in /proc/modules whether a kernel module is loaded
  *
- * @param module_name The name of the kernel module
+ * @param driver The name of the driver (not a filename)
  * @return 1 if the module is loaded, 0 otherwise
  */
-int module_is_loaded(char *module_name) {
+int module_is_loaded(char *driver) {
   // use the same buffer length as lsmod
   char buffer[4096];
   FILE * bbs = fopen("/proc/modules", "r");
   int ret = 0;
   /* assume mod_len <= sizeof(buffer) */
-  int mod_len = strlen(module_name);
+  int mod_len = strlen(driver);
 
   if (bbs == 0) {//error opening, return -1
     bb_log(LOG_DEBUG, "Couldn't open /proc/modules");
@@ -47,7 +47,7 @@ int module_is_loaded(char *module_name) {
   }
   while (fgets(buffer, sizeof(buffer), bbs)) {
     /* match "module" with "module " and not "module-blah" */
-    if (!strncmp(buffer, module_name, mod_len) && isspace(buffer[mod_len])) {
+    if (!strncmp(buffer, driver, mod_len) && isspace(buffer[mod_len])) {
       /* module is found */
       ret = 1;
       break;
@@ -61,21 +61,21 @@ int module_is_loaded(char *module_name) {
  * Attempts to load a module. If the module has not been loaded after ten
  * seconds, give up
  *
- * @param module_name The name of the kernel module to be loaded
+ * @param module_name The filename of the module to be loaded
  * @param driver The name of the driver to be loaded
  * @return 1 if the driver is succesfully loaded, 0 otherwise
  */
 int module_load(char *module_name, char *driver) {
-  if (module_is_loaded(module_name) == 0) {
+  if (module_is_loaded(driver) == 0) {
     /* the module has not loaded yet, try to load it */
     bb_log(LOG_INFO, "Loading driver %s (module %s)\n", driver, module_name);
     char *mod_argv[] = {
       "modprobe",
-      driver,
+      module_name,
       NULL
     };
     bb_run_fork_wait(mod_argv, 10);
-    if (module_is_loaded(module_name) == 0) {
+    if (module_is_loaded(driver) == 0) {
       bb_log(LOG_ERR, "Module %s could not be loaded (timeout?)\n", module_name);
       return 0;
     }
@@ -87,21 +87,21 @@ int module_load(char *module_name, char *driver) {
  * Attempts to unload a module if loaded, for ten seconds before
  * giving up
  *
- * @param module_name The name of the kernel module to be unloaded
+ * @param driver The name of the driver (not a filename)
  * @return 1 if the driver is succesfully unloaded, 0 otherwise
  */
-int module_unload(char *module_name) {
-  if (module_is_loaded(module_name) == 1) {
-    bb_log(LOG_INFO, "Unloading %s module\n", module_name);
+int module_unload(char *driver) {
+  if (module_is_loaded(driver) == 1) {
+    bb_log(LOG_INFO, "Unloading %s driver\n", driver);
     char *mod_argv[] = {
       "rmmod",
       "--wait",
-      module_name,
+      driver,
       NULL
     };
     bb_run_fork_wait(mod_argv, 10);
-    if (module_is_loaded(module_name) == 1) {
-      bb_log(LOG_ERR, "Unloading %s module timed out.\n", module_name);
+    if (module_is_loaded(driver) == 1) {
+      bb_log(LOG_ERR, "Unloading %s driver timed out.\n", driver);
       return 0;
     }
   }
@@ -111,7 +111,7 @@ int module_unload(char *module_name) {
 /**
  * Checks whether a kernel module is available for loading
  *
- * @param module_name The module name to be checked
+ * @param module_name The module name to be checked (filename)
  * @return 1 if the module is available for loading, 0 otherwise
  */
 int module_is_available(char *module_name) {

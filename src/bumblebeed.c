@@ -31,7 +31,9 @@
 #include <string.h>
 #include <errno.h>
 #include <getopt.h>
+#ifdef WITH_PIDFILE
 #include <bsd/libutil.h>
+#endif
 #include "bbconfig.h"
 #include "bbsocket.h"
 #include "bblogger.h"
@@ -118,7 +120,7 @@ static void handle_signal(int sig) {
     case SIGTERM:
       bb_log(LOG_WARNING, "Received %s signal.\n", strsignal(sig));
       socketClose(&bb_status.bb_socket); //closing the socket terminates the server
-      bb_run_stopwaiting();//speed up shutdown by not waiting for processes anymore
+      bb_run_stopwaiting(); //speed up shutdown by not waiting for processes anymore
       break;
     default:
       bb_log(LOG_WARNING, "Unhandled signal %s\n", strsignal(sig));
@@ -198,7 +200,7 @@ static void handle_socket(struct clientsocket * C) {
 static void main_loop(void) {
   int optirun_socket_fd;
   struct clientsocket *client;
-  struct clientsocket *last = 0;// the last client
+  struct clientsocket *last = 0; // the last client
 
   bb_log(LOG_INFO, "Started main loop\n");
   /* Listen for Optirun conections and act accordingly */
@@ -280,6 +282,7 @@ static void main_loop(void) {
 const char *bbconfig_get_optstr(void) {
   return BBCONFIG_COMMON_OPTSTR "Dx:g:m:k:";
 }
+
 /**
  * Returns the long options for this program
  * @return A option struct which can be used for getopt_long
@@ -292,7 +295,9 @@ const struct option *bbconfig_get_lopts(void) {
     {"module-path", 1, 0, 'm'},
     {"driver-module", 1, 0, 'k'},
     {"driver", 1, 0, OPT_DRIVER},
+#ifdef WITH_PIDFILE
     {"pidfile", 1, 0, OPT_PIDFILE},
+#endif
     BBCONFIG_COMMON_LOPTS
   };
   return longOpts;
@@ -324,9 +329,11 @@ int bbconfig_parse_options(int opt, char *value) {
     case 'k'://kernel module
       set_string_value(&bb_config.module_name, value);
       break;
+#ifdef WITH_PIDFILE
     case OPT_PIDFILE:
       set_string_value(&bb_config.pid_file, value);
       break;
+#endif
     default:
       /* no options parsed */
       return 0;
@@ -335,8 +342,10 @@ int bbconfig_parse_options(int opt, char *value) {
 }
 
 int main(int argc, char* argv[]) {
+#ifdef WITH_PIDFILE
   struct pidfh *pfh = NULL;
   pid_t otherpid;
+#endif
 
   init_early_config(argc, argv, BB_RUN_SERVER);
 
@@ -358,13 +367,25 @@ int main(int argc, char* argv[]) {
     bb_log(LOG_ERR, "No nVidia graphics card found, quitting.\n");
     return (EXIT_FAILURE);
   }
+
+  bbconfig_parse_opts(argc, argv, PARSE_STAGE_PRECONF);
+  GKeyFile *bbcfg = bbconfig_parse_conf();
+  bbconfig_parse_opts(argc, argv, PARSE_STAGE_DRIVER);
   check_secondary();
+  if (bbcfg) {
+    bbconfig_parse_conf_driver(bbcfg, bb_config.driver);
+    g_key_file_free(bbcfg);
+  }
+  bbconfig_parse_opts(argc, argv, PARSE_STAGE_OTHER);
+  check_pm_method();
+
   /* dump the config after detecting the driver */
   config_dump();
   if (config_validate() != 0) {
     return (EXIT_FAILURE);
   }
 
+#ifdef WITH_PIDFILE
   /* only write PID if a pid file has been set */
   if (bb_config.pid_file[0]) {
     pfh = pidfile_open(bb_config.pid_file, 0644, &otherpid);
@@ -378,31 +399,38 @@ int main(int argc, char* argv[]) {
       exit(EXIT_FAILURE);
     }
   }
+#endif
 
   /* Change GID and mask according to configuration */
   if ((bb_config.gid_name != 0) && (bb_config.gid_name[0] != 0)) {
     int retval = bb_chgid();
     if (retval != EXIT_SUCCESS) {
       bb_closelog();
+#ifdef WITH_PIDFILE
       pidfile_remove(pfh);
+#endif
       exit(retval);
     }
   }
 
-  bb_log(LOG_DEBUG, "%s version %s starting...\n", bb_status.program_name, GITVERSION);
+  bb_log(LOG_DEBUG, "%s version %s starting...\n", "bumblebeed", GITVERSION);
 
   /* Daemonized if daemon flag is activated */
   if (bb_status.runmode == BB_RUN_DAEMON) {
     int retval = daemonize();
     if (retval != EXIT_SUCCESS) {
       bb_closelog();
+#ifdef WITH_PIDFILE
       pidfile_remove(pfh);
+#endif
       exit(retval);
     }
   }
 
+#ifdef WITH_PIDFILE
   /* write PID after daemonizing */
   pidfile_write(pfh);
+#endif
 
   /* Initialize communication socket, enter main loop */
   bb_status.bb_socket = socketServer(bb_config.socket_path, SOCK_NOBLOCK);
@@ -418,7 +446,9 @@ int main(int argc, char* argv[]) {
     stop_secondary();
   }
   bb_closelog();
+#ifdef WITH_PIDFILE
   pidfile_remove(pfh);
+#endif
   bb_stop_all(); //stop any started processes that are left
   return (EXIT_SUCCESS);
 }

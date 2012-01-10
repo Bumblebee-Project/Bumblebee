@@ -56,7 +56,7 @@ static char *xorg_path_w_driver(char *x_conf_file, char *driver) {
   }
   path_length = strlen(x_conf_file) +
           driver_occurences * (strlen(driver_keyword) - 1);
- 
+
   /* allocate some memory including null byte and make it an empty string */
   path = malloc(path_length + 1);
   if (!path) {
@@ -80,9 +80,11 @@ static char *xorg_path_w_driver(char *x_conf_file, char *driver) {
   return path;
 }
 
-/// Start the X server by fork-exec, turn card on and load driver if needed.
-/// If after this method finishes X is running, it was successfull.
-/// If it somehow fails, X should not be running after this method finishes.
+/**
+ * Start the X server by fork-exec, turn card on and load driver if needed.
+ * If after this method finishes X is running, it was successfull.
+ * If it somehow fails, X should not be running after this method finishes.
+ */
 void start_secondary(void) {
   char driver[BUFFER_SIZE] = {0};
   /* enable card if the switcher is available */
@@ -143,7 +145,7 @@ void start_secondary(void) {
       NULL
     };
     if (!*bb_config.mod_path) {
-      x_argv[10] = 0;//remove -modulepath if not set
+      x_argv[10] = 0; //remove -modulepath if not set
     }
     bb_status.x_pid = bb_run_fork_ld(x_argv, bb_config.ld_path);
   }
@@ -180,7 +182,9 @@ void start_secondary(void) {
   }
 }//start_secondary
 
-/// Kill the second X server if any, turn card off if requested.
+/**
+ * Kill the second X server if any, turn card off if requested.
+ */
 void stop_secondary() {
   char driver[BUFFER_SIZE];
   // kill X if it is running
@@ -218,7 +222,10 @@ void stop_secondary() {
   }
 }//stop_secondary
 
-/// Returns 0 if card is off, 1 if card is on, -1 if not-switchable.
+/**
+ * Check the status of the discrete card
+ * @return 0 if card is off, 1 if card is on, -1 if not-switchable.
+ */
 int status_secondary(void) {
   switch (switch_status()) {
     case SWITCH_ON:
@@ -231,10 +238,10 @@ int status_secondary(void) {
   }
 }
 
-/// Checks what methods are available and what drivers are installed.
-/// Sets sane defaults for the current environment, also prints
-/// debug messages including the found hardware/software.
-/// Will print warning message if no switching method is found.
+/**
+ * Check what drivers are available and autodetect if possible. Driver, module
+ * library path and module path are set
+ */
 void check_secondary(void) {
   /* determine driver to be used */
   if (*bb_config.driver) {
@@ -243,24 +250,19 @@ void check_secondary(void) {
   } else if (strlen(CONF_DRIVER)) {
     /* if the default driver is set, use that */
     set_string_value(&bb_config.driver, CONF_DRIVER);
-    set_string_value(&bb_config.module_name, CONF_DRIVER_MODULE);
-    bb_log(LOG_DEBUG, "Using compile default driver '%s' (module %s)",
-            CONF_DRIVER, CONF_DRIVER_MODULE);
+    bb_log(LOG_DEBUG, "Using compile default driver '%s'", CONF_DRIVER);
   } else if (module_is_loaded("nouveau")) {
     /* loaded drivers take precedence over ones available for modprobing */
     set_string_value(&bb_config.driver, "nouveau");
     set_string_value(&bb_config.module_name, "nouveau");
     bb_log(LOG_DEBUG, "Detected nouveau driver\n");
-  } else if (module_is_available("nvidia")) {
-    set_string_value(&bb_config.driver, "nvidia");
-    set_string_value(&bb_config.module_name, "nvidia");
-    bb_log(LOG_DEBUG, "Detected nvidia driver\n");
-  } else if (module_is_available("nvidia-current")) {
+  } else if (module_is_available(CONF_DRIVER_MODULE_NVIDIA)) {
     /* Ubuntu and Mandriva use nvidia-current.ko. nvidia cannot be compiled into
      * the kernel, so module_is_available makes module_is_loaded redundant */
-    set_string_value(&bb_config.driver, "nvidia-current");
-    set_string_value(&bb_config.module_name, "nvidia");
-    bb_log(LOG_DEBUG, "Detected nvidia driver (module nvidia-current)\n");
+    set_string_value(&bb_config.driver, "nvidia");
+    set_string_value(&bb_config.module_name, CONF_DRIVER_MODULE_NVIDIA);
+    bb_log(LOG_DEBUG, "Detected nvidia driver (module %s)\n",
+            CONF_DRIVER_MODULE_NVIDIA);
   } else if (module_is_available("nouveau")) {
     set_string_value(&bb_config.driver, "nouveau");
     set_string_value(&bb_config.module_name, "nouveau");
@@ -270,15 +272,23 @@ void check_secondary(void) {
   if (!*bb_config.module_name) {
     /* no module has been configured, set a sensible one based on driver */
     if (strcmp(bb_config.driver, "nvidia") == 0 &&
-            module_is_available("nvidia-current")) {
-      set_string_value(&bb_config.driver, "nvidia-current");
-      set_string_value(&bb_config.module_name, "nvidia");
+            module_is_available(CONF_DRIVER_MODULE_NVIDIA)) {
+      set_string_value(&bb_config.module_name, CONF_DRIVER_MODULE_NVIDIA);
     } else {
       set_string_value(&bb_config.module_name, bb_config.driver);
     }
   }
 
-  //check switch availability, warn if not availble
+  if (strcmp(bb_config.driver, "nvidia")) {
+    set_string_value(&bb_config.ld_path, CONF_LDPATH_NVIDIA);
+    set_string_value(&bb_config.mod_path, CONF_MODPATH_NVIDIA);
+  }
+}
+
+/**
+ * Check for the availability of a PM method, warn if no method is available
+ */
+void check_pm_method(void) {
   if (bb_config.pm_method == PM_DISABLED) {
     bb_log(LOG_INFO, "PM is disabled, not performing detection.\n");
   } else {
