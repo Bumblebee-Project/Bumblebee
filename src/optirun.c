@@ -229,7 +229,7 @@ int main(int argc, char *argv[]) {
   bbconfig_parse_opts(argc, argv, PARSE_STAGE_OTHER);
   config_dump();
 
-  bb_log(LOG_DEBUG, "%s version %s starting...\n", bb_status.program_name, GITVERSION);
+  bb_log(LOG_DEBUG, "%s version %s starting...\n", "optirun", GITVERSION);
 
   /* Connect to listening daemon */
   bb_status.bb_socket = socketConnect(bb_config.socket_path, SOCK_NOBLOCK);

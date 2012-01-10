@@ -28,7 +28,6 @@
 #include <assert.h>
 #include <unistd.h>
 #include <getopt.h>
-#include <libgen.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -132,11 +131,12 @@ static void print_usage_line(char *opt, char *desc) {
 void print_usage(int exit_val) {
   int is_optirun = bb_status.runmode == BB_RUN_APP ||
           bb_status.runmode == BB_RUN_STATUS;
-  printf("%s version %s\n\n", bb_status.program_name, GITVERSION);
+  printf("%s version %s\n\n", "Bumblebee", GITVERSION);
   if (is_optirun) {
-    printf("Usage: %s [options] [--] [application to run] [application options]\n", bb_status.program_name);
+    printf("Usage: %s [options] [--] [application to run] [application options]"
+            "\n", "optirun");
   } else {
-    printf("Usage: %s [options]\n", bb_status.program_name);
+    printf("Usage: %s [options]\n", "bumblebeed");
   }
   printf(" Options:\n");
   if (is_optirun) {
@@ -376,8 +376,6 @@ void bbconfig_parse_conf_driver(GKeyFile *bbcfg, char *driver) {
 void init_early_config(int argc, char **argv, int runmode) {
   /* clear existing configuration and reset pointers */
   memset(&bb_status, 0, sizeof bb_status);
-  /* set program name */
-  set_string_value(&bb_status.program_name, basename(argv[0]));
   set_string_value(&bb_status.errors, ""); //we start without errors, yay!
   bb_status.verbosity = VERB_WARN;
   bb_status.bb_socket = -1;

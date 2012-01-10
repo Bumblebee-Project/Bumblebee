@@ -98,7 +98,6 @@ const char *bb_pm_method_string[PM_METHODS_COUNT];
 
 /* Structure containing the status of the application */
 struct bb_status_struct {
-    char * program_name; /// How this application was called.
     enum verbosity_level verbosity; ///Verbosity level of messages.
     int bb_socket; /// The socket file descriptor of the application.
     unsigned int appcount; /// Count applications using the X server.
