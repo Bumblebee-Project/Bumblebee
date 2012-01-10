@@ -14,6 +14,7 @@ Build Requirements
 - pkg-config
 - autotools (2.68+ recommended)
 - libx11 and development headers
+- libbsd and development headers
 - [bbswitch](https://github.com/Bumblebee-Project/bbswitch) (optional, for PM)
 
 Building
