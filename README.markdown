@@ -60,6 +60,18 @@ You can build the binaries and set the system wide paths at configure time
     ./configure --prefix=/usr --sysconfdir=/etc
     make
 
+To set the default driver to `nvidia` and adjust the library and module paths
+for it, use `./configure` like:
+
+    ./configure CONF_DRIVER=nvidia CONF_DRIVER_MODULE_NVIDIA=nvidia-current \
+      CONF_LDPATH_NVIDIA=/usr/lib/nvidia-current:/usr/lib32/nvidia-current \
+      CONF_MODPATH_NVIDIA=/usr/lib/nvidia-current/xorg,/usr/lib/xorg/modules \
+      --prefix=/usr --sysconfdir=/etc
+
+For all available options, run:
+
+    ./configure --help
+
 After building the binaries they can be installed using make:
 
     sudo make install
