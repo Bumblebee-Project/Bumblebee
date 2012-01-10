@@ -395,8 +395,8 @@ void init_config(int argc, char **argv) {
   /* set defaults if not set already */
   set_string_value(&bb_config.x_display, CONF_XDISP);
   set_string_value(&bb_config.bb_conf_file, CONFIG_FILE);
-  set_string_value(&bb_config.ld_path, CONF_LDPATH);
-  set_string_value(&bb_config.mod_path, CONF_MODPATH);
+  set_string_value(&bb_config.ld_path, "");
+  set_string_value(&bb_config.mod_path, "");
   set_string_value(&bb_config.socket_path, CONF_SOCKPATH);
   set_string_value(&bb_config.gid_name, CONF_GID);
   set_string_value(&bb_config.x_conf_file, CONF_XORG);
