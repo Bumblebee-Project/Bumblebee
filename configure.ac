@@ -25,8 +25,8 @@ AC_DEFINE_SUBST(CONF_PM_METHOD, "auto", "Power management method")
 AC_DEFINE_SUBST(CONF_KEEPONEXIT, "false", "stop secondary X on exit of last optirun executable")
 AC_DEFINE_SUBST(CONF_FALLBACKSTART, "false", "make optirun start applications normally if secondary is unavailable")
 AC_DEFINE_SUBST(CONF_VGLCOMPRESS, "proxy", "vglclient transport method")
-AC_DEFINE_SUBST(CONF_DRIVER, "", "nvidia driver to use (empty for autodetection)")
-AC_DEFINE_SUBST(CONF_DRIVER_MODULE, "", "driver kernel module (empty defaults to autodetection)")
+AC_DEFINE_SUBST(CONF_DRIVER, "", "default driver to use (empty for autodetection)")
+AC_DEFINE_SUBST(CONF_DRIVER_MODULE, "", "default driver kernel module (empty defaults to autodetection), currently abused for the nvidia default module name as well")
 AC_DEFINE_SUBST(CONF_TURNOFFATEXIT, "false", "state of card when shutting off daemon")
 
 # non-config related compile-time defines

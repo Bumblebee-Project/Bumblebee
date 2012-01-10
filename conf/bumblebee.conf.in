@@ -21,7 +21,7 @@ TurnCardOffAtExit=@CONF_TURNOFFATEXIT@
 NoEcoModeOverride=false
 
 # The Driver used by Bumblebee server. (See specific sections below)
-Driver=@CONF_DRIVER_MODULE@
+Driver=@CONF_DRIVER@
 
 ## Client options. Will take effect on the next optirun executed.
 [optirun]
