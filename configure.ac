@@ -32,10 +32,9 @@ AC_DEFINE_SUBST(CONF_FALLBACKSTART, "false", [make optirun start applications no
 AC_DEFINE_SUBST(CONF_VGLCOMPRESS, "proxy", [vglclient transport method])
 AC_DEFINE_SUBST(CONF_TURNOFFATEXIT, "false", [state of card when shutting off daemon])
 
-default_pidfile=/var/run/bumblebeed.pid
-AC_DEFINE_CONF(CONF_PIDFILE, [Path to the pidfile or $default_pidfile if empty], [
+AC_DEFINE_CONF(CONF_PIDFILE, [Path to the pidfile or /var/run/bumblebeed.pid if empty], [
 if test "x" = "x$CONF_PIDFILE"; then
-	CONF_PIDFILE="$default_pidfile"
+	CONF_PIDFILE=/var/run/bumblebeed.pid
 fi
 ])
 
