@@ -147,7 +147,15 @@ void start_secondary(void) {
     if (!*bb_config.mod_path) {
       x_argv[10] = 0; //remove -modulepath if not set
     }
-    bb_status.x_pid = bb_run_fork_ld(x_argv, bb_config.ld_path);
+    //close any previous pipe, if it (still) exists
+    if (bb_status.x_pipe[0] != -1){close(bb_status.x_pipe[0]); bb_status.x_pipe[0] = -1;}
+    if (bb_status.x_pipe[1] != -1){close(bb_status.x_pipe[1]); bb_status.x_pipe[1] = -1;}
+    //create a new pipe
+    if (pipe(bb_status.x_pipe)){
+      set_bb_error("Could not create output pipe for X");
+      return;
+    }
+    bb_status.x_pid = bb_run_fork_ld_redirect(x_argv, bb_config.ld_path, bb_status.x_pipe[1]);
   }
 
   //check if X is available, for maximum 10 seconds.

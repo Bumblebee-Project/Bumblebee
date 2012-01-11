@@ -231,6 +231,11 @@ static void main_loop(void) {
       last = client;
     }
 
+    //check the X output pipe, if open
+    if (bb_status.x_pipe[0] != -1){
+      /// \todo Parse output from X
+    }
+
     /* loop through all connections, removing dead ones, receiving/sending data to the rest */
     struct clientsocket *next_iter;
     for (client = last; client; client = next_iter) {
@@ -457,5 +462,8 @@ int main(int argc, char* argv[]) {
   pidfile_remove(pfh);
 #endif
   bb_stop_all(); //stop any started processes that are left
+  //close X pipe, if any parts of it are open still
+  if (bb_status.x_pipe[0] != -1){close(bb_status.x_pipe[0]); bb_status.x_pipe[0] = -1;}
+  if (bb_status.x_pipe[1] != -1){close(bb_status.x_pipe[1]); bb_status.x_pipe[1] = -1;}
   return (EXIT_SUCCESS);
 }

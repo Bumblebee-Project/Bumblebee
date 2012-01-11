@@ -383,6 +383,8 @@ void init_early_config(int argc, char **argv, int runmode) {
   bb_status.bb_socket = -1;
   bb_status.appcount = 0;
   bb_status.x_pid = 0;
+  bb_status.x_pipe[0] = -1;
+  bb_status.x_pipe[1] = -1;
   bb_status.runmode = runmode;
 }
 

@@ -22,9 +22,11 @@
  * Run command functions for Bumblebee
  */
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <string.h>
 #include <signal.h>
-#include <sys/types.h>
 #include <sys/wait.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -125,17 +127,16 @@ static void check_handler(void) {
   }
 }//check_handler
 
-static void bb_run_exec_hide_stderr(char **argv);
+static void bb_run_exec_detached(char **argv);
 
 /**
  * Forks and runs the given application and waits for the process to finish
  *
  * @param argv The arguments values, the first one is the program
- * @param hide_stderr non-zero if the stderr output of the client needs to be
- * discarded, zero otherwise
+ * @param detached non-zero if the std in/output must be redirected to /dev/null, zero otherwise
  * @return Exit code of the program (between 0 and 255) or -1 on failure
  */
-int bb_run_fork(char **argv, int hide_stderr) {
+int bb_run_fork(char **argv, int detached) {
   int exitcode = -1;
 
   check_handler();
@@ -143,8 +144,8 @@ int bb_run_fork(char **argv, int hide_stderr) {
   pid_t pid = fork();
   if (pid == 0) {
     /* child process after fork */
-    if (hide_stderr) {
-      bb_run_exec_hide_stderr(argv);
+    if (detached) {
+      bb_run_exec_detached(argv);
     } else {
       bb_run_exec(argv);
     }
@@ -178,13 +179,16 @@ int bb_run_fork(char **argv, int hide_stderr) {
 
 /**
  * Forks and runs the given application, using an optional LD_LIBRARY_PATH. The
- * function then returns immediately
+ * function then returns immediately.
+ * stderr and stdout of the ran application is redirected to the parameter redirect.
+ * stdin is redirected to /dev/null always.
  *
  * @param argv The arguments values, the first one is the program
  * @param ldpath The library path to be used if any (may be NULL)
+ * @param redirect The file descriptor to redirect stdout/stderr to. Must be valid and open.
  * @return The childs process ID
  */
-pid_t bb_run_fork_ld(char **argv, char *ldpath) {
+pid_t bb_run_fork_ld_redirect(char **argv, char *ldpath, int redirect) {
   check_handler();
   // Fork and attempt to run given application
   pid_t ret = fork();
@@ -207,6 +211,14 @@ pid_t bb_run_fork_ld(char **argv, char *ldpath) {
         setenv("LD_LIBRARY_PATH", ldpath, 1);
       }
     }
+    //open /dev/null for stdin redirect
+    int devnull = open("/dev/null", O_RDWR);
+    //fail silently on error, nothing we can do about it anyway...
+    if (devnull >= 0){dup2(devnull, STDIN_FILENO);}
+    //redirect stdout and stderr to the given filenum.
+    dup2(redirect, STDOUT_FILENO);
+    dup2(redirect, STDERR_FILENO);
+    //ok, all ready, now actually execute
     bb_run_exec(argv);
   } else {
     if (ret > 0) {
@@ -311,26 +323,35 @@ void bb_stop_all(void) {
 void bb_run_exec(char **argv) {
   execvp(argv[0], argv);
   bb_log(LOG_ERR, "Error running \"%s\": %s\n", argv[0], strerror(errno));
-  exit(42);
+  exit(errno);
 }
 
 /**
- * Attempts to run the given application, replacing the current process but hide
- * any stderr output from the executed program
+ * Attempts to run the given application, replacing the current process but
+ * redirect all standard in/outputs to /dev/null.
  * @param argv The program to be run
  */
-static void bb_run_exec_hide_stderr(char **argv) {
+static void bb_run_exec_detached(char **argv) {
   int old_stderr, exec_err;
-
   bb_log(LOG_DEBUG, "Hiding stderr for execution of %s\n", argv[0]);
-  /* stderr fd no = 2 */
-  old_stderr = dup(2);
-  close(2);
+  /* Redirect all three standard file descriptors to /dev/null.
+   * If daemonized, this already happened - but doing it
+   * again doesn't hurt since this fork won't run forever anyway.
+   */
+  int devnull = open("/dev/null", O_RDWR);
+  if (devnull < 0){
+    bb_log(LOG_ERR, "Could not open /dev/null: %s\n", strerror(errno));
+    return EXIT_FAILURE;
+  }
+  old_stderr = dup(STDERR_FILENO);
+  dup2(devnull, STDIN_FILENO);
+  dup2(devnull, STDOUT_FILENO);
+  dup2(devnull, STDERR_FILENO);
+  //done redirecting, do the exec
   execvp(argv[0], argv);
   /* note: the below lines are only executed if execvp fails */
   exec_err = errno;
-  dup2(old_stderr, 2);
-  close(old_stderr);
+  dup2(old_stderr, STDERR_FILENO);
   bb_log(LOG_ERR, "Error running \"%s\": %s\n", argv[0], strerror(exec_err));
   exit(exec_err);
 }
