@@ -36,8 +36,6 @@ bin_bumblebeed_LDADD = ${x11_LIBS} ${libbsd_LIBS} ${glib_LIBS}
 bumblebeedconf_DATA = conf/bumblebee.conf conf/xorg.conf.nouveau conf/xorg.conf.nvidia
 
 do_subst = sed -e 's|[@]CONF_XDISP[@]|$(CONF_XDISP)|g' \
-	-e 's|[@]CONF_LDPATH[@]|$(CONF_LDPATH)|g' \
-	-e 's|[@]CONF_MODPATH[@]|$(CONF_MODPATH)|g' \
 	-e 's|[@]CONF_SOCKPATH[@]|$(CONF_SOCKPATH)|g' \
 	-e 's|[@]CONF_GID[@]|$(CONF_GID)|g' \
 	-e 's|[@]CONF_PM_METHOD[@]|$(CONF_PM_METHOD)|g' \
@@ -45,11 +43,13 @@ do_subst = sed -e 's|[@]CONF_XDISP[@]|$(CONF_XDISP)|g' \
 	-e 's|[@]CONF_FALLBACKSTART[@]|$(CONF_FALLBACKSTART)|g' \
 	-e 's|[@]CONF_VGLCOMPRESS[@]|$(CONF_VGLCOMPRESS)|g' \
 	-e 's|[@]CONF_DRIVER[@]|$(CONF_DRIVER)|g' \
-	-e 's|[@]CONF_DRIVER_MODULE[@]|$(CONF_DRIVER_MODULE)|g' \
 	-e 's|[@]CONF_TURNOFFATEXIT[@]|$(CONF_TURNOFFATEXIT)|g' \
 	-e 's|[@]BINDIR[@]|$(bindir)|g' \
 	-e 's|[@]BBCONFDIR[@]|$(bumblebeedconfdir)|g' \
 	-e 's|[@]CONF_XORG[@]|$(bumblebeedconfdir)/xorg.conf.DRIVER|g' \
+	-e 's|[@]CONF_DRIVER_MODULE_NVIDIA[@]|$(CONF_DRIVER_MODULE_NVIDIA)|g' \
+	-e 's|[@]CONF_LDPATH_NVIDIA[@]|$(CONF_LDPATH_NVIDIA)|g' \
+	-e 's|[@]CONF_MODPATH_NVIDIA[@]|$(CONF_MODPATH_NVIDIA)|g' \
 	-e 's|[@]CONF_PIDFILE[@]|$(CONF_PIDFILE)|g'
 
 conf/bumblebee.conf: conf/bumblebee.conf.in
