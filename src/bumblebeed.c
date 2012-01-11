@@ -23,8 +23,10 @@
  * C-coded version of the Bumblebee daemon and optirun.
  */
 
-#include <stdlib.h>
+#include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
+#include <stdlib.h>
 #include <grp.h>
 #include <signal.h>
 #include <stdio.h>
@@ -96,10 +98,15 @@ static int daemonize(void) {
     return EXIT_FAILURE;
   }
 
-  /* Close out the standard file descriptors */
-  close(STDIN_FILENO);
-  close(STDOUT_FILENO);
-  close(STDERR_FILENO);
+  /* Reroute standard file descriptors to /dev/null */
+  int devnull = open("/dev/null", O_RDWR);
+  if (devnull < 0){
+    bb_log(LOG_ERR, "Could not open /dev/null: %s\n", strerror(errno));
+    return EXIT_FAILURE;
+  }
+  dup2(devnull, STDIN_FILENO);
+  dup2(devnull, STDOUT_FILENO);
+  dup2(devnull, STDERR_FILENO);
   return EXIT_SUCCESS;
 }
 
