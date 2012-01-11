@@ -189,6 +189,9 @@ static int bbconfig_parse_common(int opt, char *value) {
     case 'l'://LD driver path
       set_string_value(&bb_config.ld_path, value);
       break;
+    case 'h':
+      print_usage(EXIT_SUCCESS);
+      break;
     case 'V'://print version
       printf("Version: %s\n", GITVERSION);
       exit(EXIT_SUCCESS);
