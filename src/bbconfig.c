@@ -142,8 +142,8 @@ void print_usage(int exit_val) {
   if (is_optirun) {
     //client-only options
     print_usage_line("--vgl-compress / -c [METHOD]", "Connection method to use for VirtualGL.");
-    print_usage_line("--failsafe={Y|N}", "If Y, the program even starts if the"
-            " server is unavailable");
+    print_usage_line("--failsafe={true|false}", "If true, the program is run"
+            " even if the nvidia card is unavailable");
   } else {
     //server-only options
     print_usage_line("--daemon / -D", "Run as daemon.");
