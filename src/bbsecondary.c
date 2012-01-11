@@ -21,6 +21,8 @@
  * along with Bumblebee. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define _GNU_SOURCE
+#include <unistd.h>
 #include <X11/Xlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -152,7 +154,7 @@ void start_secondary(void) {
     if (bb_status.x_pipe[0] != -1){close(bb_status.x_pipe[0]); bb_status.x_pipe[0] = -1;}
     if (bb_status.x_pipe[1] != -1){close(bb_status.x_pipe[1]); bb_status.x_pipe[1] = -1;}
     //create a new pipe
-    if (pipe(bb_status.x_pipe)){
+    if (pipe2(bb_status.x_pipe, O_NONBLOCK)){
       set_bb_error("Could not create output pipe for X");
       return;
     }

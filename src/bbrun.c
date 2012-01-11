@@ -341,7 +341,6 @@ static void bb_run_exec_detached(char **argv) {
   int devnull = open("/dev/null", O_RDWR);
   if (devnull < 0){
     bb_log(LOG_ERR, "Could not open /dev/null: %s\n", strerror(errno));
-    return EXIT_FAILURE;
   }
   old_stderr = dup(STDERR_FILENO);
   dup2(devnull, STDIN_FILENO);
