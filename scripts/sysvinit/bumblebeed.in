@@ -58,7 +58,7 @@ stop() {
 	kill "$pid" || true
 	# and check whether it listened
 	while [ $retries -gt 0 ]; do
-		retries=$(retries - 1)
+		retries=$((retries - 1))
 
 		# process has gone, return success
 		status || return 0
