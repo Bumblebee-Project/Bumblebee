@@ -49,6 +49,7 @@ start() {
 
 stop() {
 	local retries=10
+	local pid="$(cat "$PIDFILE" 2>/dev/null)"
 
 	# not running, we're done
 	status || return 0
