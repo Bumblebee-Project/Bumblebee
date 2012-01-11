@@ -107,10 +107,19 @@ static int daemonize(void) {
  *  Handle recieved signals - except SIGCHLD, which is handled in bbrun.c
  */
 static void handle_signal(int sig) {
+  static int sigpipes = 0;
+
   switch (sig) {
     case SIGHUP:
-    case SIGPIPE:
       bb_log(LOG_WARNING, "Received %s signal (ignoring...)\n", strsignal(sig));
+      break;
+    case SIGPIPE:
+      /* if bb_log generates a SIGPIPE, i.e. when bumblebeed runs like
+       * bumblebeed 2>&1 | cat and the pipe is killed, don't die infinitely */
+      if (sigpipes <= 10) {
+        bb_log(LOG_WARNING, "Received %s signal %i (signals 10> are ignored)\n",
+                strsignal(sig), ++sigpipes);
+      }
       break;
     case SIGINT:
     case SIGQUIT:

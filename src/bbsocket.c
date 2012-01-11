@@ -102,7 +102,8 @@ int socketWrite(int * sock, void * buffer, int len) {
   if (*sock < 0) {
     return 0;
   }
-  int r = send(*sock, buffer, len, 0);
+  /* Try to send a message, but don't SIGPIPE if the client has gone */
+  int r = send(*sock, buffer, len, MSG_NOSIGNAL);
   if (r < 0) {
     switch (errno) {
       case EWOULDBLOCK: return 0;
