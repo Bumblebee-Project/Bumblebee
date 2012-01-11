@@ -33,6 +33,7 @@
 
 /* Parsing rounds */
 enum {
+    PARSE_STAGE_LOG,
     PARSE_STAGE_PRECONF,
     PARSE_STAGE_DRIVER,
     PARSE_STAGE_OTHER,
@@ -62,6 +63,7 @@ enum {
     OPT_FAILSAFE,
     OPT_STATUS,
     OPT_PIDFILE,
+    OPT_USE_SYSLOG,
 };
 
 /* Verbosity levels */
@@ -104,6 +106,7 @@ struct bb_status_struct {
     char * errors; /// Error message if any. First byte is 0 otherwise.
     enum bb_run_mode runmode; /// Running mode.
     pid_t x_pid;
+    gboolean use_syslog;
 };
 
 /* Structure containing the configuration. */

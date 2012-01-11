@@ -146,7 +146,7 @@ void print_usage(int exit_val) {
             " even if the nvidia card is unavailable");
   } else {
     //server-only options
-    print_usage_line("--daemon / -D", "Run as daemon.");
+    print_usage_line("--daemon / -D", "Run as daemon (implies --use-syslog)");
     print_usage_line("--xconf / -x [PATH]", "xorg.conf file to use.");
     print_usage_line("--group / -g [GROUPNAME]", "Name of group to change to.");
     print_usage_line("--driver [nvidia / nouveau]", "Force use of a certain GPU driver.");
@@ -155,6 +155,7 @@ void print_usage(int exit_val) {
             " loaded if different from the driver");
 #ifdef WITH_PIDFILE
     print_usage_line("--pidfile", "File in which the PID is written");
+    print_usage_line("--use-syslog", "Redirect messages to syslog");
 #endif
   }
   //common options
@@ -220,7 +221,15 @@ void bbconfig_parse_opts(int argc, char *argv[], int conf_round) {
       /* if an option was not recognized */
       print_usage(EXIT_FAILURE);
     }
-    if (conf_round == PARSE_STAGE_PRECONF) {
+    if (conf_round == PARSE_STAGE_LOG && bb_status.runmode == BB_RUN_SERVER) {
+      /* hack to get logging ready before parsing other options */
+      switch (opt) {
+        case 'D':
+        case OPT_USE_SYSLOG:
+          bb_status.use_syslog = TRUE;
+          break;
+      }
+    } else if (conf_round == PARSE_STAGE_PRECONF) {
       switch (opt) {
         case 'C':
           set_string_value(&bb_config.bb_conf_file, optarg);
