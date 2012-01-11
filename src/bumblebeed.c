@@ -210,7 +210,15 @@ static void parse_xorg_output(char * string){
   int prio = LOG_DEBUG;//most lines are debug messages
 
   //Error lines are errors.
-  if (strstr(string, "(EE)")){prio = LOG_ERR;}
+  if (strstr(string, "(EE)")){
+    //prefix with [XORG]
+    char error_buffer[X_BUFFER_SIZE+8];
+    snprintf(error_buffer, X_BUFFER_SIZE+8, "[XORG] %s", string);
+    set_bb_error(error_buffer);//set as error
+    //errors are handled seperately from the rest - return
+    return;
+  }
+
   //Warning lines are warnings.
   if (strstr(string, "(WW)")){prio = LOG_WARNING;}
   /// \todo Convert useless/meaningless warnings to LOG_INFO

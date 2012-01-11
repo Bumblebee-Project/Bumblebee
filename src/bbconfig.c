@@ -478,7 +478,11 @@ int config_validate(void) {
  */
 void set_bb_error(char * msg) {
   if (msg && msg[0] != 0) {
-    set_string_value(&bb_status.errors, msg);
+    //only store error if no error stored yet
+    //earliest error is the most important!
+    if (bb_status.errors[0] == 0){
+      set_string_value(&bb_status.errors, msg);
+    }
     bb_log(LOG_ERR, "%s\n", msg);
   } else {
     //clear set error message, if any.
