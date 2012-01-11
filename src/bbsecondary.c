@@ -139,13 +139,14 @@ void start_secondary(void) {
       "-sharevts",
       "-nolisten", "tcp",
       "-noreset",
+      "-logfile", "-",
       "-isolateDevice", pci_id,
       "-modulepath",
       bb_config.mod_path,
       NULL
     };
     if (!*bb_config.mod_path) {
-      x_argv[10] = 0; //remove -modulepath if not set
+      x_argv[12] = 0; //remove -modulepath if not set
     }
     //close any previous pipe, if it (still) exists
     if (bb_status.x_pipe[0] != -1){close(bb_status.x_pipe[0]); bb_status.x_pipe[0] = -1;}
