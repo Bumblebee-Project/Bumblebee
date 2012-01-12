@@ -211,6 +211,8 @@ static void parse_xorg_output(char * string){
 
   //Error lines are errors.
   if (strstr(string, "(EE)")){
+    //ignore the line with all types of lines
+    if (strstr(string, "(WW)")){return;}
     //prefix with [XORG]
     char error_buffer[X_BUFFER_SIZE+8];
     snprintf(error_buffer, X_BUFFER_SIZE+8, "[XORG] %s", string);
@@ -232,7 +234,7 @@ static void parse_xorg_output(char * string){
  */
 static void main_loop(void) {
   int optirun_socket_fd;
-  char x_output_buffer[X_BUFFER_SIZE];
+  char x_output_buffer[X_BUFFER_SIZE+1];
   int x_buffer_pos = 0;
   struct clientsocket *client;
   struct clientsocket *last = 0; // the last client
@@ -275,20 +277,23 @@ static void main_loop(void) {
       //while x_buffer_pos>0 and a \n is in the buffer, parse.
       //if buffer is full, parse also.
       while (x_buffer_pos > 0){
-        x_output_buffer[X_BUFFER_SIZE-1] = 0;//make sure there's a terminating null byte
-        if (x_buffer_pos == X_BUFFER_SIZE){
-          //full buffer, parse
-          parse_xorg_output(x_output_buffer);
-          x_buffer_pos = 0;
-        }else{
-          char * foundnewline = strchr(x_output_buffer, '\n');
-          if (!foundnewline){break;}//cancel search if no newline, try again later
-          foundnewline[0] = 0;//convert newline to null byte
-          parse_xorg_output(x_output_buffer);//parse the line
-          r -= foundnewline - x_output_buffer;//cut the parsed part from the buffer size
-          if (r > 0){//move the unparsed part left, if any
-            memmove(x_output_buffer, foundnewline+1, X_BUFFER_SIZE - ((foundnewline+1) - x_output_buffer));
+        x_output_buffer[X_BUFFER_SIZE] = 0;//make sure there's a terminating null byte
+        char * foundnewline = strchr(x_output_buffer, '\n');
+        if (!foundnewline || foundnewline-x_output_buffer > x_buffer_pos){
+          //cancel search if no newline, try again later
+          //except if buffer is full, then parse
+          if (x_buffer_pos == X_BUFFER_SIZE){
+            parse_xorg_output(x_output_buffer);
+            x_buffer_pos = 0;
           }
+          break;
+        }
+        foundnewline[0] = 0;//convert newline to null byte
+        parse_xorg_output(x_output_buffer);//parse the line
+        int size = foundnewline - x_output_buffer + 1;
+        x_buffer_pos -= size;//cut the parsed part from the buffer size
+        if (x_buffer_pos > 0){//move the unparsed part left, if any
+          memmove(x_output_buffer, foundnewline + 1, x_buffer_pos);
         }
       }
     }

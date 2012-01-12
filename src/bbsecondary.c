@@ -141,7 +141,7 @@ void start_secondary(void) {
       "-sharevts",
       "-nolisten", "tcp",
       "-noreset",
-      "-logfile", "-",
+      "-verbose", "3",
       "-isolateDevice", pci_id,
       "-modulepath",
       bb_config.mod_path,
