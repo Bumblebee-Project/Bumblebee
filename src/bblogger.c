@@ -27,6 +27,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <ctype.h>
 #include "bblogger.h"
 #include "bbconfig.h"
 
@@ -119,7 +120,12 @@ static void parse_xorg_output(char * string){
   char * valid_end = 0; /* Helper for finding correct ConnectedMonitor setting */
   /* message to be logged with set_bb_error */
   char error_buffer[strlen("[XORG] ") + sizeof (x_output_buffer)];
-  
+
+  /* don't log an empty line or a line with a single whitespace */
+  if (string[0] == 0 || (string[1] == 0 && isspace(string[0]))) {
+    return;
+  }
+
   /* Error lines are errors. */
   if (strncmp(string, "(EE)", 4) == 0){
     /* prefix with [XORG] */
