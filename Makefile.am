@@ -35,6 +35,9 @@ bin_bumblebeed_LDADD = ${x11_LIBS} ${libbsd_LIBS} ${glib_LIBS}
 
 bumblebeedconf_DATA = conf/bumblebee.conf conf/xorg.conf.nouveau conf/xorg.conf.nvidia
 
+completiondir = $(sysconfdir)/bash_completion.d
+completion_DATA = scripts/bash_completion/bumblebee
+
 do_subst = sed -e 's|[@]CONF_XDISP[@]|$(CONF_XDISP)|g' \
 	-e 's|[@]CONF_SOCKPATH[@]|$(CONF_SOCKPATH)|g' \
 	-e 's|[@]CONF_GID[@]|$(CONF_GID)|g' \
