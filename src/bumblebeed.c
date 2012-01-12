@@ -218,7 +218,7 @@ static void main_loop(void) {
   struct clientsocket *client;
   struct clientsocket *last = 0; // the last client
 
-  bb_log(LOG_INFO, "Started main loop\n");
+  bb_log(LOG_INFO, "Initialization completed - now handling client requests\n");
   /* Listen for Optirun conections and act accordingly */
   while (bb_status.bb_socket != -1) {
     usleep(100000); //sleep 100ms to prevent 100% CPU time usage

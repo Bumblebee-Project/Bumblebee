@@ -51,6 +51,7 @@ enum {
     {"config", 1, 0, 'C'},\
     {"help", 0, 0, 'h'},\
     {"version", 0, 0, 'V'},\
+    {"debug", 0, 0, OPT_DEBUG},\
     {0, 0, 0, 0}
 
 const char *bbconfig_get_optstr(void);
@@ -64,6 +65,7 @@ enum {
     OPT_STATUS,
     OPT_PIDFILE,
     OPT_USE_SYSLOG,
+    OPT_DEBUG
 };
 
 /* Verbosity levels */

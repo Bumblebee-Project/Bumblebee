@@ -161,6 +161,7 @@ void print_usage(int exit_val) {
   //common options
   print_usage_line("--quiet / --silent / -q", "Be quiet (sets verbosity to zero)");
   print_usage_line("--verbose / -v", "Be more verbose (can be used multiple times)");
+  print_usage_line("--debug", "Enable all messsages (sets verbosity to maximum)");
   print_usage_line("--display / -d [DISPLAY NAME]", "X display number to use.");
   print_usage_line("--config / -C [PATH]", "Configuration file to use.");
   print_usage_line("--ldpath / -l [PATH]", "LD driver path to use (nvidia-only).");
@@ -180,6 +181,9 @@ static int bbconfig_parse_common(int opt, char *value) {
   switch (opt) {
     case 'q'://quiet mode
       bb_status.verbosity = VERB_NONE;
+      break;
+    case OPT_DEBUG://debug mode
+      bb_status.verbosity = VERB_ALL;
       break;
     case 'd'://X display number
       set_string_value(&bb_config.x_display, value);
