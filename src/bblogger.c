@@ -31,8 +31,8 @@
 #include "bbconfig.h"
 
 #define X_BUFFER_SIZE 512
-char x_output_buffer[X_BUFFER_SIZE+1]; //Xorg output buffer
-int x_buffer_pos = 0;//Xorg output buffer position
+char x_output_buffer[X_BUFFER_SIZE+1]; /* Xorg output buffer */
+int x_buffer_pos = 0;/* Xorg output buffer position */
 
 
 /**
@@ -115,25 +115,49 @@ void bb_closelog(void) {
  * Will call bb_log appropiately.
  */
 static void parse_xorg_output(char * string){
-  int prio = LOG_DEBUG;//most lines are debug messages
+  int prio = LOG_DEBUG;/* most lines are debug messages */
+  char * valid = 0; /* Helper for finding correct ConnectedMonitor setting */
+  char * valid_end = 0; /* Helper for finding correct ConnectedMonitor setting */
+  char error_buffer[X_BUFFER_SIZE+8]; /* Temp array for building error lines */
   
-  //Error lines are errors.
-  if (strstr(string, "(EE)")){
-    //ignore the line with all types of lines
-    if (strstr(string, "(WW)")){return;}
-    //prefix with [XORG]
-    char error_buffer[X_BUFFER_SIZE+8];
+  /* Error lines are errors. */
+  if (strncmp(string, "(EE)", 4) == 0){
+    /* prefix with [XORG] */
     snprintf(error_buffer, X_BUFFER_SIZE+8, "[XORG] %s", string);
     set_bb_error(error_buffer);//set as error
-    //errors are handled seperately from the rest - return
+    /* errors are handled seperately from the rest - return */
     return;
   }
+
+  /* Warning lines are warnings. */
+  if (strncmp(string, "(WW)", 4) == 0){
+    prio = LOG_WARNING;
+    /* recognize some of the less usefull nouveau warnings, degrade them to LOG_INFO level. */
+    if (strstr(string, "trying again")){prio = LOG_INFO;}/* warning about no outputs being found connected */
+    if (strstr(string, "initial framebuffer")){prio = LOG_INFO;}/* warning for set resolution with no screen attached */
+    if (strstr(string, "looking for one")){prio = LOG_INFO;}/* no keyboard/mouse warning */
+    /* Recognize nvidia complaining about ConnectedMonitor setting */
+    if (strstr(string, "valid display devices are")){
+      valid = strstr(string, "'");//find the '-character
+      if (valid){
+        valid_end = ++valid;/* advance valid one character, start searching for end */
+        while (valid_end[0] != 0){
+          if (valid_end[0] == '\'' || valid_end[0] == ',' || valid_end[0] == ' '){
+            valid_end[0] = 0;
+            break;
+          }
+          valid_end++;
+        }
+        set_bb_error(0); /* Clear error message, we want to override it even though it is not first */
+        snprintf(error_buffer, X_BUFFER_SIZE+8, "You need to change the ConnectedMonitor setting in %s to %s", bb_config.x_conf_file, valid);
+        set_bb_error(error_buffer);//set as error
+        /* Restore the string, sort of (lazy replace with ' even though it could be space or comma). */
+        valid_end[0] = '\'';
+      }
+    }
+  }
   
-  //Warning lines are warnings.
-  if (strstr(string, "(WW)")){prio = LOG_WARNING;}
-  /// \todo Convert useless/meaningless warnings to LOG_INFO
-  
-  //do the actual logging
+  /* do the actual logging */
   bb_log(prio, "[XORG] %s\n", string);
 }
 
@@ -146,39 +170,39 @@ void check_xorg_pipe(void){
 
   do{
     repeat = 0;
-    //attempt to read at most the entire buffer full.
+    /* attempt to read at most the entire buffer full. */
     int r = read(bb_status.x_pipe[0], x_output_buffer+x_buffer_pos, X_BUFFER_SIZE-x_buffer_pos);
     if (r > 0){
       x_buffer_pos += r;
-      if (x_buffer_pos == X_BUFFER_SIZE){repeat = 1;}//ensure we read all we can
+      if (x_buffer_pos == X_BUFFER_SIZE){repeat = 1;}/* ensure we read all we can */
     }else{
       if (r == 0 || (errno != EAGAIN && r == -1)){
-        //the pipe is closed/invalid. Clean up.
+        /* the pipe is closed/invalid. Clean up. */
         if (bb_status.x_pipe[0] != -1){close(bb_status.x_pipe[0]); bb_status.x_pipe[0] = -1;}
         if (bb_status.x_pipe[1] != -1){close(bb_status.x_pipe[1]); bb_status.x_pipe[1] = -1;}
       }
     }
-    //while x_buffer_pos>0 and a \n is in the buffer, parse.
-    //if buffer is full, parse also.
+    /* while x_buffer_pos>0 and a \n is in the buffer, parse.
+     * if buffer is full, parse also. */
     while (x_buffer_pos > 0){
       x_output_buffer[X_BUFFER_SIZE] = 0;//make sure there's a terminating null byte
       char * foundnewline = strchr(x_output_buffer, '\n');
       if (!foundnewline || foundnewline-x_output_buffer > x_buffer_pos){
-        //cancel search if no newline, try again later
-        //except if buffer is full, then parse
+        /* cancel search if no newline, try again later
+         * except if buffer is full, then parse */
         if (x_buffer_pos == X_BUFFER_SIZE){
           parse_xorg_output(x_output_buffer);
           x_buffer_pos = 0;
         }
         break;
       }
-      foundnewline[0] = 0;//convert newline to null byte
-      parse_xorg_output(x_output_buffer);//parse the line
+      foundnewline[0] = 0;/* convert newline to null byte */
+      parse_xorg_output(x_output_buffer);/* parse the line */
       int size = foundnewline - x_output_buffer + 1;
-      x_buffer_pos -= size;//cut the parsed part from the buffer size
-      if (x_buffer_pos > 0){//move the unparsed part left, if any
+      x_buffer_pos -= size;/* cut the parsed part from the buffer size */
+      if (x_buffer_pos > 0){/* move the unparsed part left, if any */
         memmove(x_output_buffer, foundnewline + 1, x_buffer_pos);
       }
     }
   }while(repeat);
-}//check_xorg_pipe
+}/* check_xorg_pipe */
