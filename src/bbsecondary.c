@@ -159,6 +159,8 @@ void start_secondary(void) {
       return;
     }
     bb_status.x_pid = bb_run_fork_ld_redirect(x_argv, bb_config.ld_path, bb_status.x_pipe[1]);
+    //close the end of the pipe that is not ours
+    if (bb_status.x_pipe[1] != -1){close(bb_status.x_pipe[1]); bb_status.x_pipe[1] = -1;}
   }
 
   //check if X is available, for maximum 10 seconds.
@@ -169,8 +171,10 @@ void start_secondary(void) {
     if (xdisp != 0) {
       break;
     }
+    check_xorg_pipe();//make sure Xorg errors come in smoothly
     usleep(100000); //don't retry too fast
   }
+  check_xorg_pipe();//make sure Xorg errors come in smoothly
 
   //check if X is available
   if (xdisp == 0) {

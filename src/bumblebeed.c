@@ -43,8 +43,6 @@
 #include "bbrun.h"
 #include "pci.h"
 
-#define X_BUFFER_SIZE 512
-
 /**
  * Change GID and umask of the daemon
  * @return EXIT_SUCCESS if the gid could be changed, EXIT_FAILURE otherwise
@@ -203,39 +201,11 @@ static void handle_socket(struct clientsocket * C) {
   }
 }
 
-/* Parses a single null-terminated string of Xorg output.
- * Will call bb_log appropiately.
- */
-static void parse_xorg_output(char * string){
-  int prio = LOG_DEBUG;//most lines are debug messages
-
-  //Error lines are errors.
-  if (strstr(string, "(EE)")){
-    //ignore the line with all types of lines
-    if (strstr(string, "(WW)")){return;}
-    //prefix with [XORG]
-    char error_buffer[X_BUFFER_SIZE+8];
-    snprintf(error_buffer, X_BUFFER_SIZE+8, "[XORG] %s", string);
-    set_bb_error(error_buffer);//set as error
-    //errors are handled seperately from the rest - return
-    return;
-  }
-
-  //Warning lines are warnings.
-  if (strstr(string, "(WW)")){prio = LOG_WARNING;}
-  /// \todo Convert useless/meaningless warnings to LOG_INFO
-
-  //do the actual logging
-  bb_log(prio, "[XORG] %s\n", string);
-}
-
 /* The main loop handles all connections and cleanup.
  * It returns if there are any problems with the listening socket.
  */
 static void main_loop(void) {
   int optirun_socket_fd;
-  char x_output_buffer[X_BUFFER_SIZE+1];
-  int x_buffer_pos = 0;
   struct clientsocket *client;
   struct clientsocket *last = 0; // the last client
 
@@ -262,41 +232,7 @@ static void main_loop(void) {
     }
 
     //check the X output pipe, if open
-    if (bb_status.x_pipe[0] != -1){
-      //attempt to read at most the entire buffer full.
-      int r = read(bb_status.x_pipe[0], x_output_buffer+x_buffer_pos, X_BUFFER_SIZE-x_buffer_pos);
-      if (r > 0){
-        x_buffer_pos += r;
-      }else{
-        if (r == 0 || errno == EAGAIN){
-          //the pipe is closed/invalid. Clean up.
-          if (bb_status.x_pipe[0] != -1){close(bb_status.x_pipe[0]); bb_status.x_pipe[0] = -1;}
-          if (bb_status.x_pipe[1] != -1){close(bb_status.x_pipe[1]); bb_status.x_pipe[1] = -1;}
-        }
-      }
-      //while x_buffer_pos>0 and a \n is in the buffer, parse.
-      //if buffer is full, parse also.
-      while (x_buffer_pos > 0){
-        x_output_buffer[X_BUFFER_SIZE] = 0;//make sure there's a terminating null byte
-        char * foundnewline = strchr(x_output_buffer, '\n');
-        if (!foundnewline || foundnewline-x_output_buffer > x_buffer_pos){
-          //cancel search if no newline, try again later
-          //except if buffer is full, then parse
-          if (x_buffer_pos == X_BUFFER_SIZE){
-            parse_xorg_output(x_output_buffer);
-            x_buffer_pos = 0;
-          }
-          break;
-        }
-        foundnewline[0] = 0;//convert newline to null byte
-        parse_xorg_output(x_output_buffer);//parse the line
-        int size = foundnewline - x_output_buffer + 1;
-        x_buffer_pos -= size;//cut the parsed part from the buffer size
-        if (x_buffer_pos > 0){//move the unparsed part left, if any
-          memmove(x_output_buffer, foundnewline + 1, x_buffer_pos);
-        }
-      }
-    }
+    check_xorg_pipe();
 
     /* loop through all connections, removing dead ones, receiving/sending data to the rest */
     struct clientsocket *next_iter;
