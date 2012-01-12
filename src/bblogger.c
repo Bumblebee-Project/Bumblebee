@@ -132,10 +132,11 @@ static void parse_xorg_output(char * string){
   /* Warning lines are warnings. */
   if (strncmp(string, "(WW)", 4) == 0){
     prio = LOG_WARNING;
-    /* recognize some of the less usefull nouveau warnings, degrade them to LOG_INFO level. */
-    if (strstr(string, "trying again")){prio = LOG_INFO;}/* warning about no outputs being found connected */
-    if (strstr(string, "initial framebuffer")){prio = LOG_INFO;}/* warning for set resolution with no screen attached */
-    if (strstr(string, "looking for one")){prio = LOG_INFO;}/* no keyboard/mouse warning */
+    /* recognize some of the less useful nouveau/nvidia warnings, degrade them to LOG_INFO level. */
+    if (strstr(string, "trying again")){prio = LOG_INFO;}/* nouveau: warning about no outputs being found connected */
+    if (strstr(string, "initial framebuffer")){prio = LOG_INFO;}/* nouveau: warning for set resolution with no screen attached */
+    if (strstr(string, "looking for one")){prio = LOG_INFO;}/* nouveau: no keyboard/mouse warning */
+    if (strstr(string, "EDID")){prio = LOG_INFO;}/* nvidia: cannot read EDID warning */
     /* Recognize nvidia complaining about ConnectedMonitor setting */
     if (strstr(string, "valid display devices are")){
       valid = strstr(string, "'");//find the '-character
