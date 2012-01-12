@@ -40,7 +40,7 @@ int x_buffer_pos = 0;/* Xorg output buffer position */
  */
 int bb_init_log(void) {
   /*  Open Logggin mechanism based on configuration */
-  if (bb_status.runmode == BB_RUN_DAEMON) {
+  if (bb_status.use_syslog) {
     openlog(DAEMON_NAME, LOG_PID, LOG_DAEMON);
   } else {
   }
@@ -78,7 +78,7 @@ void bb_log(int priority, char* msg_format, ...) {
 
   va_list args;
   va_start(args, msg_format);
-  if (bb_status.runmode == BB_RUN_DAEMON) {
+  if (bb_status.use_syslog) {
     vsyslog(priority, msg_format, args);
   } else {
     char* fullmsg_fmt = malloc(BUFFER_SIZE + 8);
@@ -106,7 +106,7 @@ void bb_log(int priority, char* msg_format, ...) {
  * Close logging mechanism
  */
 void bb_closelog(void) {
-  if (bb_status.runmode == BB_RUN_DAEMON) {
+  if (bb_status.use_syslog) {
     closelog();
   }
 }

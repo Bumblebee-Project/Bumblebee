@@ -28,8 +28,6 @@
 
 int socketConnect(char * address, int nonblock);
 void socketClose(int * sock);
-int socketCanRead(int sock);
-int socketCanWrite(int sock);
 int socketWrite(int * sock, void * buffer, int len);
 int socketRead(int * sock, void * buffer, int len);
 int socketServer(char * address, int nonblock);

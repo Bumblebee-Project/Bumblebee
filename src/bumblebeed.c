@@ -114,10 +114,19 @@ static int daemonize(void) {
  *  Handle recieved signals - except SIGCHLD, which is handled in bbrun.c
  */
 static void handle_signal(int sig) {
+  static int sigpipes = 0;
+
   switch (sig) {
     case SIGHUP:
-    case SIGPIPE:
       bb_log(LOG_WARNING, "Received %s signal (ignoring...)\n", strsignal(sig));
+      break;
+    case SIGPIPE:
+      /* if bb_log generates a SIGPIPE, i.e. when bumblebeed runs like
+       * bumblebeed 2>&1 | cat and the pipe is killed, don't die infinitely */
+      if (sigpipes <= 10) {
+        bb_log(LOG_WARNING, "Received %s signal %i (signals 10> are ignored)\n",
+                strsignal(sig), ++sigpipes);
+      }
       break;
     case SIGINT:
     case SIGQUIT:
@@ -308,6 +317,7 @@ const struct option *bbconfig_get_lopts(void) {
 #ifdef WITH_PIDFILE
     {"pidfile", 1, 0, OPT_PIDFILE},
 #endif
+    {"use-syslog", 0, 0, OPT_USE_SYSLOG},
     BBCONFIG_COMMON_LOPTS
   };
   return longOpts;
@@ -321,6 +331,9 @@ const struct option *bbconfig_get_lopts(void) {
  */
 int bbconfig_parse_options(int opt, char *value) {
   switch (opt) {
+    case OPT_USE_SYSLOG:
+      /* already processed in bbconfig.c */
+      break;
     case 'D'://daemonize
       bb_status.runmode = BB_RUN_DAEMON;
       break;
@@ -357,7 +370,10 @@ int main(int argc, char* argv[]) {
   pid_t otherpid;
 #endif
 
+  /* the logs needs to be ready before the signal handlers */
   init_early_config(argc, argv, BB_RUN_SERVER);
+  bbconfig_parse_opts(argc, argv, PARSE_STAGE_LOG);
+  bb_init_log();
 
   /* Setup signal handling before anything else. Note that messages are not
    * shown until init_config has set bb_status.verbosity
@@ -367,8 +383,6 @@ int main(int argc, char* argv[]) {
   signal(SIGINT, handle_signal);
   signal(SIGQUIT, handle_signal);
   signal(SIGPIPE, handle_signal);
-
-  bb_init_log();
 
   /* first load the config to make the logging verbosity level available */
   init_config(argc, argv);

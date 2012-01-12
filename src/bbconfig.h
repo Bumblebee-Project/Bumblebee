@@ -33,6 +33,7 @@
 
 /* Parsing rounds */
 enum {
+    PARSE_STAGE_LOG,
     PARSE_STAGE_PRECONF,
     PARSE_STAGE_DRIVER,
     PARSE_STAGE_OTHER,
@@ -48,7 +49,7 @@ enum {
     {"socket", 1, 0, 's'},\
     {"ldpath", 1, 0, 'l'},\
     {"config", 1, 0, 'C'},\
-    {"help", 1, 0, 'h'},\
+    {"help", 0, 0, 'h'},\
     {"version", 0, 0, 'V'},\
     {0, 0, 0, 0}
 
@@ -62,6 +63,7 @@ enum {
     OPT_FAILSAFE,
     OPT_STATUS,
     OPT_PIDFILE,
+    OPT_USE_SYSLOG,
 };
 
 /* Verbosity levels */
@@ -105,6 +107,7 @@ struct bb_status_struct {
     enum bb_run_mode runmode; /// Running mode.
     pid_t x_pid;
     int x_pipe[2];//pipes for reading/writing output from X's stdout/stderr
+    gboolean use_syslog;
 };
 
 /* Structure containing the configuration. */
