@@ -78,7 +78,7 @@ int socketConnect(char * address, int nonblock) {
 /// Never fails.
 
 void socketClose(int * sock) {
-  bb_log(LOG_INFO, "Socket closed.\n");
+  bb_log(LOG_DEBUG, "Socket closed.\n");
   // do not attempt to close closed or uninitialized sockets
   if (!sock || *sock == -1) {
     return;

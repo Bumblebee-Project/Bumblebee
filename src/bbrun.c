@@ -153,7 +153,7 @@ int bb_run_fork(char **argv, int detached) {
     /* parent process after fork */
     int status = 0;
 
-    bb_log(LOG_INFO, "Process %s started, PID %i.\n", argv[0], pid);
+    bb_log(LOG_DEBUG, "Process %s started, PID %i.\n", argv[0], pid);
     pidlist_add(pid);
 
     if (waitpid(pid, &status, 0) != -1) {
@@ -223,7 +223,7 @@ pid_t bb_run_fork_ld_redirect(char **argv, char *ldpath, int redirect) {
   } else {
     if (ret > 0) {
       // Fork went ok, parent process continues
-      bb_log(LOG_INFO, "Process %s started, PID %i.\n", argv[0], ret);
+      bb_log(LOG_DEBUG, "Process %s started, PID %i.\n", argv[0], ret);
       pidlist_add(ret);
     } else {
       // Fork failed
@@ -249,7 +249,7 @@ void bb_run_fork_wait(char** argv, int timeout) {
   } else {
     if (ret > 0) {
       // Fork went ok, parent process continues
-      bb_log(LOG_INFO, "Process %s started, PID %i.\n", argv[0], ret);
+      bb_log(LOG_DEBUG, "Process %s started, PID %i.\n", argv[0], ret);
       pidlist_add(ret);
       //sleep until process finishes or timeout reached
       int i = 0;
