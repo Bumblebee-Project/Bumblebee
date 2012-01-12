@@ -139,11 +139,13 @@ static void parse_xorg_output(char * string){
     if (strstr(string, "EDID")){prio = LOG_DEBUG;}/* nvidia: cannot read EDID warning */
     /* Recognize nvidia complaining about ConnectedMonitor setting */
     if (strstr(string, "valid display devices are")){
-      valid = strstr(string, "'");//find the '-character
+      valid = strchr(string, '\'');//find the '-character
       if (valid){
+        char last_chr = 0;
         valid_end = ++valid;/* advance valid one character, start searching for end */
         while (valid_end[0] != 0){
-          if (valid_end[0] == '\'' || valid_end[0] == ',' || valid_end[0] == ' '){
+          last_chr = valid_end[0];
+          if (last_chr == '\'' || last_chr == ',' || last_chr == ' ') {
             valid_end[0] = 0;
             break;
           }
@@ -152,8 +154,8 @@ static void parse_xorg_output(char * string){
         set_bb_error(0); /* Clear error message, we want to override it even though it is not first */
         snprintf(error_buffer, X_BUFFER_SIZE+8, "You need to change the ConnectedMonitor setting in %s to %s", bb_config.x_conf_file, valid);
         set_bb_error(error_buffer);//set as error
-        /* Restore the string, sort of (lazy replace with ' even though it could be space or comma). */
-        valid_end[0] = '\'';
+        /* Restore the string for logging purposes */
+        valid_end[0] = last_chr;
       }
     }
   }
