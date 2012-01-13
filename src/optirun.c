@@ -106,12 +106,13 @@ static int run_app(int argc, char *argv[]) {
   while (bb_status.bb_socket != -1) {
     r = socketRead(&bb_status.bb_socket, buffer, BUFFER_SIZE);
     if (r > 0) {
-      bb_log(LOG_INFO, "Response: %*s\n", r, buffer);
+      bb_log(LOG_INFO, "Response: %s\n", buffer);
       switch (buffer[0]) {
         case 'N': //No, run normally.
+          bb_log(LOG_ERR, "Cannot access secondary GPU%s\n", buffer+2);
           socketClose(&bb_status.bb_socket);
           if (!bb_config.fallback_start) {
-            bb_log(LOG_ERR, "Cannot access secondary GPU. Aborting.\n");
+            bb_log(LOG_ERR, "Aborting because fallback start is disabled.\n");
           }
           break;
         case 'Y': //Yes, run through vglrun

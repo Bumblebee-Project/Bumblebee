@@ -21,6 +21,8 @@
  * along with Bumblebee. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define _GNU_SOURCE
+#include <unistd.h>
 #include <X11/Xlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -139,15 +141,26 @@ void start_secondary(void) {
       "-sharevts",
       "-nolisten", "tcp",
       "-noreset",
+      "-verbose", "3",
       "-isolateDevice", pci_id,
       "-modulepath",
       bb_config.mod_path,
       NULL
     };
     if (!*bb_config.mod_path) {
-      x_argv[10] = 0; //remove -modulepath if not set
+      x_argv[12] = 0; //remove -modulepath if not set
     }
-    bb_status.x_pid = bb_run_fork_ld(x_argv, bb_config.ld_path);
+    //close any previous pipe, if it (still) exists
+    if (bb_status.x_pipe[0] != -1){close(bb_status.x_pipe[0]); bb_status.x_pipe[0] = -1;}
+    if (bb_status.x_pipe[1] != -1){close(bb_status.x_pipe[1]); bb_status.x_pipe[1] = -1;}
+    //create a new pipe
+    if (pipe2(bb_status.x_pipe, O_NONBLOCK)){
+      set_bb_error("Could not create output pipe for X");
+      return;
+    }
+    bb_status.x_pid = bb_run_fork_ld_redirect(x_argv, bb_config.ld_path, bb_status.x_pipe[1]);
+    //close the end of the pipe that is not ours
+    if (bb_status.x_pipe[1] != -1){close(bb_status.x_pipe[1]); bb_status.x_pipe[1] = -1;}
   }
 
   //check if X is available, for maximum 10 seconds.
@@ -158,8 +171,10 @@ void start_secondary(void) {
     if (xdisp != 0) {
       break;
     }
+    check_xorg_pipe();//make sure Xorg errors come in smoothly
     usleep(100000); //don't retry too fast
   }
+  check_xorg_pipe();//make sure Xorg errors come in smoothly
 
   //check if X is available
   if (xdisp == 0) {

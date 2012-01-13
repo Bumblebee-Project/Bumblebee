@@ -117,7 +117,6 @@ int module_unload(char *driver) {
 int module_is_available(char *module_name) {
   char *mod_argv[] = {
     "modinfo",
-    "--field", "",
     module_name,
     NULL
   };

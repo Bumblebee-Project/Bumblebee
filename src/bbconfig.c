@@ -142,11 +142,11 @@ void print_usage(int exit_val) {
   if (is_optirun) {
     //client-only options
     print_usage_line("--vgl-compress / -c [METHOD]", "Connection method to use for VirtualGL.");
-    print_usage_line("--failsafe={Y|N}", "If Y, the program even starts if the"
-            " server is unavailable");
+    print_usage_line("--failsafe={true|false}", "If true, the program is run"
+            " even if the nvidia card is unavailable");
   } else {
     //server-only options
-    print_usage_line("--daemon / -D", "Run as daemon.");
+    print_usage_line("--daemon / -D", "Run as daemon (implies --use-syslog)");
     print_usage_line("--xconf / -x [PATH]", "xorg.conf file to use.");
     print_usage_line("--group / -g [GROUPNAME]", "Name of group to change to.");
     print_usage_line("--driver [nvidia / nouveau]", "Force use of a certain GPU driver.");
@@ -155,11 +155,13 @@ void print_usage(int exit_val) {
             " loaded if different from the driver");
 #ifdef WITH_PIDFILE
     print_usage_line("--pidfile", "File in which the PID is written");
+    print_usage_line("--use-syslog", "Redirect messages to syslog");
 #endif
   }
   //common options
   print_usage_line("--quiet / --silent / -q", "Be quiet (sets verbosity to zero)");
   print_usage_line("--verbose / -v", "Be more verbose (can be used multiple times)");
+  print_usage_line("--debug", "Enable all messsages (sets verbosity to maximum)");
   print_usage_line("--display / -d [DISPLAY NAME]", "X display number to use.");
   print_usage_line("--config / -C [PATH]", "Configuration file to use.");
   print_usage_line("--ldpath / -l [PATH]", "LD driver path to use (nvidia-only).");
@@ -180,6 +182,9 @@ static int bbconfig_parse_common(int opt, char *value) {
     case 'q'://quiet mode
       bb_status.verbosity = VERB_NONE;
       break;
+    case OPT_DEBUG://debug mode
+      bb_status.verbosity = VERB_ALL;
+      break;
     case 'd'://X display number
       set_string_value(&bb_config.x_display, value);
       break;
@@ -188,6 +193,9 @@ static int bbconfig_parse_common(int opt, char *value) {
       break;
     case 'l'://LD driver path
       set_string_value(&bb_config.ld_path, value);
+      break;
+    case 'h':
+      print_usage(EXIT_SUCCESS);
       break;
     case 'V'://print version
       printf("Version: %s\n", GITVERSION);
@@ -217,7 +225,15 @@ void bbconfig_parse_opts(int argc, char *argv[], int conf_round) {
       /* if an option was not recognized */
       print_usage(EXIT_FAILURE);
     }
-    if (conf_round == PARSE_STAGE_PRECONF) {
+    if (conf_round == PARSE_STAGE_LOG && bb_status.runmode == BB_RUN_SERVER) {
+      /* hack to get logging ready before parsing other options */
+      switch (opt) {
+        case 'D':
+        case OPT_USE_SYSLOG:
+          bb_status.use_syslog = TRUE;
+          break;
+      }
+    } else if (conf_round == PARSE_STAGE_PRECONF) {
       switch (opt) {
         case 'C':
           set_string_value(&bb_config.bb_conf_file, optarg);
@@ -383,6 +399,8 @@ void init_early_config(int argc, char **argv, int runmode) {
   bb_status.bb_socket = -1;
   bb_status.appcount = 0;
   bb_status.x_pid = 0;
+  bb_status.x_pipe[0] = -1;
+  bb_status.x_pipe[1] = -1;
   bb_status.runmode = runmode;
 }
 
@@ -476,7 +494,11 @@ int config_validate(void) {
  */
 void set_bb_error(char * msg) {
   if (msg && msg[0] != 0) {
-    set_string_value(&bb_status.errors, msg);
+    //only store error if no error stored yet
+    //earliest error is the most important!
+    if (bb_status.errors[0] == 0){
+      set_string_value(&bb_status.errors, msg);
+    }
     bb_log(LOG_ERR, "%s\n", msg);
   } else {
     //clear set error message, if any.

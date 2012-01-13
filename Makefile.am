@@ -1,5 +1,7 @@
 # -*- Makefile -*-
 
+GITVERSION = $(shell "$(top_srcdir)/version.sh" "$(top_srcdir)")
+
 bumblebeedconfdir=$(sysconfdir)/bumblebee
 
 AM_CPPFLAGS = ${regular_CPPFLAGS} \
@@ -7,7 +9,7 @@ AM_CPPFLAGS = ${regular_CPPFLAGS} \
 		-DCONF_XORG='"$(bumblebeedconfdir)/xorg.conf.DRIVER"'
 AM_CFLAGS = ${regular_CFLAGS} \
 		${x11_CFLAGS} ${libbsd_CFLAGS} ${glib_CFLAGS} \
-		-Wextra -funsigned-char -DGITVERSION="\"`git describe --tags`\""
+		-Wextra -funsigned-char -DGITVERSION='"${GITVERSION}"'
 
 noinst_SCRIPTS = scripts/systemd/bumblebeed.service \
 	scripts/upstart/bumblebeed.conf
@@ -34,6 +36,9 @@ bin_bumblebeed_SOURCES = src/pci.c src/bbconfig.c src/bblogger.c src/bbrun.c src
 bin_bumblebeed_LDADD = ${x11_LIBS} ${libbsd_LIBS} ${glib_LIBS}
 
 bumblebeedconf_DATA = conf/bumblebee.conf conf/xorg.conf.nouveau conf/xorg.conf.nvidia
+
+completiondir = $(sysconfdir)/bash_completion.d
+completion_DATA = scripts/bash_completion/bumblebee
 
 do_subst = sed -e 's|[@]CONF_XDISP[@]|$(CONF_XDISP)|g' \
 	-e 's|[@]CONF_SOCKPATH[@]|$(CONF_SOCKPATH)|g' \
