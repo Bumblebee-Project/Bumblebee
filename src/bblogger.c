@@ -27,11 +27,11 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <ctype.h>
 #include "bblogger.h"
 #include "bbconfig.h"
 
-#define X_BUFFER_SIZE 512
-char x_output_buffer[X_BUFFER_SIZE+1]; /* Xorg output buffer */
+char x_output_buffer[512]; /* Xorg output buffer */
 int x_buffer_pos = 0;/* Xorg output buffer position */
 
 
@@ -118,12 +118,18 @@ static void parse_xorg_output(char * string){
   int prio = LOG_DEBUG;/* most lines are debug messages */
   char * valid = 0; /* Helper for finding correct ConnectedMonitor setting */
   char * valid_end = 0; /* Helper for finding correct ConnectedMonitor setting */
-  char error_buffer[X_BUFFER_SIZE+8]; /* Temp array for building error lines */
-  
+  /* message to be logged with set_bb_error */
+  char error_buffer[strlen("[XORG] ") + sizeof (x_output_buffer)];
+
+  /* don't log an empty line or a line with a single whitespace */
+  if (string[0] == 0 || (string[1] == 0 && isspace(string[0]))) {
+    return;
+  }
+
   /* Error lines are errors. */
   if (strncmp(string, "(EE)", 4) == 0){
     /* prefix with [XORG] */
-    snprintf(error_buffer, X_BUFFER_SIZE+8, "[XORG] %s", string);
+    snprintf(error_buffer, sizeof error_buffer, "[XORG] %s", string);
     set_bb_error(error_buffer);//set as error
     /* errors are handled seperately from the rest - return */
     return;
@@ -152,7 +158,9 @@ static void parse_xorg_output(char * string){
           valid_end++;
         }
         set_bb_error(0); /* Clear error message, we want to override it even though it is not first */
-        snprintf(error_buffer, X_BUFFER_SIZE+8, "You need to change the ConnectedMonitor setting in %s to %s", bb_config.x_conf_file, valid);
+        snprintf(error_buffer, sizeof error_buffer, "You need to change the"
+                " ConnectedMonitor setting in %s to %s",
+                bb_config.x_conf_file, valid);
         set_bb_error(error_buffer);//set as error
         /* Restore the string for logging purposes */
         valid_end[0] = last_chr;
@@ -174,10 +182,16 @@ void check_xorg_pipe(void){
   do{
     repeat = 0;
     /* attempt to read at most the entire buffer full. */
-    int r = read(bb_status.x_pipe[0], x_output_buffer+x_buffer_pos, X_BUFFER_SIZE-x_buffer_pos);
+    int r = read(bb_status.x_pipe[0], x_output_buffer + x_buffer_pos,
+            sizeof (x_output_buffer) - x_buffer_pos - 1);
     if (r > 0){
       x_buffer_pos += r;
-      if (x_buffer_pos == X_BUFFER_SIZE){repeat = 1;}/* ensure we read all we can */
+      /* append a null byte to close the string */
+      x_output_buffer[x_buffer_pos] = 0;
+      if (x_buffer_pos == sizeof (x_output_buffer) - 1) {
+        /* line / buffer is full, process the remaining buffer the next round */
+        repeat = 1;
+      }
     }else{
       if (r == 0 || (errno != EAGAIN && r == -1)){
         /* the pipe is closed/invalid. Clean up. */
@@ -188,12 +202,11 @@ void check_xorg_pipe(void){
     /* while x_buffer_pos>0 and a \n is in the buffer, parse.
      * if buffer is full, parse also. */
     while (x_buffer_pos > 0){
-      x_output_buffer[X_BUFFER_SIZE] = 0;//make sure there's a terminating null byte
       char * foundnewline = strchr(x_output_buffer, '\n');
       if (!foundnewline || foundnewline-x_output_buffer > x_buffer_pos){
         /* cancel search if no newline, try again later
          * except if buffer is full, then parse */
-        if (x_buffer_pos == X_BUFFER_SIZE){
+        if (x_buffer_pos == sizeof (x_output_buffer) - 1) {
           parse_xorg_output(x_output_buffer);
           x_buffer_pos = 0;
         }
@@ -201,10 +214,11 @@ void check_xorg_pipe(void){
       }
       foundnewline[0] = 0;/* convert newline to null byte */
       parse_xorg_output(x_output_buffer);/* parse the line */
-      int size = foundnewline - x_output_buffer + 1;
+      char *next_part = foundnewline + 1; /* begin of next line */
+      int size = next_part - x_output_buffer;
       x_buffer_pos -= size;/* cut the parsed part from the buffer size */
       if (x_buffer_pos > 0){/* move the unparsed part left, if any */
-        memmove(x_output_buffer, foundnewline + 1, x_buffer_pos);
+        memmove(x_output_buffer, next_part, x_buffer_pos);
       }
     }
   }while(repeat);
