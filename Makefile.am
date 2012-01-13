@@ -1,5 +1,7 @@
 # -*- Makefile -*-
 
+GITVERSION = $(shell "$(top_srcdir)/version.sh" "$(top_srcdir)")
+
 bumblebeedconfdir=$(sysconfdir)/bumblebee
 
 AM_CPPFLAGS = ${regular_CPPFLAGS} \
@@ -7,7 +9,7 @@ AM_CPPFLAGS = ${regular_CPPFLAGS} \
 		-DCONF_XORG='"$(bumblebeedconfdir)/xorg.conf.DRIVER"'
 AM_CFLAGS = ${regular_CFLAGS} \
 		${x11_CFLAGS} ${libbsd_CFLAGS} ${glib_CFLAGS} \
-		-Wextra -funsigned-char -DGITVERSION="\"`git describe --tags`\""
+		-Wextra -funsigned-char -DGITVERSION='"${GITVERSION}"'
 
 noinst_SCRIPTS = scripts/systemd/bumblebeed.service \
 	scripts/upstart/bumblebeed.conf
