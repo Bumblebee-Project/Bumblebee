@@ -46,10 +46,18 @@ Building
 Usage
 ------
 
+The first time you install Bumblebee, the `bumblebee` group has be created.
+Users who are allowed to use Bumblebee need to be added the group:
+
+    sudo groupadd bumblebee
+    sudo usermod -a -G bumblebee $USER
+
+To test Bumblebee before installing it system-wide, run:
+
     sudo bin/bumblebeed --daemon
     bin/optirun -- <application>
     
-For more information, try --help on either of the two binaries.
+For more information, try `--help` on either of the two binaries.
 
 Installing System-wide and Packaging
 -------------------------------------
@@ -72,10 +80,14 @@ For all available options, run:
 
     ./configure --help
 
-After building the binaries they can be installed using make:
+After building the binaries and bash completion script, it can be installed
+using `make`:
 
     sudo make install
 
 For packagers you need to add DESTDIR=$pkgdir
 
     make install DESTDIR=$pkgdir
+
+Example initscripts are available in the `scripts/` directory. Currently,
+Upstart, SystemD and SysV initscripts are available
