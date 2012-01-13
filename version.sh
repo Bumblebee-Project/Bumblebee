@@ -20,7 +20,7 @@ else
 	srcdir="$(cd "$1" && pwd)"
 	case "$srcdir" in
 	  */*-*-[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f])
-		git_hash="$(srcdir##*-)"
+		git_hash="${srcdir##*-}"
 		[ -z "$PACKAGE_VERSION" ] || VN="$PACKAGE_VERSION-$git_hash"
 		;;
 	esac
