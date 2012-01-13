@@ -3,7 +3,8 @@
 rootdir="$1"
 [ -n "$rootdir" ] || rootdir=.
 if [ -z "$PACKAGE_VERSION" ]; then
-	eval "$(cd "$rootdir" && grep -m1 PACKAGE_VERSION configure)"
+	eval "$(cd "$rootdir" && grep -m1 PACKAGE_VERSION configure \
+		2>/dev/null)"
 fi
 
 if [ -d "$rootdir/.git" ]; then
@@ -16,7 +17,16 @@ if [ -d "$rootdir/.git" ]; then
 			2>/dev/null)
 		[ -z "$VN" ] || VN="$PACKAGE_VERSION-$VN"
 	fi
-else
+fi
+
+# try substituted hash if any
+if [ -z "$VN" ]; then
+	git_hash="$Format:%h$"
+	[ ${#git_hash} -ne 7 ] || VN="$PACKAGE_VERSION-$git_hash"
+fi
+
+# try name of directory (from github tarballs)
+if [ -z "$VN" ]; then
 	srcdir="$(cd "$1" && pwd)"
 	case "$srcdir" in
 	  */*-*-[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f])
