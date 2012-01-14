@@ -62,6 +62,7 @@ int bbconfig_parse_options(int opt, char *value);
 enum {
     OPT_DRIVER = CHAR_MAX + 1,
     OPT_FAILSAFE,
+    OPT_NO_FAILSAFE,
     OPT_STATUS,
     OPT_PIDFILE,
     OPT_USE_SYSLOG,

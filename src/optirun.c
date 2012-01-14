@@ -172,7 +172,8 @@ const char *bbconfig_get_optstr(void) {
  */
 const struct option *bbconfig_get_lopts(void) {
   static struct option longOpts[] = {
-    {"failsafe", 1, 0, OPT_FAILSAFE},
+    {"failsafe", 0, 0, OPT_FAILSAFE},
+    {"no-failsafe", 0, 0, OPT_NO_FAILSAFE},
     {"vgl-compress", 1, 0, 'c'},
     {"status", 0, 0, OPT_STATUS},
     BBCONFIG_COMMON_LOPTS
@@ -191,8 +192,11 @@ int bbconfig_parse_options(int opt, char *value) {
     case 'c'://vglclient method
       set_string_value(&bb_config.vgl_compress, value);
       break;
-    case OPT_FAILSAFE: // for optirun
-      bb_config.fallback_start = bb_bool_from_string(value);
+    case OPT_FAILSAFE:
+      bb_config.fallback_start = 1;
+      break;
+    case OPT_NO_FAILSAFE:
+      bb_config.fallback_start = 0;
       break;
     case OPT_STATUS:
       bb_status.runmode = BB_RUN_STATUS;
