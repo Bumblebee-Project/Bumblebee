@@ -21,8 +21,12 @@ fi
 
 # try substituted hash if any
 if [ -z "$VN" ]; then
+	git_date="$Format:%ci"
 	git_hash="$Format:%h$"
-	[ ${#git_hash} -ne 7 ] || VN="$PACKAGE_VERSION-$git_hash"
+	if ! [ "${git_hash:0:1}" = "\$" ]; then
+		git_date="${git_date%% *}"
+		VN="$PACKAGE_VERSION-$git_date-$git_hash"
+	fi
 fi
 
 # try name of directory (from github tarballs)
