@@ -42,6 +42,7 @@
 #include "bbsecondary.h"
 #include "bbrun.h"
 #include "pci.h"
+#include "driver.h"
 
 /**
  * Change GID and umask of the daemon
@@ -395,7 +396,7 @@ int main(int argc, char* argv[]) {
   bbconfig_parse_opts(argc, argv, PARSE_STAGE_PRECONF);
   GKeyFile *bbcfg = bbconfig_parse_conf();
   bbconfig_parse_opts(argc, argv, PARSE_STAGE_DRIVER);
-  check_secondary();
+  driver_detect();
   if (bbcfg) {
     bbconfig_parse_conf_driver(bbcfg, bb_config.driver);
     g_key_file_free(bbcfg);
