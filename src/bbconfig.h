@@ -111,6 +111,7 @@ struct bb_status_struct {
     pid_t x_pid;
     int x_pipe[2];//pipes for reading/writing output from X's stdout/stderr
     gboolean use_syslog;
+    char *program_name;
 };
 
 /* Structure containing the configuration. */
