@@ -32,6 +32,7 @@
 #include "bbsocket.h"
 #include "bblogger.h"
 #include "bbrun.h"
+#include "driver.h"
 
 /**
  *  Handle recieved signals - except SIGCHLD, which is handled in bbrun.c
@@ -220,9 +221,9 @@ int main(int argc, char *argv[]) {
   init_config(argc, argv);
   bbconfig_parse_opts(argc, argv, PARSE_STAGE_PRECONF);
   GKeyFile *bbcfg = bbconfig_parse_conf();
-  /* XXX load the driver (or even better, the ldpath) through the protocol!
-   * This will now not work for nvidia because nvidia sucks and the ldpath
-   * cannot be detected from the driver */
+  /* XXX load the driver (or even better, the ldpath) through the protocol */
+  bbconfig_parse_opts(argc, argv, PARSE_STAGE_DRIVER);
+  driver_detect();
   if (bbcfg) {
     bbconfig_parse_conf_driver(bbcfg, bb_config.driver);
     g_key_file_free(bbcfg);

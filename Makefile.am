@@ -29,7 +29,8 @@ endif
 
 bin_PROGRAMS = bin/bumblebeed bin/optirun
 
-bin_optirun_SOURCES = src/module.c src/bbconfig.c src/bblogger.c src/bbrun.c src/bbsocket.c src/optirun.c
+bin_optirun_SOURCES = src/module.c src/bbconfig.c src/bblogger.c src/bbrun.c \
+	src/bbsocket.c src/driver.c src/optirun.c
 bin_optirun_LDADD = ${glib_LIBS}
 bin_bumblebeed_SOURCES = src/pci.c src/bbconfig.c src/bblogger.c src/bbrun.c \
 	src/bbsocket.c src/module.c src/bbsecondary.c src/switch/switching.c \
