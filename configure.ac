@@ -60,7 +60,7 @@ AC_DEFINE_CONF(CONF_MODPATH_NVIDIA, [ModulePath for xorg modules when using nvid
 AC_DEFINE(DAEMON_NAME, "bumblebeed", "daemon name")
 
 AM_INIT_AUTOMAKE([1.10.2 -Wall foreign subdir-objects
-	tar-pax no-dist-gzip dist-xz])
+	tar-pax])
 
 AC_ARG_WITH([pidfile],
 	[AS_HELP_STRING([--without-pidfile],
