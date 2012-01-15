@@ -391,13 +391,14 @@ int main(int argc, char* argv[]) {
 
   /* first load the config to make the logging verbosity level available */
   init_config(argc, argv);
+  bbconfig_parse_opts(argc, argv, PARSE_STAGE_PRECONF);
+
   pci_bus_id_discrete = pci_find_gfx_by_vendor(PCI_VENDOR_ID_NVIDIA);
   if (!pci_bus_id_discrete) {
     bb_log(LOG_ERR, "No nVidia graphics card found, quitting.\n");
     return (EXIT_FAILURE);
   }
 
-  bbconfig_parse_opts(argc, argv, PARSE_STAGE_PRECONF);
   GKeyFile *bbcfg = bbconfig_parse_conf();
   bbconfig_parse_opts(argc, argv, PARSE_STAGE_DRIVER);
   driver_detect();

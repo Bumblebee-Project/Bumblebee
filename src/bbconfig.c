@@ -209,8 +209,6 @@ Bumblebee homepage: <https://launchpad.net/~bumblebee>\n", out);
  * @return 1 if the option has been processed, 0 otherwise
  */
 static int bbconfig_parse_common(int opt, char *value) {
-  int is_optirun = bb_status.runmode == BB_RUN_APP ||
-          bb_status.runmode == BB_RUN_STATUS;
   switch (opt) {
     case 'q'://quiet mode
       bb_status.verbosity = VERB_NONE;
@@ -226,20 +224,6 @@ static int bbconfig_parse_common(int opt, char *value) {
       break;
     case 'l'://LD driver path
       set_string_value(&bb_config.ld_path, value);
-      break;
-    case 'h':
-      print_usage(EXIT_SUCCESS);
-      break;
-    case 'V'://print version
-      printf("%s (Bumblebee) %s\n",
-              is_optirun ? "optirun" : "bumblebeed", GITVERSION);
-      printf("Copyright (C) 2011 The Bumblebee Project\n");
-      printf("License GPLv3+: GNU GPL version 3 or later"
-              " <http://gnu.org/licenses/gpl.html>.\n");
-      printf("This is free software: you are free to change and redistribute"
-              " it.\n");
-      printf("There is NO WARRANTY, to the extent permitted by law.\n");
-      exit(EXIT_SUCCESS);
       break;
     default:
       /* no options parsed */
@@ -274,6 +258,8 @@ void bbconfig_parse_opts(int argc, char *argv[], int conf_round) {
           break;
       }
     } else if (conf_round == PARSE_STAGE_PRECONF) {
+      int is_optirun = bb_status.runmode == BB_RUN_APP ||
+              bb_status.runmode == BB_RUN_STATUS;
       switch (opt) {
         case 'C':
           set_string_value(&bb_config.bb_conf_file, optarg);
@@ -283,7 +269,19 @@ void bbconfig_parse_opts(int argc, char *argv[], int conf_round) {
             bb_status.verbosity++;
           }
           break;
-        default:
+        case 'V'://print version
+          printf("%s (Bumblebee) %s\n",
+                  is_optirun ? "optirun" : "bumblebeed", GITVERSION);
+          printf("Copyright (C) 2011 The Bumblebee Project\n");
+          printf("License GPLv3+: GNU GPL version 3 or later"
+                  " <http://gnu.org/licenses/gpl.html>.\n");
+          printf("This is free software: you are free to change and redistribute"
+                  " it.\n");
+          printf("There is NO WARRANTY, to the extent permitted by law.\n");
+          exit(EXIT_SUCCESS);
+          break;
+        case 'h':
+          print_usage(EXIT_SUCCESS);
           break;
       }
     } else if (conf_round == PARSE_STAGE_DRIVER) {
