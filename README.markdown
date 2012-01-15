@@ -43,22 +43,6 @@ Building
     ./configure
     make
 
-Usage
-------
-
-The first time you install Bumblebee, the `bumblebee` group has be created.
-Users who are allowed to use Bumblebee need to be added the group:
-
-    sudo groupadd bumblebee
-    sudo usermod -a -G bumblebee $USER
-
-To test Bumblebee before installing it system-wide, run:
-
-    sudo bin/bumblebeed --daemon
-    bin/optirun -- <application>
-    
-For more information, try `--help` on either of the two binaries.
-
 Installing System-wide and Packaging
 -------------------------------------
 
@@ -91,3 +75,19 @@ For packagers you need to add DESTDIR=$pkgdir
 
 Example initscripts are available in the `scripts/` directory. Currently,
 Upstart, SystemD and SysV initscripts are available
+
+Usage
+------
+
+The first time you install Bumblebee, the `bumblebee` group has be created.
+Users who are allowed to use Bumblebee need to be added the group:
+
+    sudo groupadd bumblebee
+    sudo usermod -a -G bumblebee $USER
+
+To test Bumblebee before installing it system-wide, run:
+
+    sudo bin/bumblebeed --daemon
+    bin/optirun -- <application>
+
+For more information, try `--help` on either of the two binaries.
