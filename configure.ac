@@ -75,6 +75,12 @@ AM_CONDITIONAL([WITH_PIDFILE], [test "x$with_pidfile" != xno])
 # Checks for programs.
 AC_PROG_CC
 AM_PROG_CC_C_O
+AC_PATH_PROG([HELP2MAN], help2man)
+AM_CONDITIONAL([HAVE_HELP2MAN], [test -n "$HELP2MAN"])
+if test x"$HELP2MAN" = x; then
+	AC_MSG_WARN([cannot find help2man, you will not be able to generate
+		manpages])
+fi
 
 regular_CPPFLAGS="-D_FILE_OFFSET_BITS=64 -D_REENTRANT"
 regular_CFLAGS="-Wall -Waggregate-return \

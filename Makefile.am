@@ -73,3 +73,19 @@ endif
 
 scripts/upstart/bumblebeed.conf: scripts/upstart/bumblebeed.conf.in
 	$(do_subst) < $@.in > $@
+
+if HAVE_HELP2MAN
+man_MANS = doc/bumblebeed.1 doc/optirun.1
+
+doc/optirun.1: $(bin_optirun_SOURCES)
+	$(HELP2MAN) --output=$@ --no-info \
+		--name='run programs on the discrete video card' \
+		bin/optirun
+
+doc/bumblebeed.1: $(bin_bumblebeed_SOURCES)
+	$(HELP2MAN) --output=$@ --no-info \
+		--name='bumblebee daemon' \
+		bin/bumblebeed
+else
+	@echo "Warning: help2man not available, no man page is created."
+endif
