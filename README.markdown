@@ -85,9 +85,9 @@ Users who are allowed to use Bumblebee need to be added the group:
     sudo groupadd bumblebee
     sudo usermod -a -G bumblebee $USER
 
-To test Bumblebee before installing it system-wide, run:
+To run Bumblebee after installing it system-wide, run:
 
-    sudo bin/bumblebeed --daemon
-    bin/optirun -- <application>
+    sudo bumblebeed --daemon
+    optirun -- <application>
 
 For more information, try `--help` on either of the two binaries.
