@@ -117,12 +117,20 @@ static enum bb_pm_method bb_pm_method_from_string(char *value) {
 
 /**
  * Prints a usage message and exits with given exit code
- * @param exit_val The exit code to be passed to exit()
+ * @param exit_val The exit code to be passed to exit(). If non-zero, an hint is
+ * printed to use --help. Otherwise a help message is printed
  */
 void print_usage(int exit_val) {
   FILE *out = stdout;
   int is_optirun = bb_status.runmode == BB_RUN_APP ||
           bb_status.runmode == BB_RUN_STATUS;
+
+  if (exit_val != EXIT_SUCCESS) {
+    fprintf(stderr, "Try `%s --help' for more information.\n",
+            bb_status.program_name);
+    exit(exit_val);
+  }
+
   if (is_optirun) {
     printf("Usage: %s [OPTION]... command [command options...]\n",
             bb_status.program_name);
