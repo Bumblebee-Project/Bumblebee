@@ -21,7 +21,14 @@ endif
 CLEANFILES = $(noinst_SCRIPTS) conf/bumblebee.conf
 EXTRA_DIST = scripts/systemd/bumblebeed.service.in \
 	scripts/upstart/bumblebeed.conf.in \
-	conf/bumblebee.conf.in
+	conf/bumblebee.conf.in \
+	conf/xorg.conf.nvidia \
+	conf/xorg.conf.nouveau \
+	README.markdown doc/daemon.notes \
+	scripts/bash_completion/bumblebee \
+	version.sh
+# for laziness include all headers found
+EXTRA_DIST += src/*.h src/*/switching.h
 
 if WITH_PIDFILE
 EXTRA_DIST += scripts/sysvinit/bumblebeed.in
@@ -89,3 +96,6 @@ doc/bumblebeed.1: $(bin_bumblebeed_SOURCES)
 else
 	@echo "Warning: help2man not available, no man page is created."
 endif
+
+dist-hook:
+	echo $(PACKAGE_VERSION) > $(distdir)/VERSION

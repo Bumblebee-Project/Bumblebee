@@ -7,7 +7,9 @@ if [ -z "$PACKAGE_VERSION" ]; then
 		2>/dev/null)"
 fi
 
-if [ -d "$rootdir/.git" ]; then
+[ ! -f "$1/VERSION" ] || VN="$(cat VERSION)"
+
+if [ -z "$VN" ] && [ -d "$rootdir/.git" ]; then
 	VN=$(cd "$rootdir" &&
 		git describe --tags --match 'v[0-9]*' 2>/dev/null)
 
