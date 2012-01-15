@@ -74,6 +74,7 @@ enum verbosity_level {
     VERB_NONE,
     VERB_ERR,
     VERB_WARN,
+    VERB_NOTICE,
     VERB_INFO,
     VERB_DEBUG,
     VERB_ALL

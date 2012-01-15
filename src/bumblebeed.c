@@ -438,7 +438,7 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  bb_log(LOG_DEBUG, "%s version %s starting...\n", "bumblebeed", GITVERSION);
+  bb_log(LOG_NOTICE, "%s %s started\n", bb_status.program_name, GITVERSION);
 
   /* Daemonized if daemon flag is activated */
   if (bb_status.runmode == BB_RUN_DAEMON) {

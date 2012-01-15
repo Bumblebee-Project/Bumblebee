@@ -59,18 +59,29 @@ void bb_log(int priority, char* msg_format, ...) {
         return;
       }
       break;
-    case LOG_DEBUG:
-      if (bb_status.verbosity < VERB_DEBUG) {
-        return;
-      }
-      break;
     case LOG_WARNING:
       if (bb_status.verbosity < VERB_WARN) {
         return;
       }
       break;
-    default:
+    case LOG_NOTICE:
+      if (bb_status.verbosity < VERB_NOTICE) {
+        return;
+      }
+      break;
+    case LOG_INFO:
       if (bb_status.verbosity < VERB_INFO) {
+        return;
+      }
+      break;
+    case LOG_DEBUG:
+      if (bb_status.verbosity < VERB_DEBUG) {
+        return;
+      }
+      break;
+    default:
+      /* unspecified log level, always log it unless verbosity is NONE */
+      if (bb_status.verbosity == VERB_NONE) {
         return;
       }
       break;
