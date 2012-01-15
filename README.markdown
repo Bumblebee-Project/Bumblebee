@@ -79,8 +79,8 @@ Upstart, SystemD and SysV initscripts are available
 Usage
 ------
 
-The first time you install Bumblebee, the `bumblebee` group has be created.
-Users who are allowed to use Bumblebee need to be added the group:
+The first time you install Bumblebee, the `bumblebee` group has to be created.
+Users who are allowed to use Bumblebee need to be added to the group:
 
     sudo groupadd bumblebee
     sudo usermod -a -G bumblebee $USER
