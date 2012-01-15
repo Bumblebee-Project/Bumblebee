@@ -95,8 +95,10 @@ AC_SUBST([regular_CFLAGS])
 # Checks for header files.
 PKG_CHECK_MODULES([x11], [x11])
 PKG_CHECK_MODULES([glib], [glib-2.0])
-AS_IF([test "x$with_pidfile" != xno],
-	[PKG_CHECK_MODULES([libbsd], [libbsd >= 0.2.0])])
+AS_IF([test "x$with_pidfile" != xno], [
+		PKG_CHECK_MODULES([libbsd], [libbsd >= 0.2.0])
+		PKG_CHECK_EXISTS([libbsd = 0.2.0], [AC_DEFINE(HAVE_LIBBSD_020)])
+	])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

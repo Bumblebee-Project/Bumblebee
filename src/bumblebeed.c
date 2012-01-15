@@ -34,7 +34,11 @@
 #include <errno.h>
 #include <getopt.h>
 #ifdef WITH_PIDFILE
+#ifdef HAVE_LIBBSD_020
+#include <libutil.h>
+#else
 #include <bsd/libutil.h>
+#endif
 #endif
 #include "bbconfig.h"
 #include "bbsocket.h"
