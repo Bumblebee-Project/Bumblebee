@@ -22,6 +22,7 @@
 
 #define PCI_VENDOR_ID_NVIDIA  0x10de
 #define PCI_CLASS_DISPLAY_VGA 0x0300
+#define PCI_CLASS_DISPLAY_3D  0x0302
 
 struct pci_bus_id {
   unsigned char bus; /* 0x00 - 0xFF */
