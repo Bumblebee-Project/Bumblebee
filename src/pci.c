@@ -74,10 +74,10 @@ int pci_get_class(struct pci_bus_id *bus_id) {
  * @return A bus ID struct if a device was found, NULL if no device is found or
  * no memory could be allocated
  */
-struct pci_bus_id *pci_find_gfx_by_vendor(int vendor_id) {
+struct pci_bus_id *pci_find_gfx_by_vendor(unsigned int vendor_id) {
   FILE *fp;
   char buf[512];
-  int bus_id_numeric, vendor_device;
+  unsigned int bus_id_numeric, vendor_device;
   struct pci_bus_id *result;
 
   fp = fopen("/proc/bus/pci/devices", "r");
