@@ -83,6 +83,7 @@ scripts/upstart/bumblebeed.conf: scripts/upstart/bumblebeed.conf.in
 
 if HAVE_HELP2MAN
 man_MANS = doc/bumblebeed.1 doc/optirun.1
+CLEANFILES += $(man_MANS)
 
 doc/optirun.1: $(bin_optirun_SOURCES)
 	$(HELP2MAN) --output=$@ --no-info \
