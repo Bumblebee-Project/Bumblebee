@@ -92,12 +92,12 @@ if HAVE_HELP2MAN
 man_MANS = bumblebeed.1 optirun.1
 CLEANFILES += $(man_MANS)
 
-optirun.1: optirun $(bin_optirun_SOURCES)
+optirun.1: bin/optirun $(bin_optirun_SOURCES)
 	$(HELP2MAN) --output=$@ --no-info \
 		--name='run programs on the discrete video card' \
 		bin/optirun
 
-bumblebeed.1: bumblebeed $(bin_bumblebeed_SOURCES)
+bumblebeed.1: bin/bumblebeed $(bin_bumblebeed_SOURCES)
 	$(HELP2MAN) --output=$@ --no-info \
 		--name='bumblebee daemon' \
 		bin/bumblebeed
