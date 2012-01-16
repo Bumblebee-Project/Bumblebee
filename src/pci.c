@@ -19,6 +19,9 @@
  */
 
 #include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <libgen.h>
 #include <errno.h>
@@ -159,18 +162,17 @@ size_t pci_get_driver(char *dest, struct pci_bus_id *bus_id, size_t len) {
 /**
  * Opens a stream to the PCI configuration space
  * @param bus_id A pci_bus_id struct containing a Bus ID
- * @param mode The mode for opening the file "w" for writing, "r" for reading
+ * @param mode The mode for opening the file: O_WRONLY for writing, O_RDONLY for
+ * reading
  * @return a file handle on success, or NULL on failure
  */
-static FILE *pci_config_open(struct pci_bus_id *bus_id, const char *mode) {
+static int pci_config_open(struct pci_bus_id *bus_id, mode_t mode) {
   char config_path[41];
-  FILE *fp;
 
   snprintf(config_path, sizeof config_path,
           "/sys/bus/pci/devices/0000:%02x:%02x.%o/config", bus_id->bus,
           bus_id->slot, bus_id->func);
-  fp = fopen(config_path, mode);
-  return fp;
+  return open(config_path, mode);
 }
 
 /**
@@ -182,19 +184,20 @@ static FILE *pci_config_open(struct pci_bus_id *bus_id, const char *mode) {
  */
 int pci_config_save(struct pci_bus_id *bus_id, struct pci_config_state *pcs) {
   int i, is_saved = 1;
-  FILE *fp = pci_config_open(bus_id, "r");
-  if (!fp) {
+  int fd = pci_config_open(bus_id, O_RDONLY);
+  if (fd == -1) {
     return errno;
   }
   bb_log(LOG_DEBUG, "Saving PCI configuration space...\n");
   for (i = 0; i < 16; i++) {
-    if (fread(&pcs->saved_config_space[i], sizeof (int32_t), 1, fp) == 0) {
+    /* read 32 bits (8 bytes) from the PCI configuration space */
+    if (read(fd, &pcs->saved_config_space[i], 4) != 4) {
       bb_log(LOG_WARNING, "failed to retrieve config space value at offset"
                 " %#x\n", i);
       is_saved = 0;
     }
   }
-  fclose(fp);
+  close(fd);
   pcs->state_saved = is_saved;
   return 0;
 }
@@ -208,20 +211,20 @@ int pci_config_save(struct pci_bus_id *bus_id, struct pci_config_state *pcs) {
  */
 int pci_config_restore(struct pci_bus_id *bus_id, struct pci_config_state *pcs) {
   int i;
-  FILE *fp_write, *fp_read;
+  int fd_write, fd_read;
   if (!pcs->state_saved) {
     /* nothing to restore, so success? */
     bb_log(LOG_DEBUG, "there is no PCI configuration space to restore\n");
     return 0;
   }
-  fp_write = pci_config_open(bus_id, "w");
-  if (!fp_write) {
+  fd_write = pci_config_open(bus_id, O_WRONLY);
+  if (fd_write == -1) {
     return errno;
   }
-  fp_read = pci_config_open(bus_id, "r");
-  if (!fp_read) {
+  fd_read = pci_config_open(bus_id, O_RDONLY);
+  if (fd_read == -1) {
     int err = errno;
-    fclose(fp_write);
+    close(fd_write);
     return err;
   }
 
@@ -229,19 +232,27 @@ int pci_config_restore(struct pci_bus_id *bus_id, struct pci_config_state *pcs) 
 
   for (i = 15; i >= 0; i--) {
     int32_t val;
-    fseek(fp_read, 4 * i, SEEK_SET);
-    if (fread(&val, sizeof (int32_t), 1, fp_read) == 0) {
+
+    lseek(fd_read, 4 * i, SEEK_SET);
+    if (read(fd_read, &val, 4) == 0) {
       bb_log(LOG_WARNING, "failed to retrieve config space value at offset"
               " %#x - not writing\n", i);
     } else if (val != pcs->saved_config_space[i]) {
       bb_log(LOG_DEBUG, "restoring config space at offset %#x (was %#x, writing"
               " %#x)\n", i, val, pcs->saved_config_space[i]);
-      fseek(fp_write, 4 * i, SEEK_SET);
-      (void) fwrite(&pcs->saved_config_space[i], sizeof (int32_t), 1, fp_write);
+      lseek(fd_write, 4 * i, SEEK_SET);
+
+      int written_bytes = write(fd_write, &pcs->saved_config_space[i], 4) != 4;
+      if (written_bytes != 4) {
+        /* this is unlikely to happen, but not sure if it will never happen */
+        bb_log(LOG_WARNING, "The PCI config space could not be written fully at"
+                " offset %#x; %i bytes have been written; error: %s",
+                i, written_bytes, strerror(errno));
+      }
     }
   }
-  fclose(fp_read);
-  fclose(fp_write);
+  close(fd_read);
+  close(fd_write);
   pcs->state_saved = 0;
   return 0;
 }
