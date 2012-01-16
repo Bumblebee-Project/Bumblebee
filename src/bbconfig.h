@@ -63,6 +63,7 @@ enum {
     OPT_DRIVER = CHAR_MAX + 1,
     OPT_FAILSAFE,
     OPT_NO_FAILSAFE,
+    OPT_VGL_OPTIONS,
     OPT_STATUS,
     OPT_PIDFILE,
     OPT_USE_SYSLOG,
@@ -128,6 +129,7 @@ struct bb_config_struct {
     int stop_on_exit; /// Whether to stop the X server on last optirun instance exit.
     int fallback_start; /// Wheter the application should be launched on the integrated card when X is not available.
     char * vgl_compress; /// VGL transport method.
+    char *vglrun_options; /* extra options passed to vglrun */
     char * driver; /// Driver to use (nvidia or nouveau).
     char * module_name; /* Kernel module to be loaded for the driver.
                                     * If empty, driver will be used. This is

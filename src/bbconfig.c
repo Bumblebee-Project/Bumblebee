@@ -148,7 +148,12 @@ void print_usage(int exit_val) {
                                VirtualGL. Valid values for METHOD are proxy,\n\
                                jpeg, rgb, xv and yuv\n\
       --failsafe      run a program even if the nvidia card is unavailable\n\
-      --no-failsafe   do not run a program if the nvidia card is unavailable\n",
+      --no-failsafe   do not run a program if the nvidia card is unavailable\n\
+      --vgl-options OPTS   a space-separated list of command options to be\n\
+                             passed to vglrun. Useful for debugging virtualgl\n\
+                             by passing options to it like +tr. These OPTS\n\
+                             override the settings from optirun so be careful\n\
+                             with setting it\n",
             out);
   } else {
     //server-only options

@@ -128,7 +128,21 @@ static int run_app(int argc, char *argv[]) {
             };
             bb_run_fork(vglclient_args, 0);
           }
-          char ** vglrun_args = malloc(sizeof (char *) * (9 + argc - optind));
+          /* number of options passed to --vgl-options */
+          unsigned int vglrun_opts_count = 0;
+          char *next_arg = bb_config.vglrun_options;
+          /* read vglrun options only if there is an arguments list */
+          if (next_arg && next_arg[0]) {
+            do {
+              ++vglrun_opts_count;
+            } while ((next_arg = strchr(next_arg + 1, ' ')));
+          }
+          /* position of next option */
+          unsigned int optno = 0;
+
+          /* 7 for the first options, 1 for the -- and 1 for the trailing 0 */
+          char ** vglrun_args = malloc(sizeof (char *) *
+                  (9 + vglrun_opts_count + argc - optind));
           vglrun_args[0] = "vglrun";
           vglrun_args[1] = "-c";
           vglrun_args[2] = bb_config.vgl_compress;
@@ -136,11 +150,29 @@ static int run_app(int argc, char *argv[]) {
           vglrun_args[4] = bb_config.x_display;
           vglrun_args[5] = "-ld";
           vglrun_args[6] = bb_config.ld_path;
-          vglrun_args[7] = "--";
-          for (r = 0; r < argc - optind; r++) {
-            vglrun_args[8 + r] = argv[optind + r];
+          optno = 7;
+
+          next_arg = bb_config.vglrun_options;
+          if (next_arg && next_arg[0]) {
+            char *current_arg;
+            do {
+              current_arg = next_arg;
+              next_arg = strchr(current_arg, ' ');
+              /* cut the string if a space is found */
+              if (next_arg) {
+                *next_arg = 0;
+                /* the next argument starts at the position after the space */
+                next_arg++;
+              }
+              vglrun_args[optno++] = current_arg;
+            } while (next_arg);
           }
-          vglrun_args[8 + r] = 0;
+
+          vglrun_args[optno++] = "--";
+          for (r = 0; r < argc - optind; r++) {
+            vglrun_args[r + optno++] = argv[optind + r];
+          }
+          vglrun_args[optno] = 0;
           exitcode = bb_run_fork(vglrun_args, 0);
           free(vglrun_args);
           socketClose(&bb_status.bb_socket);
@@ -175,6 +207,7 @@ const struct option *bbconfig_get_lopts(void) {
     {"failsafe", 0, 0, OPT_FAILSAFE},
     {"no-failsafe", 0, 0, OPT_NO_FAILSAFE},
     {"vgl-compress", 1, 0, 'c'},
+    {"vgl-options", 1, 0, OPT_VGL_OPTIONS},
     {"status", 0, 0, OPT_STATUS},
     BBCONFIG_COMMON_LOPTS
   };
@@ -197,6 +230,9 @@ int bbconfig_parse_options(int opt, char *value) {
       break;
     case OPT_NO_FAILSAFE:
       bb_config.fallback_start = 0;
+      break;
+    case OPT_VGL_OPTIONS:
+      set_string_value(&bb_config.vglrun_options, value);
       break;
     case OPT_STATUS:
       bb_status.runmode = BB_RUN_STATUS;
