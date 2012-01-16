@@ -18,5 +18,5 @@ Makefile.in
 /scripts/sysvinit/bumblebeed
 /scripts/upstart/bumblebeed.conf
 /scripts/bumblebee-bugreport
-/doc/optirun.1
-/doc/bumblebeed.1
+/optirun.1
+/bumblebeed.1
