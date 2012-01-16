@@ -126,7 +126,7 @@ static int run_app(int argc, char *argv[]) {
               "-detach",
               0
             };
-            bb_run_fork(vglclient_args, 0);
+            bb_run_fork(vglclient_args, 1);
           }
           /* number of options passed to --vgl-options */
           unsigned int vglrun_opts_count = 0;
