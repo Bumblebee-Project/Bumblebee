@@ -139,23 +139,41 @@ static void parse_xorg_output(char * string){
 
   /* Error lines are errors. */
   if (strncmp(string, "(EE)", 4) == 0){
-    /* prefix with [XORG] */
-    snprintf(error_buffer, sizeof error_buffer, "[XORG] %s", string);
-    set_bb_error(error_buffer);//set as error
-    /* errors are handled seperately from the rest - return */
-    return;
+    if (strstr(string, "Failed to load module \"kbd\"") ||
+            strstr(string, "No input driver matching")) {
+      /* non-fatal errors */
+      prio = LOG_DEBUG;
+    } else {
+      /* prefix with [XORG] */
+      snprintf(error_buffer, sizeof error_buffer, "[XORG] %s", string);
+      set_bb_error(error_buffer);//set as error
+      /* errors are handled seperately from the rest - return */
+      return;
+    }
   }
 
   /* Warning lines are warnings. */
   if (strncmp(string, "(WW)", 4) == 0){
     prio = LOG_WARNING;
     /* recognize some of the less useful warnings, degrade them to LOG_DEBUG level. */
-    if (strstr(string, "trying again")){prio = LOG_DEBUG;}/* nouveau: warning about no outputs being found connected */
-    if (strstr(string, "initial framebuffer")){prio = LOG_DEBUG;}/* nouveau: warning for set resolution with no screen attached */
-    if (strstr(string, "looking for one")){prio = LOG_DEBUG;}/* X: no keyboard/mouse warning */
-    if (strstr(string, "EDID")){prio = LOG_DEBUG;}/* nvidia: cannot read EDID warning */
-    /* Recognize nvidia complaining about ConnectedMonitor setting */
-    if (strstr(string, "valid display devices are")){
+    if (
+            /* nouveau: warning about no outputs being found connected */
+            strstr(string, "trying again") ||
+            /* nouveau: warning for set resolution with no screen attached */
+            strstr(string, "initial framebuffer") ||
+            /* X: no keyboard/mouse warning */
+            strstr(string, "looking for one") ||
+            /* nvidia: cannot read EDID warning */
+            strstr(string, "EDID") ||
+            /* fonts directory that cannot be found */
+            strstr(string, "The directory \"") ||
+            /* kbd module that is trying to get loaded */
+            strstr(string, "couldn't open module kbd") ||
+            /* we're not interested in input drivers */
+            strstr(string, "No input driver matching")) {
+      prio = LOG_DEBUG;
+    } else if (strstr(string, "valid display devices are")) {
+      /* Recognize nvidia complaining about ConnectedMonitor setting */
       valid = strchr(string, '\'');//find the '-character
       if (valid){
         char last_chr = 0;
