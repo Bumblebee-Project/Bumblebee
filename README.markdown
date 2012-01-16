@@ -16,6 +16,7 @@ Build Requirements
 - glib-2.0 and development headers
 - libx11 and development headers
 - libbsd and development headers (if pidfile support is enabled, default yes)
+- help2man (optional, it is needed for building manual pages)
 
 Runtime dependencies
 --------------------
@@ -43,14 +44,6 @@ Building
     ./configure
     make
 
-Usage
-------
-
-    sudo bin/bumblebeed --daemon
-    bin/optirun -- <application>
-    
-For more information, try --help on either of the two binaries.
-
 Installing System-wide and Packaging
 -------------------------------------
 
@@ -72,10 +65,30 @@ For all available options, run:
 
     ./configure --help
 
-After building the binaries they can be installed using make:
+After building the binaries and bash completion script, it can be installed
+using `make`:
 
     sudo make install
 
 For packagers you need to add DESTDIR=$pkgdir
 
     make install DESTDIR=$pkgdir
+
+Example initscripts are available in the `scripts/` directory. Currently,
+Upstart, SystemD and SysV initscripts are available
+
+Usage
+------
+
+The first time you install Bumblebee, the `bumblebee` group has to be created.
+Users who are allowed to use Bumblebee need to be added to the group:
+
+    sudo groupadd bumblebee
+    sudo usermod -a -G bumblebee $USER
+
+To run Bumblebee after installing it system-wide, run:
+
+    sudo bumblebeed --daemon
+    optirun -- <application>
+
+For more information, try `--help` on either of the two binaries.

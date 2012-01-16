@@ -20,18 +20,5 @@
 
 #pragma once
 
-#define PCI_VENDOR_ID_NVIDIA  0x10de
-#define PCI_VENDOR_ID_INTEL   0x8086
-#define PCI_CLASS_DISPLAY_VGA 0x0300
-#define PCI_CLASS_DISPLAY_3D  0x0302
-
-struct pci_bus_id {
-  unsigned char bus; /* 0x00 - 0xFF */
-  unsigned char slot; /* 0x00 - 0x1F */
-  unsigned char func; /* 0 - 7 */
-};
-
-int pci_parse_bus_id(struct pci_bus_id *dest, int bus_id_numeric);
-int pci_get_class(struct pci_bus_id *bus_id);
-struct pci_bus_id *pci_find_gfx_by_vendor(unsigned int vendor_id);
-size_t pci_get_driver(char *dest, struct pci_bus_id *bus_id, size_t len);
+/* Check what drivers are available and autodetect if possible */
+void driver_detect(void);

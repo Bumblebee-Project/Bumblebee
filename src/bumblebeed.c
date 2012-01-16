@@ -34,7 +34,11 @@
 #include <errno.h>
 #include <getopt.h>
 #ifdef WITH_PIDFILE
+#ifdef HAVE_LIBBSD_020
+#include <libutil.h>
+#else
 #include <bsd/libutil.h>
+#endif
 #endif
 #include "bbconfig.h"
 #include "bbsocket.h"
@@ -42,6 +46,7 @@
 #include "bbsecondary.h"
 #include "bbrun.h"
 #include "pci.h"
+#include "driver.h"
 
 /**
  * Change GID and umask of the daemon
@@ -218,7 +223,7 @@ static void main_loop(void) {
   struct clientsocket *client;
   struct clientsocket *last = 0; // the last client
 
-  bb_log(LOG_INFO, "Started main loop\n");
+  bb_log(LOG_INFO, "Initialization completed - now handling client requests\n");
   /* Listen for Optirun conections and act accordingly */
   while (bb_status.bb_socket != -1) {
     usleep(100000); //sleep 100ms to prevent 100% CPU time usage
@@ -386,16 +391,23 @@ int main(int argc, char* argv[]) {
 
   /* first load the config to make the logging verbosity level available */
   init_config(argc, argv);
+  bbconfig_parse_opts(argc, argv, PARSE_STAGE_PRECONF);
+
   pci_bus_id_discrete = pci_find_gfx_by_vendor(PCI_VENDOR_ID_NVIDIA);
   if (!pci_bus_id_discrete) {
     bb_log(LOG_ERR, "No nVidia graphics card found, quitting.\n");
     return (EXIT_FAILURE);
   }
+  struct pci_bus_id *pci_id_igd = pci_find_gfx_by_vendor(PCI_VENDOR_ID_INTEL);
+  if (!pci_id_igd) {
+    bb_log(LOG_ERR, "No Optimus system detected, quitting.\n");
+    return (EXIT_FAILURE);
+  }
+  free(pci_id_igd);
 
-  bbconfig_parse_opts(argc, argv, PARSE_STAGE_PRECONF);
   GKeyFile *bbcfg = bbconfig_parse_conf();
   bbconfig_parse_opts(argc, argv, PARSE_STAGE_DRIVER);
-  check_secondary();
+  driver_detect();
   if (bbcfg) {
     bbconfig_parse_conf_driver(bbcfg, bb_config.driver);
     g_key_file_free(bbcfg);
@@ -437,7 +449,7 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  bb_log(LOG_DEBUG, "%s version %s starting...\n", "bumblebeed", GITVERSION);
+  bb_log(LOG_NOTICE, "%s %s started\n", bb_status.program_name, GITVERSION);
 
   /* Daemonized if daemon flag is activated */
   if (bb_status.runmode == BB_RUN_DAEMON) {

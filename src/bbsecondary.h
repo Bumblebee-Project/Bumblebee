@@ -39,10 +39,7 @@ void start_secondary(void);
 /// Kill the second X server if any, turn card off if requested.
 void stop_secondary(void);
 
-/// Checks what methods are available and what drivers are installed.
-void check_secondary(void);
-
-/* check for the availability of a PM method */
+/* check for the availability of PM methods */
 void check_pm_method(void);
 
 /// Returns 0 if card is off, 1 if card is on, -1 if not-switchable.

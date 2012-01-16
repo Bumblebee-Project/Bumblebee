@@ -1,4 +1,3 @@
-#!/bin/bash
 # bash completion for bumblebee
 
 _optirun() {

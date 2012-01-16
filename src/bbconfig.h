@@ -51,6 +51,7 @@ enum {
     {"config", 1, 0, 'C'},\
     {"help", 0, 0, 'h'},\
     {"version", 0, 0, 'V'},\
+    {"debug", 0, 0, OPT_DEBUG},\
     {0, 0, 0, 0}
 
 const char *bbconfig_get_optstr(void);
@@ -61,9 +62,12 @@ int bbconfig_parse_options(int opt, char *value);
 enum {
     OPT_DRIVER = CHAR_MAX + 1,
     OPT_FAILSAFE,
+    OPT_NO_FAILSAFE,
+    OPT_VGL_OPTIONS,
     OPT_STATUS,
     OPT_PIDFILE,
     OPT_USE_SYSLOG,
+    OPT_DEBUG
 };
 
 /* Verbosity levels */
@@ -71,6 +75,7 @@ enum verbosity_level {
     VERB_NONE,
     VERB_ERR,
     VERB_WARN,
+    VERB_NOTICE,
     VERB_INFO,
     VERB_DEBUG,
     VERB_ALL
@@ -108,6 +113,7 @@ struct bb_status_struct {
     pid_t x_pid;
     int x_pipe[2];//pipes for reading/writing output from X's stdout/stderr
     gboolean use_syslog;
+    char *program_name;
 };
 
 /* Structure containing the configuration. */
@@ -123,6 +129,7 @@ struct bb_config_struct {
     int stop_on_exit; /// Whether to stop the X server on last optirun instance exit.
     int fallback_start; /// Wheter the application should be launched on the integrated card when X is not available.
     char * vgl_compress; /// VGL transport method.
+    char *vglrun_options; /* extra options passed to vglrun */
     char * driver; /// Driver to use (nvidia or nouveau).
     char * module_name; /* Kernel module to be loaded for the driver.
                                     * If empty, driver will be used. This is

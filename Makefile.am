@@ -18,10 +18,20 @@ if WITH_PIDFILE
 noinst_SCRIPTS += scripts/sysvinit/bumblebeed
 endif
 
+noinst_SCRIPTS += scripts/bumblebee-bugreport
+
 CLEANFILES = $(noinst_SCRIPTS) conf/bumblebee.conf
 EXTRA_DIST = scripts/systemd/bumblebeed.service.in \
 	scripts/upstart/bumblebeed.conf.in \
-	conf/bumblebee.conf.in
+	conf/bumblebee.conf.in \
+	conf/xorg.conf.nvidia \
+	conf/xorg.conf.nouveau \
+	README.markdown \
+	scripts/bash_completion/bumblebee \
+	scripts/bumblebee-bugreport.in \
+	version.sh
+# for laziness include all headers found
+EXTRA_DIST += src/*.h src/*/switching.h
 
 if WITH_PIDFILE
 EXTRA_DIST += scripts/sysvinit/bumblebeed.in
@@ -29,10 +39,13 @@ endif
 
 bin_PROGRAMS = bin/bumblebeed bin/optirun
 
-bin_optirun_SOURCES = src/module.c src/bbconfig.c src/bblogger.c src/bbrun.c src/bbsocket.c src/optirun.c
+bin_optirun_SOURCES = src/module.c src/bbconfig.c src/bblogger.c src/bbrun.c \
+	src/bbsocket.c src/driver.c src/optirun.c
 bin_optirun_LDADD = ${glib_LIBS}
-bin_bumblebeed_SOURCES = src/pci.c src/bbconfig.c src/bblogger.c src/bbrun.c src/bbsocket.c src/module.c src/bbsecondary.c \
-	src/switch/switching.c src/switch/sw_bbswitch.c src/switch/sw_switcheroo.c src/bumblebeed.c
+bin_bumblebeed_SOURCES = src/pci.c src/bbconfig.c src/bblogger.c src/bbrun.c \
+	src/bbsocket.c src/module.c src/bbsecondary.c src/switch/switching.c \
+	src/switch/sw_bbswitch.c src/switch/sw_switcheroo.c \
+	src/driver.c src/bumblebeed.c
 bin_bumblebeed_LDADD = ${x11_LIBS} ${libbsd_LIBS} ${glib_LIBS}
 
 bumblebeedconf_DATA = conf/bumblebee.conf conf/xorg.conf.nouveau conf/xorg.conf.nvidia
@@ -40,7 +53,8 @@ bumblebeedconf_DATA = conf/bumblebee.conf conf/xorg.conf.nouveau conf/xorg.conf.
 completiondir = $(sysconfdir)/bash_completion.d
 completion_DATA = scripts/bash_completion/bumblebee
 
-do_subst = sed -e 's|[@]CONF_XDISP[@]|$(CONF_XDISP)|g' \
+do_subst = sed -e 's|[@]GITVERSION[@]|$(GITVERSION)|g' \
+	-e 's|[@]CONF_XDISP[@]|$(CONF_XDISP)|g' \
 	-e 's|[@]CONF_SOCKPATH[@]|$(CONF_SOCKPATH)|g' \
 	-e 's|[@]CONF_GID[@]|$(CONF_GID)|g' \
 	-e 's|[@]CONF_PM_METHOD[@]|$(CONF_PM_METHOD)|g' \
@@ -63,6 +77,9 @@ conf/bumblebee.conf: conf/bumblebee.conf.in
 scripts/systemd/bumblebeed.service: scripts/systemd/bumblebeed.service.in
 	$(do_subst) < $@.in > $@
 
+scripts/bumblebee-bugreport: scripts/bumblebee-bugreport.in
+	$(do_subst) < $@.in > $@
+
 if WITH_PIDFILE
 scripts/sysvinit/bumblebeed: scripts/sysvinit/bumblebeed.in
 	$(do_subst) < $@.in > $@
@@ -70,3 +87,23 @@ endif
 
 scripts/upstart/bumblebeed.conf: scripts/upstart/bumblebeed.conf.in
 	$(do_subst) < $@.in > $@
+
+if HAVE_HELP2MAN
+man_MANS = bumblebeed.1 optirun.1
+CLEANFILES += $(man_MANS)
+
+optirun.1: bin/optirun $(bin_optirun_SOURCES)
+	$(HELP2MAN) --output=$@ --no-info \
+		--name='run programs on the discrete video card' \
+		bin/optirun
+
+bumblebeed.1: bin/bumblebeed $(bin_bumblebeed_SOURCES)
+	$(HELP2MAN) --output=$@ --no-info \
+		--name='bumblebee daemon' \
+		bin/bumblebeed
+else
+	@echo "Warning: help2man not available, no man page is created."
+endif
+
+dist-hook:
+	echo $(PACKAGE_VERSION) > $(distdir)/VERSION
