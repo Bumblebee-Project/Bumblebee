@@ -16,6 +16,7 @@ Build Requirements
 - glib-2.0 and development headers
 - libx11 and development headers
 - libbsd and development headers (if pidfile support is enabled, default yes)
+- help2man (optional, it is needed for building manual pages)
 
 Runtime dependencies
 --------------------
