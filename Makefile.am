@@ -18,6 +18,8 @@ if WITH_PIDFILE
 noinst_SCRIPTS += scripts/sysvinit/bumblebeed
 endif
 
+dist_bin_SCRIPTS = scripts/bumblebee-bugreport
+
 CLEANFILES = $(noinst_SCRIPTS) conf/bumblebee.conf
 EXTRA_DIST = scripts/systemd/bumblebeed.service.in \
 	scripts/upstart/bumblebeed.conf.in \
@@ -50,7 +52,8 @@ bumblebeedconf_DATA = conf/bumblebee.conf conf/xorg.conf.nouveau conf/xorg.conf.
 completiondir = $(sysconfdir)/bash_completion.d
 completion_DATA = scripts/bash_completion/bumblebee
 
-do_subst = sed -e 's|[@]CONF_XDISP[@]|$(CONF_XDISP)|g' \
+do_subst = sed -e 's|[@]GITVERSION[@]|$(GITVERSION)|g' \
+	-e 's|[@]CONF_XDISP[@]|$(CONF_XDISP)|g' \
 	-e 's|[@]CONF_SOCKPATH[@]|$(CONF_SOCKPATH)|g' \
 	-e 's|[@]CONF_GID[@]|$(CONF_GID)|g' \
 	-e 's|[@]CONF_PM_METHOD[@]|$(CONF_PM_METHOD)|g' \
@@ -71,6 +74,9 @@ conf/bumblebee.conf: conf/bumblebee.conf.in
 	$(do_subst) < $@.in > $@
 
 scripts/systemd/bumblebeed.service: scripts/systemd/bumblebeed.service.in
+	$(do_subst) < $@.in > $@
+
+scripts/bumblebee-bugreport: scripts/bumblebee-bugreport.in
 	$(do_subst) < $@.in > $@
 
 if WITH_PIDFILE
