@@ -144,7 +144,9 @@ void print_usage(int exit_val) {
   if (is_optirun) {
     //client-only options
     fputs("\
-  -c, --vgl-compress METHOD     transport method to use for VirtualGL\n\
+  -c, --vgl-compress METHOD  image compression or transport to use with \n\
+                               VirtualGL. Valid values for METHOD are proxy,\n\
+                               jpeg, rgb, xv and yuv\n\
       --failsafe      run a program even if the nvidia card is unavailable\n\
       --no-failsafe   do not run a program if the nvidia card is unavailable\n",
             out);
