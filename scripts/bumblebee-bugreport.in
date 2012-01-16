@@ -19,6 +19,7 @@
 BUMBLEBEE_VERSION='@GITVERSION@'
 CONFDIR='@BBCONFDIR@'
 BINDIR='@BINDIR@'
+SBINDIR='@SBINDIR@'
 
 if (( EUID != 0 )); then
     echo "Certain system information can only be gathered as root. This"
@@ -234,7 +235,7 @@ for bin in $(which glxgears glxspheres xdriinfo 2>/dev/null); do
 done
 
 header "Locations of files"
-for file in "$BINDIR/bumblebeed" "$BINDIR/optirun" \
+for file in "$SBINDIR/bumblebeed" "$BINDIR/optirun" \
     $(which optirun bumblebeed bumblebee vglrun vglconnect 2>/dev/null); do
     if [ -e "$file" ]; then
         ls -la "$file"

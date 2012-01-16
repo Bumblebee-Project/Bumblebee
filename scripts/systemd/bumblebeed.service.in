@@ -4,7 +4,7 @@ Description=Bumblebee C Daemon
 [Service]
 Type=simple
 CPUSchedulingPolicy=idle
-ExecStart=@BINDIR@/bumblebeed
+ExecStart=@SBINDIR@/bumblebeed
 Restart=always
 RestartSec=60
 StandardOutput=kmsg
