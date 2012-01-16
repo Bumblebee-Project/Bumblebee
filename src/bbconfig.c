@@ -178,7 +178,7 @@ void print_usage(int exit_val) {
   fputs("\
   -q, --quiet, --silent   supresses all logging messages\n\
   -v, --verbose           increase the verbosity level of log messages. It\n\
-                            can be specified up to three times (or six if\n\
+                            can be specified up to two times (or five if\n\
                             --quiet is used)\n\
       --debug             show all logging messsages by setting the verbosity\n\
                             level to the maximum\n\
