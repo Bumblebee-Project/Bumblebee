@@ -34,6 +34,7 @@
 #include <fcntl.h>
 #include "bbsocket.h"
 #include "bblogger.h"
+#include "bbconfig.h"
 
 #ifdef __FreeBSD__
 #include <netinet/in.h>
@@ -66,8 +67,17 @@ int socketConnect(char * address, int nonblock) {
       fcntl(sock, F_SETFL, flags);
     }
   } else {
-    //connection fail
-    bb_log(LOG_ERR, "Could not connect to %s! Error: %s\n", address, strerror(errno));
+    if (errno == EACCES) {
+      bb_log(LOG_ERR, "You've no permission to communicate with the Bumblebee"
+              " daemon. Try adding yourself to the '%s' group\n",
+              bb_config.gid_name);
+    } else if (errno == ENOENT) {
+      bb_log(LOG_ERR, "The Bumblebee daemon has not been started yet or the"
+              " socket path %s was incorrect.\n", address);
+    } else {
+      bb_log(LOG_ERR, "Could not connect to %s! Error: %s\n", address,
+              strerror(errno));
+    }
     //close the socket and set it to -1
     socketClose(&sock);
   }

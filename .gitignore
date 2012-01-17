@@ -17,3 +17,6 @@ Makefile.in
 /scripts/systemd/bumblebeed.service
 /scripts/sysvinit/bumblebeed
 /scripts/upstart/bumblebeed.conf
+/scripts/bumblebee-bugreport
+/optirun.1
+/bumblebeed.1

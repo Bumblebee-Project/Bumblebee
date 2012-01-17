@@ -116,58 +116,96 @@ static enum bb_pm_method bb_pm_method_from_string(char *value) {
 }
 
 /**
- * Prints a single line, for use by print_usage, with alignment
- * @param opt Name of option to be displayed
- * @param desc Description of option
- */
-static void print_usage_line(char *opt, char *desc) {
-  printf("  %-35s%s\n", opt, desc);
-}
-
-/**
  * Prints a usage message and exits with given exit code
- * @param exit_val The exit code to be passed to exit()
+ * @param exit_val The exit code to be passed to exit(). If non-zero, an hint is
+ * printed to use --help. Otherwise a help message is printed
  */
 void print_usage(int exit_val) {
+  FILE *out = stdout;
   int is_optirun = bb_status.runmode == BB_RUN_APP ||
           bb_status.runmode == BB_RUN_STATUS;
-  printf("%s version %s\n\n", "Bumblebee", GITVERSION);
-  if (is_optirun) {
-    printf("Usage: %s [options] [--] [application to run] [application options]"
-            "\n", "optirun");
-  } else {
-    printf("Usage: %s [options]\n", "bumblebeed");
+
+  if (exit_val != EXIT_SUCCESS) {
+    fprintf(stderr, "Try `%s --help' for more information.\n",
+            bb_status.program_name);
+    exit(exit_val);
   }
-  printf(" Options:\n");
+
+  if (is_optirun) {
+    printf("Usage: %s [OPTION]... command [command options...]\n",
+            bb_status.program_name);
+    fputs("Run an application using the discrete video card.\n", out);
+  } else {
+    printf("Usage: %s [OPTION]...\n", bb_status.program_name);
+    fputs("Daemon for controlling the discrete nVidia video card on Optimus"
+            " systems.\n", out);
+  }
+  printf("\n");
   if (is_optirun) {
     //client-only options
-    print_usage_line("--vgl-compress / -c [METHOD]", "Connection method to use for VirtualGL.");
-    print_usage_line("--failsafe={true|false}", "If true, the program is run"
-            " even if the nvidia card is unavailable");
+    fputs("\
+  -c, --vgl-compress METHOD  image compression or transport to use with \n\
+                               VirtualGL. Valid values for METHOD are proxy,\n\
+                               jpeg, rgb, xv and yuv\n\
+      --failsafe      run a program even if the nvidia card is unavailable\n\
+      --no-failsafe   do not run a program if the nvidia card is unavailable\n\
+      --vgl-options OPTS   a space-separated list of command options to be\n\
+                             passed to vglrun. Useful for debugging virtualgl\n\
+                             by passing options to it like +tr. These OPTS\n\
+                             override the settings from optirun so be careful\n\
+                             with setting it\n",
+            out);
   } else {
     //server-only options
-    print_usage_line("--daemon / -D", "Run as daemon (implies --use-syslog)");
-    print_usage_line("--xconf / -x [PATH]", "xorg.conf file to use.");
-    print_usage_line("--group / -g [GROUPNAME]", "Name of group to change to.");
-    print_usage_line("--driver [nvidia / nouveau]", "Force use of a certain GPU driver.");
-    print_usage_line("--module-path / -m [PATH]", "ModulePath to use for xorg (nvidia-only).");
-    print_usage_line("--driver-module / -k [NAME]", "Name of kernel module to be"
-            " loaded if different from the driver");
+    fputs("\
+  -D, --daemon          run daemonized (backgrounded). Implies --use-syslog\n\
+  -x, --xconf FILE      xorg.conf file to use\n\
+  -g, --group GROUP     allow GROUP to communicate with the daemon\n\
+      --driver DRIVER   the driver to use for the nvidia card. Valid values\n\
+                          are nouveau and nvidia. This option also effects\n\
+                          the driver section that will be used from the\n\
+                          configuration file\n\
+  -m, --module-path PATH  ModulePath to use for Xorg (only useful for nvidia)\n\
+  -k, --driver-module NAME    Name of kernel module to be loaded if different\n\
+                                from the driver\n", out);
 #ifdef WITH_PIDFILE
-    print_usage_line("--pidfile", "File in which the PID is written");
-    print_usage_line("--use-syslog", "Redirect messages to syslog");
+    fputs("\
+      --pidfile         file in which the process ID is written\n\
+      --use-syslog      redirect all messages to syslog\n", out);
 #endif
   }
-  //common options
-  print_usage_line("--quiet / --silent / -q", "Be quiet (sets verbosity to zero)");
-  print_usage_line("--verbose / -v", "Be more verbose (can be used multiple times)");
-  print_usage_line("--debug", "Enable all messsages (sets verbosity to maximum)");
-  print_usage_line("--display / -d [DISPLAY NAME]", "X display number to use.");
-  print_usage_line("--config / -C [PATH]", "Configuration file to use.");
-  print_usage_line("--ldpath / -l [PATH]", "LD driver path to use (nvidia-only).");
-  print_usage_line("--socket / -s [PATH]", "Unix socket to use.");
-  print_usage_line("--help / -h", "Show this help screen.");
-  printf("\n");
+  /* common options */
+  fputs("\
+  -q, --quiet, --silent   supresses all logging messages\n\
+  -v, --verbose           increase the verbosity level of log messages. It\n\
+                            can be specified up to two times (or five if\n\
+                            --quiet is used)\n\
+      --debug             show all logging messsages by setting the verbosity\n\
+                            level to the maximum\n\
+  -d, --display DISPLAY   the X display number to use\n\
+  -C, --config FILE       retrieve settings for Bumblebee from FILE\n", out);
+  if (is_optirun) {
+    fputs("\
+  -l, --ldpath PATH       libraries like libGL.so are searched in PATH\n\
+                            (useful for the nvidia driver)\n", out);
+  } else {
+    fputs("\
+  -l, --ldpath PATH       libraries like nvidia_drv.so are searched in PATH\n\
+                            (useful for the nvidia driver)\n", out);
+  }
+  fputs("\
+  -s, --socket FILENAME   use FILENAME for communication with the daemon\n\
+  -h, --help              display this help and exit\n\
+  --version               output version information and exit\n", out);
+  if (is_optirun) {
+    fputs("\n\
+Examples:\n\
+  optirun glxspheres      Runs the graphics demo supplied with virtualgl\n\
+  optirun firefox http://example.com    Run a program with arguments\n", out);
+  }
+  fputs("\n\
+Report bugs on <https://github.com/Bumblebee-Project/Bumblebee/issues>\n\
+Bumblebee homepage: <https://launchpad.net/~bumblebee>\n", out);
   exit(exit_val);
 }
 
@@ -193,13 +231,6 @@ static int bbconfig_parse_common(int opt, char *value) {
       break;
     case 'l'://LD driver path
       set_string_value(&bb_config.ld_path, value);
-      break;
-    case 'h':
-      print_usage(EXIT_SUCCESS);
-      break;
-    case 'V'://print version
-      printf("Version: %s\n", GITVERSION);
-      exit(EXIT_SUCCESS);
       break;
     default:
       /* no options parsed */
@@ -234,6 +265,8 @@ void bbconfig_parse_opts(int argc, char *argv[], int conf_round) {
           break;
       }
     } else if (conf_round == PARSE_STAGE_PRECONF) {
+      int is_optirun = bb_status.runmode == BB_RUN_APP ||
+              bb_status.runmode == BB_RUN_STATUS;
       switch (opt) {
         case 'C':
           set_string_value(&bb_config.bb_conf_file, optarg);
@@ -243,7 +276,19 @@ void bbconfig_parse_opts(int argc, char *argv[], int conf_round) {
             bb_status.verbosity++;
           }
           break;
-        default:
+        case 'V'://print version
+          printf("%s (Bumblebee) %s\n",
+                  is_optirun ? "optirun" : "bumblebeed", GITVERSION);
+          printf("Copyright (C) 2011 The Bumblebee Project\n");
+          printf("License GPLv3+: GNU GPL version 3 or later"
+                  " <http://gnu.org/licenses/gpl.html>.\n");
+          printf("This is free software: you are free to change and redistribute"
+                  " it.\n");
+          printf("There is NO WARRANTY, to the extent permitted by law.\n");
+          exit(EXIT_SUCCESS);
+          break;
+        case 'h':
+          print_usage(EXIT_SUCCESS);
           break;
       }
     } else if (conf_round == PARSE_STAGE_DRIVER) {
@@ -395,13 +440,14 @@ void init_early_config(int argc, char **argv, int runmode) {
   /* clear existing configuration and reset pointers */
   memset(&bb_status, 0, sizeof bb_status);
   set_string_value(&bb_status.errors, ""); //we start without errors, yay!
-  bb_status.verbosity = VERB_WARN;
+  bb_status.verbosity = VERB_NOTICE;
   bb_status.bb_socket = -1;
   bb_status.appcount = 0;
   bb_status.x_pid = 0;
   bb_status.x_pipe[0] = -1;
   bb_status.x_pipe[1] = -1;
   bb_status.runmode = runmode;
+  bb_status.program_name = argv[0];
 }
 
 /**
