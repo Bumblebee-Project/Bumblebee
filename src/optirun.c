@@ -170,9 +170,9 @@ static int run_app(int argc, char *argv[]) {
 
           vglrun_args[optno++] = "--";
           for (r = 0; r < argc - optind; r++) {
-            vglrun_args[r + optno++] = argv[optind + r];
+            vglrun_args[r + optno] = argv[optind + r];
           }
-          vglrun_args[optno] = 0;
+          vglrun_args[optno+=r] = 0;
           exitcode = bb_run_fork(vglrun_args, 0);
           free(vglrun_args);
           socketClose(&bb_status.bb_socket);
