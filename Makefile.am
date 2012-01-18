@@ -1,6 +1,7 @@
 # -*- Makefile -*-
 
 GITVERSION = $(shell "$(top_srcdir)/version.sh" "$(top_srcdir)")
+relnotes = doc/RELEASE_NOTES_3_0
 
 bumblebeedconfdir=$(sysconfdir)/bumblebee
 
@@ -29,7 +30,7 @@ EXTRA_DIST = scripts/systemd/bumblebeed.service.in \
 	README.markdown \
 	scripts/bash_completion/bumblebee \
 	scripts/bumblebee-bugreport.in \
-	doc/RELEASE_NOTES_3_0 \
+	$(relnotes) \
 	version.sh
 # for laziness include all headers found
 EXTRA_DIST += src/*.h src/*/switching.h
@@ -50,6 +51,7 @@ bin_bumblebeed_SOURCES = src/pci.c src/bbconfig.c src/bblogger.c src/bbrun.c \
 	src/driver.c src/bumblebeed.c
 bin_bumblebeed_LDADD = ${x11_LIBS} ${libbsd_LIBS} ${glib_LIBS}
 
+dist_doc_DATA = $(relnotes) README.markdown
 bumblebeedconf_DATA = conf/bumblebee.conf conf/xorg.conf.nouveau conf/xorg.conf.nvidia
 
 completiondir = $(sysconfdir)/bash_completion.d
