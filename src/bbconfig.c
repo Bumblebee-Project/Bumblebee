@@ -146,7 +146,9 @@ void print_usage(int exit_val) {
     fputs("\
   -c, --vgl-compress METHOD  image compression or transport to use with \n\
                                VirtualGL. Valid values for METHOD are proxy,\n\
-                               jpeg, rgb, xv and yuv\n\
+                               jpeg, rgb, xv and yuv. Changing this setting\n\
+                               may affect performance, CPU usage and image\n\
+                               quality\n\
       --failsafe      run a program even if the nvidia card is unavailable\n\
       --no-failsafe   do not run a program if the nvidia card is unavailable\n\
       --vgl-options OPTS   a space-separated list of command options to be\n\
@@ -200,8 +202,10 @@ void print_usage(int exit_val) {
   if (is_optirun) {
     fputs("\n\
 Examples:\n\
-  optirun glxspheres      Runs the graphics demo supplied with virtualgl\n\
-  optirun firefox http://example.com    Run a program with arguments\n", out);
+  optirun glxspheres      Runs the graphics demo supplied with Virtual GL.\n\
+  optirun -c yuv glxspheres  Runs a program with the yuv transport method for\n\
+                             better performance.\n\
+  optirun firefox http://example.com    Run a program with arguments.\n", out);
   }
   fputs("\n\
 Report bugs on <https://github.com/Bumblebee-Project/Bumblebee/issues>\n\
