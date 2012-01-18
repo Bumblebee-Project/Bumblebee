@@ -193,8 +193,17 @@ int pci_config_save(struct pci_bus_id *bus_id, struct pci_config_state *pcs) {
     /* read 32 bits (8 bytes) from the PCI configuration space */
     if (read(fd, &pcs->saved_config_space[i], 4) != 4) {
       bb_log(LOG_WARNING, "failed to retrieve config space value at offset"
-                " %#x\n", i);
+                " %#x - aborting\n", i);
       is_saved = 0;
+      break;
+    }
+    /* Vendor ID and Device ID with all bits enabled is invalid and returned if
+     * a device is disabled */
+    if (i == 0 && pcs->saved_config_space[i] == (int32_t)-1) {
+      bb_log(LOG_WARNING, "invalid device state, is the discrete video card"
+              " disabled?\n");
+      is_saved = 0;
+      break;
     }
   }
   close(fd);
