@@ -88,4 +88,6 @@ Known issues:
 - After a configuration change in drivers, the daemon needs to be restarted for
   the changes to take effect. However, optirun reads the configuration
   immediately which may cause unexpected behavior.
+- The Lenovo Y470 and Y570 are neither supported by bbswitch nor the video
+  drivers. See https://github.com/Bumblebee-Project/bbswitch/issues/2
 
