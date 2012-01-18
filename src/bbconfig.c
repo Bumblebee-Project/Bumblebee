@@ -208,8 +208,8 @@ Examples:\n\
   optirun firefox http://example.com    Run a program with arguments.\n", out);
   }
   fputs("\n\
-Report bugs on <https://github.com/Bumblebee-Project/Bumblebee/issues>\n\
-Bumblebee homepage: <https://launchpad.net/~bumblebee>\n", out);
+Report bugs on <http://Bumblebee-Project.org/issues>\n\
+Bumblebee homepage: <http://Bumblebee-Project.org/>\n", out);
   exit(exit_val);
 }
 

@@ -272,17 +272,15 @@ fi
 tar zcf "${BUGREPORT_NAME}.tar.gz" -C "$BUGREPORT_TMP" "$BUGREPORT_NAME"
 rm -rf "$BUGREPORT_TMP"
 
-echo "Bug report generated"
-echo
-echo "The bug report has been saved as:"
-echo "${PWD%%/}/${BUGREPORT_NAME}.tar.gz"
-echo
-echo "Please create an issue on Github and email the bugreport file including"
-echo "the issue number to bumblebee@lists.launchpad.net"
-echo
-echo "https://github.com/Bumblebee-Project/Bumblebee/issues"
-echo
-echo "This really makes bugfixing much easier for us and faster for you"
-echo
-echo "Thanks for your help!"
-echo "The Bumblebee Project Team"
+cat <<EOF
+Bug report generated
+
+The bug report has been saved as:
+${PWD%%/}/${BUGREPORT_NAME}.tar.gz
+
+Please continue following the instructions on
+https://github.com/Bumblebee-Project/Bumblebee/wiki/Reporting-Issues
+
+Thanks for your help!
+The Bumblebee Project Team
+EOF
