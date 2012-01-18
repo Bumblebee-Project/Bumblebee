@@ -146,9 +146,7 @@ copy_log() {
 shopt -s nullglob
 
 # Copy configuration, preserving times and permissions
-confdirs=("$CONFDIR")
-[[ "${confdirs[0]}" == "/etc/bumblebee" ]] || confdirs=("${confdirs[@]}" /etc/bumblebee)
-cp -pr "${confdirs[@]}" "$BUGREPORT_DIR"
+cp -pr "$CONFDIR" "$BUGREPORT_DIR"
 
 for log in /var/log/Xorg.* /var/log/bumblebee.*; do
     copy_log "$log"

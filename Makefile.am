@@ -19,9 +19,9 @@ if WITH_PIDFILE
 noinst_SCRIPTS += scripts/sysvinit/bumblebeed
 endif
 
-noinst_SCRIPTS += scripts/bumblebee-bugreport
+bin_SCRIPTS = scripts/bumblebee-bugreport
 
-CLEANFILES = $(noinst_SCRIPTS) conf/bumblebee.conf
+CLEANFILES = $(noinst_SCRIPTS) conf/bumblebee.conf $(bin_SCRIPTS)
 EXTRA_DIST = scripts/systemd/bumblebeed.service.in \
 	scripts/upstart/bumblebeed.conf.in \
 	conf/bumblebee.conf.in \
