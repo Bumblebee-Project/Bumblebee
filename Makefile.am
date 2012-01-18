@@ -29,6 +29,7 @@ EXTRA_DIST = scripts/systemd/bumblebeed.service.in \
 	README.markdown \
 	scripts/bash_completion/bumblebee \
 	scripts/bumblebee-bugreport.in \
+	doc/RELEASE_NOTES_3_0 \
 	version.sh
 # for laziness include all headers found
 EXTRA_DIST += src/*.h src/*/switching.h
