@@ -41,14 +41,14 @@ AllowFallbackToIGC=@CONF_FALLBACKSTART@
 ## Section with nvidia driver specific options, only parsed if Driver=nvidia
 [driver-nvidia]
 # Module name to load, defaults to Driver if empty or unset
-KernelDriver=@CONF_DRIVER_MODULE@
+KernelDriver=@CONF_DRIVER_MODULE_NVIDIA@
 Module=nvidia
 PMMethod=@CONF_PM_METHOD@
 # colon-separated path to the nvidia libraries
-LibraryPath=@CONF_LDPATH@
+LibraryPath=@CONF_LDPATH_NVIDIA@
 # comma-separated path of the directory containing nvidia_drv.so and the
 # default Xorg modules path
-XorgModulePath=@CONF_MODPATH@
+XorgModulePath=@CONF_MODPATH_NVIDIA@
 XorgConfFile=@BBCONFDIR@/xorg.conf.nvidia
 
 ## Section with nouveau driver specific options, only parsed if Driver=nouveau

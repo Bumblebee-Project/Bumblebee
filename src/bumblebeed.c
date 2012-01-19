@@ -31,7 +31,9 @@
 #include <string.h>
 #include <errno.h>
 #include <getopt.h>
+#ifdef WITH_PIDFILE
 #include <bsd/libutil.h>
+#endif
 #include "bbconfig.h"
 #include "bbsocket.h"
 #include "bblogger.h"
@@ -293,7 +295,9 @@ const struct option *bbconfig_get_lopts(void) {
     {"module-path", 1, 0, 'm'},
     {"driver-module", 1, 0, 'k'},
     {"driver", 1, 0, OPT_DRIVER},
+#ifdef WITH_PIDFILE
     {"pidfile", 1, 0, OPT_PIDFILE},
+#endif
     BBCONFIG_COMMON_LOPTS
   };
   return longOpts;
@@ -325,9 +329,11 @@ int bbconfig_parse_options(int opt, char *value) {
     case 'k'://kernel module
       set_string_value(&bb_config.module_name, value);
       break;
+#ifdef WITH_PIDFILE
     case OPT_PIDFILE:
       set_string_value(&bb_config.pid_file, value);
       break;
+#endif
     default:
       /* no options parsed */
       return 0;
@@ -336,8 +342,10 @@ int bbconfig_parse_options(int opt, char *value) {
 }
 
 int main(int argc, char* argv[]) {
+#ifdef WITH_PIDFILE
   struct pidfh *pfh = NULL;
   pid_t otherpid;
+#endif
 
   init_early_config(argc, argv, BB_RUN_SERVER);
 
@@ -377,6 +385,7 @@ int main(int argc, char* argv[]) {
     return (EXIT_FAILURE);
   }
 
+#ifdef WITH_PIDFILE
   /* only write PID if a pid file has been set */
   if (bb_config.pid_file[0]) {
     pfh = pidfile_open(bb_config.pid_file, 0644, &otherpid);
@@ -390,13 +399,16 @@ int main(int argc, char* argv[]) {
       exit(EXIT_FAILURE);
     }
   }
+#endif
 
   /* Change GID and mask according to configuration */
   if ((bb_config.gid_name != 0) && (bb_config.gid_name[0] != 0)) {
     int retval = bb_chgid();
     if (retval != EXIT_SUCCESS) {
       bb_closelog();
+#ifdef WITH_PIDFILE
       pidfile_remove(pfh);
+#endif
       exit(retval);
     }
   }
@@ -408,13 +420,17 @@ int main(int argc, char* argv[]) {
     int retval = daemonize();
     if (retval != EXIT_SUCCESS) {
       bb_closelog();
+#ifdef WITH_PIDFILE
       pidfile_remove(pfh);
+#endif
       exit(retval);
     }
   }
 
+#ifdef WITH_PIDFILE
   /* write PID after daemonizing */
   pidfile_write(pfh);
+#endif
 
   /* Initialize communication socket, enter main loop */
   bb_status.bb_socket = socketServer(bb_config.socket_path, SOCK_NOBLOCK);
@@ -430,7 +446,9 @@ int main(int argc, char* argv[]) {
     stop_secondary();
   }
   bb_closelog();
+#ifdef WITH_PIDFILE
   pidfile_remove(pfh);
+#endif
   bb_stop_all(); //stop any started processes that are left
   return (EXIT_SUCCESS);
 }
