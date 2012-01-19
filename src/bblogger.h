@@ -43,4 +43,9 @@ void bb_log(int priority, char* msg_format, ...);
  */
 void bb_closelog(void);
 
+/** Will check the xorg output pipe and parse any waiting messages.
+ * Doesn't take any parameters and doesn't return anything.
+ */
+void check_xorg_pipe(void);
+
 #endif

@@ -2,7 +2,7 @@ Bumblebee Daemon
 =================
 
 Bumblebee daemon is a rewrite of the original
-[Bumblebee](https://github.com/Bumblebee-Project/Bumblebee)
+[Bumblebee](https://github.com/Bumblebee-Project/Bumblebee-old)
 service, providing an elegant and stable means of managing Optimus
 hybrid graphics chipsets. A primary goal of this project is to not only
 enable use of the discrete GPU for rendering, but also to enable
@@ -11,11 +11,20 @@ smart power management of the dGPU when it's not in use.
 Build Requirements
 -------------------
 
+Source tarballs can be downloaded from
+https://github.com/Bumblebee-Project/Bumblebee/downloads
+
+The following packages are dependencies for the build processs:
+
 - pkg-config
-- autotools (2.68+ recommended)
 - glib-2.0 and development headers
 - libx11 and development headers
 - libbsd and development headers (if pidfile support is enabled, default yes)
+- help2man (optional, it is needed for building manual pages)
+
+If you are building from git, you will also need:
+
+- autotools (2.68+ recommended)
 
 Runtime dependencies
 --------------------
@@ -39,43 +48,61 @@ If you want to make use of Power Management, you will need:
 Building
 ---------
 
-    autoreconf -fi
+If you are building from git, you first need to run `autoreconf -fi` to generate
+the `configure` script.
+
+Next, run the configure script to check for dependencies and populate the
+`Makefile`:
+
     ./configure
-    make
-
-Usage
-------
-
-    sudo bin/bumblebeed --daemon
-    bin/optirun -- <application>
-    
-For more information, try --help on either of the two binaries.
-
-Installing System-wide and Packaging
--------------------------------------
-
-You can build the binaries and set the system wide paths at configure time
-
-    autoreconf -fi
-    ./configure --prefix=/usr --sysconfdir=/etc
-    make
 
 To set the default driver to `nvidia` and adjust the library and module paths
 for it, use `./configure` like:
 
     ./configure CONF_DRIVER=nvidia CONF_DRIVER_MODULE_NVIDIA=nvidia-current \
       CONF_LDPATH_NVIDIA=/usr/lib/nvidia-current:/usr/lib32/nvidia-current \
-      CONF_MODPATH_NVIDIA=/usr/lib/nvidia-current/xorg,/usr/lib/xorg/modules \
-      --prefix=/usr --sysconfdir=/etc
+      CONF_MODPATH_NVIDIA=/usr/lib/nvidia-current/xorg,/usr/lib/xorg/modules
 
 For all available options, run:
 
     ./configure --help
 
-After building the binaries they can be installed using make:
+After configuring, you can build the binaries with:
+
+    make
+
+Installing System-wide and Packaging
+-------------------------------------
+
+You can build the binaries and set the system wide paths at configure time
+
+    ./configure --prefix=/usr --sysconfdir=/etc
+    make
+
+After building the binaries and bash completion script, it can be installed
+using `make`:
 
     sudo make install
 
 For packagers you need to add DESTDIR=$pkgdir
 
     make install DESTDIR=$pkgdir
+
+Example initscripts are available in the `scripts/` directory. Currently,
+Upstart, SystemD and SysV initscripts are available
+
+Usage
+------
+
+The first time you install Bumblebee, the `bumblebee` group has to be created.
+Users who are allowed to use Bumblebee need to be added to the group:
+
+    sudo groupadd bumblebee
+    sudo usermod -a -G bumblebee $USER
+
+To run Bumblebee after installing it system-wide, run:
+
+    sudo bumblebeed --daemon
+    optirun -- <application>
+
+For more information, try `--help` on either of the two binaries.

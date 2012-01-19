@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.68])
-AC_INIT([bumblebeed], [bleeding-edge], [https://github.com/Bumblebee-Project/bumblebeed])
+AC_INIT([bumblebee], [3.0])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_SRCDIR([src/bbsocket.c])
 #AC_CONFIG_HEADERS([config.h])
@@ -60,7 +60,7 @@ AC_DEFINE_CONF(CONF_MODPATH_NVIDIA, [ModulePath for xorg modules when using nvid
 AC_DEFINE(DAEMON_NAME, "bumblebeed", "daemon name")
 
 AM_INIT_AUTOMAKE([1.10.2 -Wall foreign subdir-objects
-	tar-pax no-dist-gzip dist-xz])
+	tar-pax])
 
 AC_ARG_WITH([pidfile],
 	[AS_HELP_STRING([--without-pidfile],
@@ -75,6 +75,12 @@ AM_CONDITIONAL([WITH_PIDFILE], [test "x$with_pidfile" != xno])
 # Checks for programs.
 AC_PROG_CC
 AM_PROG_CC_C_O
+AC_PATH_PROG([HELP2MAN], help2man)
+AM_CONDITIONAL([HAVE_HELP2MAN], [test -n "$HELP2MAN"])
+if test x"$HELP2MAN" = x; then
+	AC_MSG_WARN([cannot find help2man, you will not be able to generate
+		manpages])
+fi
 
 regular_CPPFLAGS="-D_FILE_OFFSET_BITS=64 -D_REENTRANT"
 regular_CFLAGS="-Wall -Waggregate-return \
@@ -89,8 +95,10 @@ AC_SUBST([regular_CFLAGS])
 # Checks for header files.
 PKG_CHECK_MODULES([x11], [x11])
 PKG_CHECK_MODULES([glib], [glib-2.0])
-AS_IF([test "x$with_pidfile" != xno],
-	[PKG_CHECK_MODULES([libbsd], [libbsd >= 0.2.0])])
+AS_IF([test "x$with_pidfile" != xno], [
+		PKG_CHECK_MODULES([libbsd], [libbsd >= 0.2.0])
+		PKG_CHECK_EXISTS([libbsd = 0.2.0], [AC_DEFINE(HAVE_LIBBSD_020)])
+	])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

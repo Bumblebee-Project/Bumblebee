@@ -1,0 +1,93 @@
+Version 3.0 - 19 January 2012
+
+Highlights:
+- [new] bbswitch power management, allows for fast and reliable power switching
+  which also survives suspend
+- [new] vga_switcheroo power management is supported but only available for
+   nouveau.
+- [new] by default the card is switched off if no optirun program is using it.
+- [new] Better detection of errors as well as reporting those to the user
+  running optirun.
+- [new] Automatically detect the correct PCI Bus ID, removing the need for
+  manual configuration.
+- [new] recovery from drivers getting loaded while the card is off which would
+  result in "No such device" errors (nvidia).
+- [new] Standard autotools build system, allowing for better dependency
+  checking and a more comfortable way to install/uninstall the program.
+- [new] manual pages for optirun (a client) and bumblebeed (the daemon/server)
+- [new] optirun --status will now show the current status of Bumblebee and the
+  secondary GPU on your system.
+- [new] Includes example initscripts for SysV init, systemd and Upstart.
+- [enhancement] More reliable detection of the availability and status of the
+  secondary X server.
+- [enhancement] New configuration file format and options which groups settings
+  for the daemon, optirun and drivers.
+- [enhancement] Xorg configuration greatly simplified, provided defaults
+  usually work out of the box.
+- [enhancement] Complete rewrite of server/client in C
+- [enhancement] Better integration with the system using standard libraries.
+- [enhancement] Logging is done through syslog which allows for having the
+  kernel and daemon messages in one file.
+- [bugfix] failure when starting optirun quickly after the last instance exited
+   has been fixed.
+
+Upgrade notes for 2.4.x users:
+- EcoMode has temporary been removed which means that the card will be used by
+  optirun even when running on battery.
+- The following options are dropped from optirun:
+  - `-f`: EcoMode is not available with this release.
+  - `-32`: already deprecated in version 2.4 as it does nothing.
+  - `--debug-log`: manually set VGL_VERBOSE=1 and VGL_LOG=filename to achieve
+    the same behavior.
+- The option `--failsafe=Y` and `--failsafe=N` has been changed to `--failsafe`
+  and `--no-failsafe` (it does not accept an option anymore)
+- The Bumblebee daemon is now named "bumblebeed" instead of just "bumblebee".
+- The option `-d` does not daemonize `bumblebeed`, but changes the
+  VirtualDisplay setting. Use `-D` or `--daemon` instead.
+- The format of configuration file bumblebee.conf has changed in v3.0+ and is
+  not backwards compatible (see
+  https://github.com/Bumblebee-Project/bumblebeed/wiki/Configuration for
+  details). Important: quotes around values are **not** supported. For example,
+  use Driver=nouveau instead of Driver='nouveau'.
+- cardon/cardoff scripts cannot be used anymore; the potentional dangerous
+  acpi_call method has been removed in favor of bbswitch.
+- since we're using syslog, messages are no longer logged to
+  /var/log/bumblebee.log. Instead, look for /var/log/syslog or similar.
+
+Other notes:
+- bbswitch is independent of the driver; vga_switcheroo works for nouveau only.
+  See also the Known Issues section above and
+  https://github.com/Bumblebee-Project/Bumblebee/wiki/Comparison-of-PM-methods
+- the video drivers must be unloadable. This means that it should not be
+  compiled into the kernel. When using dynamically built modules like nvidia,
+  be sure that the toolchain used for building the kernel matches the one that
+  is used for building the module. This means that Ubuntu mainline kernels do
+  not work and will cause crashes.
+- Certain machines need the "ConnectedMonitor" setting to be changed if using
+  the nvidia driver. optirun will inform you if this change is neccesary on
+  your machine, as well as report a value that should work and what file to
+  edit.
+- VirtualGL performance is very dependent on the Transport method set. The
+  default "proxy" setting appears to perform bad in some situations. Try other
+  available settings like "rgb" or "yuv".
+- The cleanup script has been removed. Users who have used MrMEEE/bumblebee or
+  Ironhide need to reboot after removal those programs.
+- Do not combine power management methods (i.e. bbswitch with the deprecated
+  acpi_call), it does not save more power and will break your machine.
+
+Known issues:
+- vga-switcheroo needs kernel patching and won't survive suspension/hibernation
+  (newer Optimus machines need patching for OFF even to work, this has been
+  accepted for Kernel 3.3; a good patch for suspend is still being prepared).
+- bbswitch (and acpi_call) cannot disable the discrete nvidia card for the Dell
+  Vostro 360 desktop with Synergy. If you have a machine using that technology,
+  please submit your machine information on
+  https://bugs.launchpad.net/bugs/752542
+- VGA button (if present) will not change from color after switching and 
+  pushing it has no effect.
+- After a configuration change in drivers, the daemon needs to be restarted for
+  the changes to take effect. However, optirun reads the configuration
+  immediately which may cause unexpected behavior.
+- The Lenovo Y470 and Y570 are neither supported by bbswitch nor the video
+  drivers. See https://github.com/Bumblebee-Project/bbswitch/issues/2
+

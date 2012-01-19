@@ -23,8 +23,10 @@
  * C-coded version of the Bumblebee daemon and optirun.
  */
 
-#include <stdlib.h>
+#include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
+#include <stdlib.h>
 #include <grp.h>
 #include <signal.h>
 #include <stdio.h>
@@ -32,7 +34,11 @@
 #include <errno.h>
 #include <getopt.h>
 #ifdef WITH_PIDFILE
+#ifdef HAVE_LIBBSD_020
+#include <libutil.h>
+#else
 #include <bsd/libutil.h>
+#endif
 #endif
 #include "bbconfig.h"
 #include "bbsocket.h"
@@ -40,6 +46,7 @@
 #include "bbsecondary.h"
 #include "bbrun.h"
 #include "pci.h"
+#include "driver.h"
 
 /**
  * Change GID and umask of the daemon
@@ -96,10 +103,15 @@ static int daemonize(void) {
     return EXIT_FAILURE;
   }
 
-  /* Close out the standard file descriptors */
-  close(STDIN_FILENO);
-  close(STDOUT_FILENO);
-  close(STDERR_FILENO);
+  /* Reroute standard file descriptors to /dev/null */
+  int devnull = open("/dev/null", O_RDWR);
+  if (devnull < 0){
+    bb_log(LOG_ERR, "Could not open /dev/null: %s\n", strerror(errno));
+    return EXIT_FAILURE;
+  }
+  dup2(devnull, STDIN_FILENO);
+  dup2(devnull, STDOUT_FILENO);
+  dup2(devnull, STDERR_FILENO);
   return EXIT_SUCCESS;
 }
 
@@ -107,10 +119,19 @@ static int daemonize(void) {
  *  Handle recieved signals - except SIGCHLD, which is handled in bbrun.c
  */
 static void handle_signal(int sig) {
+  static int sigpipes = 0;
+
   switch (sig) {
     case SIGHUP:
-    case SIGPIPE:
       bb_log(LOG_WARNING, "Received %s signal (ignoring...)\n", strsignal(sig));
+      break;
+    case SIGPIPE:
+      /* if bb_log generates a SIGPIPE, i.e. when bumblebeed runs like
+       * bumblebeed 2>&1 | cat and the pipe is killed, don't die infinitely */
+      if (sigpipes <= 10) {
+        bb_log(LOG_WARNING, "Received %s signal %i (signals 10> are ignored)\n",
+                strsignal(sig), ++sigpipes);
+      }
       break;
     case SIGINT:
     case SIGQUIT:
@@ -202,7 +223,7 @@ static void main_loop(void) {
   struct clientsocket *client;
   struct clientsocket *last = 0; // the last client
 
-  bb_log(LOG_INFO, "Started main loop\n");
+  bb_log(LOG_INFO, "Initialization completed - now handling client requests\n");
   /* Listen for Optirun conections and act accordingly */
   while (bb_status.bb_socket != -1) {
     usleep(100000); //sleep 100ms to prevent 100% CPU time usage
@@ -223,6 +244,9 @@ static void main_loop(void) {
       }
       last = client;
     }
+
+    //check the X output pipe, if open
+    check_xorg_pipe();
 
     /* loop through all connections, removing dead ones, receiving/sending data to the rest */
     struct clientsocket *next_iter;
@@ -298,6 +322,7 @@ const struct option *bbconfig_get_lopts(void) {
 #ifdef WITH_PIDFILE
     {"pidfile", 1, 0, OPT_PIDFILE},
 #endif
+    {"use-syslog", 0, 0, OPT_USE_SYSLOG},
     BBCONFIG_COMMON_LOPTS
   };
   return longOpts;
@@ -311,6 +336,9 @@ const struct option *bbconfig_get_lopts(void) {
  */
 int bbconfig_parse_options(int opt, char *value) {
   switch (opt) {
+    case OPT_USE_SYSLOG:
+      /* already processed in bbconfig.c */
+      break;
     case 'D'://daemonize
       bb_status.runmode = BB_RUN_DAEMON;
       break;
@@ -347,7 +375,10 @@ int main(int argc, char* argv[]) {
   pid_t otherpid;
 #endif
 
+  /* the logs needs to be ready before the signal handlers */
   init_early_config(argc, argv, BB_RUN_SERVER);
+  bbconfig_parse_opts(argc, argv, PARSE_STAGE_LOG);
+  bb_init_log();
 
   /* Setup signal handling before anything else. Note that messages are not
    * shown until init_config has set bb_status.verbosity
@@ -358,20 +389,25 @@ int main(int argc, char* argv[]) {
   signal(SIGQUIT, handle_signal);
   signal(SIGPIPE, handle_signal);
 
-  bb_init_log();
-
   /* first load the config to make the logging verbosity level available */
   init_config(argc, argv);
+  bbconfig_parse_opts(argc, argv, PARSE_STAGE_PRECONF);
+
   pci_bus_id_discrete = pci_find_gfx_by_vendor(PCI_VENDOR_ID_NVIDIA);
   if (!pci_bus_id_discrete) {
     bb_log(LOG_ERR, "No nVidia graphics card found, quitting.\n");
     return (EXIT_FAILURE);
   }
+  struct pci_bus_id *pci_id_igd = pci_find_gfx_by_vendor(PCI_VENDOR_ID_INTEL);
+  if (!pci_id_igd) {
+    bb_log(LOG_ERR, "No Optimus system detected, quitting.\n");
+    return (EXIT_FAILURE);
+  }
+  free(pci_id_igd);
 
-  bbconfig_parse_opts(argc, argv, PARSE_STAGE_PRECONF);
   GKeyFile *bbcfg = bbconfig_parse_conf();
   bbconfig_parse_opts(argc, argv, PARSE_STAGE_DRIVER);
-  check_secondary();
+  driver_detect();
   if (bbcfg) {
     bbconfig_parse_conf_driver(bbcfg, bb_config.driver);
     g_key_file_free(bbcfg);
@@ -413,7 +449,7 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  bb_log(LOG_DEBUG, "%s version %s starting...\n", "bumblebeed", GITVERSION);
+  bb_log(LOG_NOTICE, "%s %s started\n", bb_status.program_name, GITVERSION);
 
   /* Daemonized if daemon flag is activated */
   if (bb_status.runmode == BB_RUN_DAEMON) {
@@ -450,5 +486,8 @@ int main(int argc, char* argv[]) {
   pidfile_remove(pfh);
 #endif
   bb_stop_all(); //stop any started processes that are left
+  //close X pipe, if any parts of it are open still
+  if (bb_status.x_pipe[0] != -1){close(bb_status.x_pipe[0]); bb_status.x_pipe[0] = -1;}
+  if (bb_status.x_pipe[1] != -1){close(bb_status.x_pipe[1]); bb_status.x_pipe[1] = -1;}
   return (EXIT_SUCCESS);
 }

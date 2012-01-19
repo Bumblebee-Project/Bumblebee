@@ -34,6 +34,7 @@
 #include <fcntl.h>
 #include "bbsocket.h"
 #include "bblogger.h"
+#include "bbconfig.h"
 
 #ifdef __FreeBSD__
 #include <netinet/in.h>
@@ -66,8 +67,17 @@ int socketConnect(char * address, int nonblock) {
       fcntl(sock, F_SETFL, flags);
     }
   } else {
-    //connection fail
-    bb_log(LOG_ERR, "Could not connect to %s! Error: %s\n", address, strerror(errno));
+    if (errno == EACCES) {
+      bb_log(LOG_ERR, "You've no permission to communicate with the Bumblebee"
+              " daemon. Try adding yourself to the '%s' group\n",
+              bb_config.gid_name);
+    } else if (errno == ENOENT) {
+      bb_log(LOG_ERR, "The Bumblebee daemon has not been started yet or the"
+              " socket path %s was incorrect.\n", address);
+    } else {
+      bb_log(LOG_ERR, "Could not connect to %s! Error: %s\n", address,
+              strerror(errno));
+    }
     //close the socket and set it to -1
     socketClose(&sock);
   }
@@ -78,7 +88,7 @@ int socketConnect(char * address, int nonblock) {
 /// Never fails.
 
 void socketClose(int * sock) {
-  bb_log(LOG_INFO, "Socket closed.\n");
+  bb_log(LOG_DEBUG, "Socket closed.\n");
   // do not attempt to close closed or uninitialized sockets
   if (!sock || *sock == -1) {
     return;
@@ -91,46 +101,6 @@ void socketClose(int * sock) {
   *sock = -1;
 }//socketClose
 
-
-/// Calls poll() on the socket, checking if data is available.
-/// This function may return 1 even if there is no data, but never returns 0 when there is.
-/// \return 1 if data can be read, 0 otherwise.
-
-int socketCanRead(int sock) {
-  if (sock < 0) {
-    return 0;
-  }
-  struct pollfd PFD;
-  PFD.fd = sock;
-  PFD.events = POLLIN;
-  PFD.revents = 0;
-  poll(&PFD, 1, 5);
-  if ((PFD.revents & POLLIN) == POLLIN) {
-    return 1;
-  } else {
-    return 0;
-  }
-}//socketCanRead
-
-/// Calls poll() on the socket, checking if data can be written.
-/// \return 1 if data can be written, 0 otherwise.
-
-int socketCanWrite(int sock) {
-  if (sock < 0) {
-    return 0;
-  }
-  struct pollfd PFD;
-  PFD.fd = sock;
-  PFD.events = POLLOUT;
-  PFD.revents = 0;
-  poll(&PFD, 1, 5);
-  if ((PFD.revents & POLLOUT) == POLLOUT) {
-    return 1;
-  } else {
-    return 0;
-  }
-}//socketCanWrite
-
 /// Incremental write call. This function tries to write len bytes to the socket from the buffer,
 /// returning the amount of bytes it actually wrote.
 /// \param sock The socket to write to. Set to -1 if any error occurs.
@@ -142,7 +112,8 @@ int socketWrite(int * sock, void * buffer, int len) {
   if (*sock < 0) {
     return 0;
   }
-  int r = send(*sock, buffer, len, 0);
+  /* Try to send a message, but don't SIGPIPE if the client has gone */
+  int r = send(*sock, buffer, len, MSG_NOSIGNAL);
   if (r < 0) {
     switch (errno) {
       case EWOULDBLOCK: return 0;

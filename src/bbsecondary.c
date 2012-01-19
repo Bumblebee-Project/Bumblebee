@@ -21,12 +21,15 @@
  * along with Bumblebee. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define _GNU_SOURCE
+#include <unistd.h>
 #include <X11/Xlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <errno.h>
 #include "bbsecondary.h"
 #include "switch/switching.h"
 #include "bbrun.h"
@@ -34,6 +37,9 @@
 #include "bbconfig.h"
 #include "pci.h"
 #include "module.h"
+
+/* the PCI configuration space of the discrete video card */
+static struct pci_config_state pci_config_state_discrete;
 
 /**
  * Substitutes DRIVER in the passed path
@@ -93,6 +99,10 @@ void start_secondary(void) {
       set_bb_error("Could not enable discrete graphics card");
       return;
     }
+    if (pci_config_restore(pci_bus_id_discrete, &pci_config_state_discrete)) {
+      bb_log(LOG_WARNING, "Could not restore PCI configuration space: %s\n",
+              strerror(errno));
+    }
   }
 
   //if runmode is BB_RUN_EXIT, do not start X, we are shutting down.
@@ -139,15 +149,26 @@ void start_secondary(void) {
       "-sharevts",
       "-nolisten", "tcp",
       "-noreset",
+      "-verbose", "3",
       "-isolateDevice", pci_id,
       "-modulepath",
       bb_config.mod_path,
       NULL
     };
     if (!*bb_config.mod_path) {
-      x_argv[10] = 0; //remove -modulepath if not set
+      x_argv[12] = 0; //remove -modulepath if not set
     }
-    bb_status.x_pid = bb_run_fork_ld(x_argv, bb_config.ld_path);
+    //close any previous pipe, if it (still) exists
+    if (bb_status.x_pipe[0] != -1){close(bb_status.x_pipe[0]); bb_status.x_pipe[0] = -1;}
+    if (bb_status.x_pipe[1] != -1){close(bb_status.x_pipe[1]); bb_status.x_pipe[1] = -1;}
+    //create a new pipe
+    if (pipe2(bb_status.x_pipe, O_NONBLOCK)){
+      set_bb_error("Could not create output pipe for X");
+      return;
+    }
+    bb_status.x_pid = bb_run_fork_ld_redirect(x_argv, bb_config.ld_path, bb_status.x_pipe[1]);
+    //close the end of the pipe that is not ours
+    if (bb_status.x_pipe[1] != -1){close(bb_status.x_pipe[1]); bb_status.x_pipe[1] = -1;}
   }
 
   //check if X is available, for maximum 10 seconds.
@@ -158,8 +179,10 @@ void start_secondary(void) {
     if (xdisp != 0) {
       break;
     }
+    check_xorg_pipe();//make sure Xorg errors come in smoothly
     usleep(100000); //don't retry too fast
   }
+  check_xorg_pipe();//make sure Xorg errors come in smoothly
 
   //check if X is available
   if (xdisp == 0) {
@@ -205,6 +228,10 @@ void stop_secondary() {
       if (switcher->status() != SWITCH_ON) {
         return;
       }
+      if (pci_config_save(pci_bus_id_discrete, &pci_config_state_discrete)) {
+        bb_log(LOG_WARNING, "Could not save PCI configuration space: %s\n",
+                strerror(errno));
+      }
       /* unload the driver loaded by the graphica card */
       if (pci_get_driver(driver, pci_bus_id_discrete, sizeof driver)) {
         module_unload(driver);
@@ -235,53 +262,6 @@ int status_secondary(void) {
     case SWITCH_UNAVAIL:
     default:
       return -1;
-  }
-}
-
-/**
- * Check what drivers are available and autodetect if possible. Driver, module
- * library path and module path are set
- */
-void check_secondary(void) {
-  /* determine driver to be used */
-  if (*bb_config.driver) {
-    bb_log(LOG_DEBUG, "Skipping auto-detection, using configured driver"
-            " '%s'\n", bb_config.driver);
-  } else if (strlen(CONF_DRIVER)) {
-    /* if the default driver is set, use that */
-    set_string_value(&bb_config.driver, CONF_DRIVER);
-    bb_log(LOG_DEBUG, "Using compile default driver '%s'", CONF_DRIVER);
-  } else if (module_is_loaded("nouveau")) {
-    /* loaded drivers take precedence over ones available for modprobing */
-    set_string_value(&bb_config.driver, "nouveau");
-    set_string_value(&bb_config.module_name, "nouveau");
-    bb_log(LOG_DEBUG, "Detected nouveau driver\n");
-  } else if (module_is_available(CONF_DRIVER_MODULE_NVIDIA)) {
-    /* Ubuntu and Mandriva use nvidia-current.ko. nvidia cannot be compiled into
-     * the kernel, so module_is_available makes module_is_loaded redundant */
-    set_string_value(&bb_config.driver, "nvidia");
-    set_string_value(&bb_config.module_name, CONF_DRIVER_MODULE_NVIDIA);
-    bb_log(LOG_DEBUG, "Detected nvidia driver (module %s)\n",
-            CONF_DRIVER_MODULE_NVIDIA);
-  } else if (module_is_available("nouveau")) {
-    set_string_value(&bb_config.driver, "nouveau");
-    set_string_value(&bb_config.module_name, "nouveau");
-    bb_log(LOG_DEBUG, "Detected nouveau driver\n");
-  }
-
-  if (!*bb_config.module_name) {
-    /* no module has been configured, set a sensible one based on driver */
-    if (strcmp(bb_config.driver, "nvidia") == 0 &&
-            module_is_available(CONF_DRIVER_MODULE_NVIDIA)) {
-      set_string_value(&bb_config.module_name, CONF_DRIVER_MODULE_NVIDIA);
-    } else {
-      set_string_value(&bb_config.module_name, bb_config.driver);
-    }
-  }
-
-  if (strcmp(bb_config.driver, "nvidia")) {
-    set_string_value(&bb_config.ld_path, CONF_LDPATH_NVIDIA);
-    set_string_value(&bb_config.mod_path, CONF_MODPATH_NVIDIA);
   }
 }
 

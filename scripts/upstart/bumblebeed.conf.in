@@ -10,5 +10,5 @@ stop on     (runlevel [016])
 # restart in case it crashed for some reason
 respawn
 
-expect fork
-exec '@BINDIR@/bumblebeed' --daemon
+# don't use --daemon as Upstart gets confused by that.
+exec '@SBINDIR@/bumblebeed' --use-syslog

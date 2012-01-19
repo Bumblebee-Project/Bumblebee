@@ -1,0 +1,64 @@
+# bash completion for bumblebee
+
+_optirun() {
+    local i prev cur last_optirun_offset compress_types in_option
+
+    in_option=false
+    # the position of the last optirun arguments part
+    last_optirun_offset=0
+    compress_types='proxy jpeg rgb xv yuv'
+
+    for (( i=1; i<=COMP_CWORD; i++ )); do
+        prev="${COMP_WORDS[i-1]}"
+        cur="${COMP_WORDS[i]}"
+
+        if $in_option; then
+            in_option=false
+        else
+            case "$prev" in
+	      -c|--vgl-compress|--failsafe|--display|-d|--config|-C|--ldpath|-l|--socket|-s)
+                in_option=true
+                ;;
+              --)
+                break
+                ;;
+            esac
+        fi
+
+        if ! $in_option; then
+            [[ "$cur" != -* ]] && break
+        fi
+
+        last_optirun_offset=$i
+    done
+
+    if [ $last_optirun_offset -eq $COMP_CWORD ]; then
+        case "$prev" in
+          -c|--vgl-compress)
+            COMPREPLY=( $(compgen -W "$compress_types" -- "$cur") )
+            ;;
+          --failsafe)
+            COMPREPLY=( $(compgen -W "true false" -- "$cur") )
+            ;;
+          -d|--display)
+            # XXX: find active bumblebee X servers and suggest these
+            ;;
+          -C|--config|-s|--socket)
+            _filedir
+            ;;
+	  -l|--ldpath)
+	    ;;
+          *)
+            COMPREPLY=( $(compgen -W "--vgl-compress -c --failsafe --quiet \
+	        --silent -q --verbose -v --display -d --config -C --ldpath -l \
+                --socket -s --help -h --" -- "$cur") )
+            ;;
+        esac
+        return 0
+    fi
+
+    # after the options, auto-complete command
+    _command_offset $i
+}
+have optirun && complete -F _optirun optirun
+

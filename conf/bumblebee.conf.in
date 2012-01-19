@@ -1,5 +1,7 @@
+# Configuration file for Bumblebee. Values should **not** be put between quotes
+
 ## Server options. Any change made in this section will need a server restart
-#to take effect.
+# to take effect.
 [bumblebeed]
 # The secondary Xorg server DISPLAY number
 VirtualDisplay=@CONF_XDISP@
@@ -22,9 +24,10 @@ Driver=@CONF_DRIVER@
 ## Client options. Will take effect on the next optirun executed.
 [optirun]
 # The method used for VirtualGL to transport frames between X servers.
-# Possible values are "proxy", "rgb", "yuv" and "jpeg"
+# Possible values are proxy, jpeg, rgb, xv and yuv.
 VGLTransport=@CONF_VGLCOMPRESS@
-# Should the program run under optirun even if Bumblebee server or nvidia card is not available?
+# Should the program run under optirun even if Bumblebee server or nvidia card
+# is not available?
 AllowFallbackToIGC=@CONF_FALLBACKSTART@
 
 
