@@ -1,0 +1,284 @@
+#!/bin/bash
+# Copyright (C) 2011 Bumblebee Project
+#
+# This file is part of Bumblebee.
+#
+# Bumblebee is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Bumblebee is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Bumblebee.  If not, see <http://www.gnu.org/licenses/>.
+
+BUMBLEBEE_VERSION='@GITVERSION@'
+CONFDIR='@BBCONFDIR@'
+BINDIR='@BINDIR@'
+SBINDIR='@SBINDIR@'
+
+if (( EUID != 0 )); then
+    echo "Certain system information can only be gathered as root. This"
+    echo "includes the machine manufacturer and model."
+    echo
+    if which sudo &>/dev/null; then
+        echo "Please run: sudo ${0##*/}"
+    else
+        echo "Please run this script as root"
+    fi
+    echo
+    exit 1
+fi
+
+# These tools need to be able to accept multiple packages as arguments
+PKG_QUERY_TOOLS=(
+    'apt-cache policy'
+    'dpkg-query --show'
+    'pacman -Q'
+)
+PKG_QUERY_TOOL=
+PACKAGES=
+# this directory will recursively be listed, symlinks are not followed
+LIST_DIRS_RECURSIVE=
+
+# Auto-detect packager tool
+for tool in "${PKG_QUERY_TOOLS[@]}"; do
+    if which "${tool%% *}" &>/dev/null; then
+        PKG_QUERY_TOOL="$tool"
+        break
+    fi
+done
+
+# XXX: perhaps LIST_DIRS_RECURSIVE can be separated from the tools
+case "$PKG_QUERY_TOOL" in
+  apt-cache*|dpkg-query*)
+    PACKAGES=(bumblebee virtualgl nvidia-current nvidia-glx libgl1-mesa-glx)
+    LIST_DIRS_RECURSIVE=(
+        /usr/lib/nvidia-current /usr/lib32/nvidia-current /usr/lib/nvidia
+        /etc/ld.so.conf.d /usr/lib/xorg
+    )
+    ;;
+  pacman*)
+    PACKAGES=(bumblebee bumblebee-git xf86-video-nouveau nouveau-dri mesa libgl lib32-nvidia-utils-bumblebee nvidia-utils-bumblebee virtualgl-bin virtualgl32-bin)
+    LIST_DIRS_RECURSIVE=(/usr/lib/nvidia-bumblebee /usr/lib32/nvidia-bumblebee)
+    ;;
+  *)
+    # unknown package management tool :/
+    ;;
+esac
+
+echo
+echo "Bug report is being generated"
+echo
+
+# Can you read Japanese? I don't.
+export LANG=C
+export LC_MESSAGES=C
+
+BUGREPORT_TMP="$(mktemp -d)"
+BUGREPORT_NAME="bumblebee-bugreport-$(date +%Y%m%d_%H%M%S)"
+BUGREPORT_DIR="$BUGREPORT_TMP/$BUGREPORT_NAME"
+BUGREPORT_FILE="$BUGREPORT_DIR"/bumblebee-report
+
+mkdir "$BUGREPORT_DIR"
+
+# Copy a logfile if exists, but merge duplicate lines if at least 10% of the
+# messages are duplicates
+copy_log() {
+    local log line skipchars months day hhmmss date hostname msg
+    local stripped_time lines_orig lines_new
+    log="$1"
+    if [ -f "$log" ]; then
+        # use the last line for determining the log format
+        line="$(tail -1 "$log")"
+        skipchars=0
+
+        months='(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)'
+        day='[ 123][0-9]'
+        hhmmss='[012][0-9]:[0-5][0-9]:[0-5][0-9]'
+        date="$months $day $hhmmss"
+        # Assume a part looking like 'Jan  1 00:00:00 '
+        if [[ "$line" =~ ^$date ]]; then
+            # skip over the leading date part and space
+            ((skipchars += 16))
+        fi
+
+        hostname="$(hostname)"
+        # Assume a static machine name part
+        if [[ "${line:$skipchars}" == "$hostname "* ]]; then
+            # skip over the hostname and space
+            ((skipchars += ${#hostname} + 1))
+        fi
+
+        # Assume a literal "kernel: " syslog tag part
+        if [[ "${line:$skipchars}" == "kernel: "* ]]; then
+            ((skipchars += 8))
+        fi
+
+        # for the printk timestamp
+        msg="${line:$skipchars}"
+        # strip leading '[ <any whitespace> <digits> . <digits> ] '
+        stripped_time="$(sed -r 's,^\[ *\d+\.\d+\] ,,' <<<"$msg")"
+        if [ ${#stripped_time} -lt ${#msg} ]; then
+            ((skipchars += ${#msg} - ${#stripped_time}))
+        fi
+
+        # Merge duplicate messages
+        uniq -s $skipchars -c "$log" > "$BUGREPORT_DIR/${log##*/}"
+
+        lines_orig=$(wc -l "$log" | cut -d' ' -f1)
+        lines_new=$(wc -l "$BUGREPORT_DIR/${log##*/}" | cut -d' ' -f1)
+
+        # if the new file is just 10% smaller in lines, use the original log
+        if [ $((lines_orig * 9 / 10)) -le $lines_new ]; then
+            cp "$log" "$BUGREPORT_DIR/"
+        fi
+        return 0
+    fi
+    return 1
+}
+
+# Remove non-matching wildcards
+shopt -s nullglob
+
+# Copy configuration, preserving times and permissions
+cp -pr "$CONFDIR" "$BUGREPORT_DIR"
+
+for log in /var/log/Xorg.* /var/log/bumblebee.*; do
+    copy_log "$log"
+done
+
+dmesg > "$BUGREPORT_TMP/dmesg"
+copy_log "$BUGREPORT_TMP/dmesg"
+
+for kernlog in /var/log/syslog /var/log/kern.log /var/log/kernel.log /var/log/messages; do
+    copy_log "$kernlog" && break
+done
+
+header() {
+    printf '\n=== %s ===\n' "$1"
+}
+
+{ # Start bug report
+header "Bumblebee Bug Report"
+echo "$BUGREPORT_NAME"
+date -R -u
+echo "Bumblebee version: $BUMBLEBEE_VERSION"
+
+header "dmidecode"
+
+for key in baseboard-manufacturer baseboard-product-name baseboard-version \
+    system-manufacturer system-product-name system-version \
+    bios-vendor bios-version bios-release-date; do
+    printf "%22s : %s\n" "$key" "$(dmidecode --string "$key")"
+done
+
+header "System Information"
+uname -a
+echo "/etc/issue:"
+cat /etc/issue
+if which lsb_release &>/dev/null; then
+    echo "lsb_release -a:"
+    lsb_release -a
+fi
+
+header "lspci overview"
+lspci -nn
+
+header "lspci on nvidia devices"
+lspci -d 10de: -vvnn
+
+header "Process information info"
+PIDS=$(pidof $(which X Xorg bumblebeed bumblebee optirun optirun32 optirun64 2>/dev/null))
+[ -n "$PIDS" ] && ps uww --pid "$PIDS"
+
+header "Directory contents"
+
+for dir in "${LIST_DIRS_RECURSIVE[@]}"; do
+    if [ -d "$dir" ]; then
+        ls --group-directories-first -laR "$dir"
+    fi
+done
+
+header "Modules info"
+lsmod
+
+if [ -d /etc/alternatives ]; then
+    header "Alternatives links"
+    alt_links=(/etc/alternatives/*gl_conf* /etc/alternatives/*xorg*)
+    # only show links if there are any
+    [ "${#alt_links[@]}" -eq 0 ] || ls -ld "${alt_links[@]}"
+
+    header "Alternatives info"
+    for alt in /var/lib/dpkg/alternatives/*gl_conf* \
+        /var/lib/dpkg/alternatives/*xorg*; do
+        update-alternatives --display "${alt##*/}"
+    done
+
+    header "Alternative links (all)"
+    ls -lAtr /etc/alternatives
+fi
+
+header "Library info for a GL program"
+# Try some programs, we just need the information for a single program
+for bin in $(which glxgears glxspheres xdriinfo 2>/dev/null); do
+    if ldd "$bin" | grep -qF "libGL.so"; then
+        ldd "$bin"
+        break
+    fi
+done
+
+header "Locations of files"
+for file in "$SBINDIR/bumblebeed" "$BINDIR/optirun" \
+    $(which optirun bumblebeed bumblebee vglrun vglconnect 2>/dev/null); do
+    if [ -e "$file" ]; then
+        ls -la "$file"
+    else
+        echo "$file: not found"
+    fi
+done
+
+header "Modules information"
+modinfo bbswitch
+modinfo nvidia
+modinfo nvidia-current
+modinfo nouveau
+
+header "Driver information"
+ls -ld /usr/lib/libnvidia*
+ls -ld /usr/lib/libGL.so*
+ls -ld /usr/lib/libvdpau.so*
+# non-empty containing 'log' and 1[0-9][0-9] files if the driver was installed
+# from nvidia.com
+ls -la /var/lib/nvidia
+
+header "Packages info"
+if [ -n "$PKG_QUERY_TOOL" ]; then
+    echo "Using tool: $PKG_QUERY_TOOL"
+    $PKG_QUERY_TOOL "${PACKAGES[@]}"
+else
+    echo "No package query tool is detected, no package report is generated"
+fi
+
+# End bug report
+} &>> "$BUGREPORT_FILE"
+
+tar zcf "${BUGREPORT_NAME}.tar.gz" -C "$BUGREPORT_TMP" "$BUGREPORT_NAME"
+rm -rf "$BUGREPORT_TMP"
+
+cat <<EOF
+Bug report generated
+
+The bug report has been saved as:
+${PWD%%/}/${BUGREPORT_NAME}.tar.gz
+
+Please continue following the instructions on
+https://github.com/Bumblebee-Project/Bumblebee/wiki/Reporting-Issues
+
+Thanks for your help!
+The Bumblebee Project Team
+EOF

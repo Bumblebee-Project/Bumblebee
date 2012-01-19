@@ -23,6 +23,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "module.h"
 #include "bblogger.h"
 #include "bbrun.h"
@@ -115,8 +116,14 @@ int module_unload(char *driver) {
  * @return 1 if the module is available for loading, 0 otherwise
  */
 int module_is_available(char *module_name) {
+  /* HACK to support call from optirun */
+  char *modinfo_bin = "/sbin/modinfo";
+  if (access(modinfo_bin, X_OK)) {
+    /* if /sbin/modinfo is not found, pray that PATH contains it*/
+    modinfo_bin = "modinfo";
+  }
   char *mod_argv[] = {
-    "modinfo",
+    modinfo_bin,
     module_name,
     NULL
   };

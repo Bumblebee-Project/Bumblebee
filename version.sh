@@ -7,7 +7,9 @@ if [ -z "$PACKAGE_VERSION" ]; then
 		2>/dev/null)"
 fi
 
-if [ -d "$rootdir/.git" ]; then
+[ ! -f "$1/VERSION" ] || VN="$(cat VERSION)"
+
+if [ -z "$VN" ] && [ -d "$rootdir/.git" ]; then
 	VN=$(cd "$rootdir" &&
 		git describe --tags --match 'v[0-9]*' 2>/dev/null)
 
@@ -21,8 +23,12 @@ fi
 
 # try substituted hash if any
 if [ -z "$VN" ]; then
+	git_date="$Format:%ci"
 	git_hash="$Format:%h$"
-	[ ${#git_hash} -ne 7 ] || VN="$PACKAGE_VERSION-$git_hash"
+	if ! [ "${git_hash:0:1}" = "\$" ]; then
+		git_date="${git_date%% *}"
+		VN="$PACKAGE_VERSION-$git_date-$git_hash"
+	fi
 fi
 
 # try name of directory (from github tarballs)

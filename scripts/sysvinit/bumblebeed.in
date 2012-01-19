@@ -19,7 +19,7 @@
 # Avoid bashism since this script runs using /bin/sh, not /bin/bash!
 
 NAME=bumblebeed
-BIN='@BINDIR@/bumblebeed'
+BIN='@SBINDIR@/bumblebeed'
 PIDFILE=/var/run/$NAME.pid
 
 # returns 0 if running, non-zero otherwise

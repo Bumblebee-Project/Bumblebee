@@ -11,4 +11,4 @@ stop on     (runlevel [016])
 respawn
 
 # don't use --daemon as Upstart gets confused by that.
-exec '@BINDIR@/bumblebeed' --use-syslog
+exec '@SBINDIR@/bumblebeed' --use-syslog
