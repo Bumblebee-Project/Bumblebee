@@ -106,3 +106,13 @@ To run Bumblebee after installing it system-wide, run:
     optirun -- <application>
 
 For more information, try `--help` on either of the two binaries.
+
+Interesting Links
+------
+- Facebook: http://www.bumblebee-project.org/facebook
+- Twitter: http://www.bumblebee-project.org/twitter
+- Google Plus: http://www.bumblebee-project.org/g+
+- Ubuntu wiki: https://wiki.ubuntu.com/Bumblebee
+- Arch wiki: https://wiki.archlinux.org/index.php/Bumblebee
+- Mandriva wiki: http://wiki.mandriva.com/en/Bumblebee
+- Debian wiki: http://wiki.debian.org/Bumblebee
