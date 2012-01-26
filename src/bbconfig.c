@@ -407,7 +407,14 @@ void bbconfig_parse_conf_driver(GKeyFile *bbcfg, char *driver) {
 
   key = "KernelDriver";
   if (g_key_file_has_key(bbcfg, section, key, NULL)) {
-    free_and_set_value(&bb_config.module_name, g_key_file_get_string(bbcfg, section, key, NULL));
+    char *module_name = g_key_file_get_string(bbcfg, section, key, NULL);
+    /* if KernelDriver is empty, the default behavior is to copy Driver which
+     * is done in driver_detect() */
+    if (*module_name) {
+      free_and_set_value(&bb_config.module_name, module_name);
+    } else {
+      g_free(module_name);
+    }
   }
   key = "LibraryPath";
   if (g_key_file_has_key(bbcfg, section, key, NULL)) {
