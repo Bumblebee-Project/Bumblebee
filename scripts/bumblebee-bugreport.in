@@ -39,6 +39,7 @@ PKG_QUERY_TOOLS=(
     'apt-cache policy'
     'dpkg-query --show'
     'pacman -Q'
+    'mpkg-show'
 )
 PKG_QUERY_TOOL=
 PACKAGES=
@@ -65,6 +66,10 @@ case "$PKG_QUERY_TOOL" in
   pacman*)
     PACKAGES=(bumblebee bumblebee-git xf86-video-nouveau nouveau-dri mesa libgl lib32-nvidia-utils-bumblebee nvidia-utils-bumblebee virtualgl-bin virtualgl32-bin)
     LIST_DIRS_RECURSIVE=(/usr/lib/nvidia-bumblebee /usr/lib32/nvidia-bumblebee)
+    ;;
+  mpkg-show*)
+    PACKAGES=(bumblebeed xf86-video-nouveau mesa libgl nvidia-driver-optimus nvidia-driver-optimus32 virtualgl virtualgl32)
+    LIST_DIRS_RECURSIVE=(/usr/lib64/nvidia-optimus /usr/lib/nvidia-optimus)
     ;;
   *)
     # unknown package management tool :/
