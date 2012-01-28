@@ -37,22 +37,40 @@ void driver_detect(void) {
     /* if the default driver is set, use that */
     set_string_value(&bb_config.driver, CONF_DRIVER);
     bb_log(LOG_DEBUG, "Using compile default driver '%s'", CONF_DRIVER);
-  } else if (module_is_loaded("nouveau")) {
-    /* loaded drivers take precedence over ones available for modprobing */
-    set_string_value(&bb_config.driver, "nouveau");
-    set_string_value(&bb_config.module_name, "nouveau");
-    bb_log(LOG_DEBUG, "Detected nouveau driver\n");
-  } else if (module_is_available(CONF_DRIVER_MODULE_NVIDIA)) {
-    /* Ubuntu and Mandriva use nvidia-current.ko. nvidia cannot be compiled into
-     * the kernel, so module_is_available makes module_is_loaded redundant */
-    set_string_value(&bb_config.driver, "nvidia");
-    set_string_value(&bb_config.module_name, CONF_DRIVER_MODULE_NVIDIA);
-    bb_log(LOG_DEBUG, "Detected nvidia driver (module %s)\n",
-            CONF_DRIVER_MODULE_NVIDIA);
-  } else if (module_is_available("nouveau")) {
-    set_string_value(&bb_config.driver, "nouveau");
-    set_string_value(&bb_config.module_name, "nouveau");
-    bb_log(LOG_DEBUG, "Detected nouveau driver\n");
+  } else if (bb_status.card_type == CARD_NVIDIA) {
+    if (module_is_loaded("nouveau")) {
+      /* loaded drivers take precedence over ones available for modprobing */
+      set_string_value(&bb_config.driver, "nouveau");
+      set_string_value(&bb_config.module_name, "nouveau");
+      bb_log(LOG_DEBUG, "Detected nouveau driver\n");
+    } else if (module_is_available(CONF_DRIVER_MODULE_NVIDIA)) {
+      /* Ubuntu, Mandriva use nvidia-current.ko. nvidia cannot be compiled into
+       * the kernel, so module_is_available makes module_is_loaded redundant */
+      set_string_value(&bb_config.driver, "nvidia");
+      set_string_value(&bb_config.module_name, CONF_DRIVER_MODULE_NVIDIA);
+      bb_log(LOG_DEBUG, "Detected nvidia driver (module %s)\n",
+              CONF_DRIVER_MODULE_NVIDIA);
+    } else if (module_is_available("nouveau")) {
+      set_string_value(&bb_config.driver, "nouveau");
+      set_string_value(&bb_config.module_name, "nouveau");
+      bb_log(LOG_DEBUG, "Detected nouveau driver\n");
+    }
+  } else if (bb_status.card_type == CARD_ATI) {
+    if (module_is_loaded("radeon")) {
+      set_string_value(&bb_config.driver, "radeon");
+      set_string_value(&bb_config.module_name, "radeon");
+      bb_log(LOG_DEBUG, "Detected radeon driver\n");
+    } else if (module_is_available("fglrx")) {
+      set_string_value(&bb_config.driver, "fglrx");
+      set_string_value(&bb_config.module_name, "fglrx");
+      bb_log(LOG_DEBUG, "Detected fglrx driver\n");
+    } else if (module_is_available("radeon")) {
+      set_string_value(&bb_config.driver, "radeon");
+      set_string_value(&bb_config.module_name, "radeon");
+      bb_log(LOG_DEBUG, "Detected radeon driver\n");
+    }
+  } else {
+    bb_log(LOG_WARNING, "Driver detection failed, no driver configured.\n");
   }
 
   if (!*bb_config.module_name) {
@@ -68,5 +86,8 @@ void driver_detect(void) {
   if (strcmp(bb_config.driver, "nvidia") == 0) {
     set_string_value(&bb_config.ld_path, CONF_LDPATH_NVIDIA);
     set_string_value(&bb_config.mod_path, CONF_MODPATH_NVIDIA);
+  } else if (strcmp(bb_config.driver, "fglrx") == 0) {
+    set_string_value(&bb_config.ld_path, CONF_LDPATH_FGLRX);
+    set_string_value(&bb_config.mod_path, CONF_MODPATH_FGLRX);
   }
 }
