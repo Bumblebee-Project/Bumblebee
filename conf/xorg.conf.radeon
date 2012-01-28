@@ -1,0 +1,15 @@
+Section "ServerLayout"
+    Identifier     "Layout0"
+    Screen         "Screen0"
+    Option         "AutoAddDevices" "false"
+EndSection
+
+Section "Device"
+    Identifier     "Device0"
+    Driver         "radeon"
+EndSection
+
+Section "Screen"
+    Identifier     "Screen0"
+    Device         "Device0"
+EndSection

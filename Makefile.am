@@ -33,6 +33,9 @@ EXTRA_DIST = scripts/systemd/bumblebeed.service.in \
 	scripts/bumblebee-bugreport.in \
 	$(relnotes) \
 	version.sh
+
+EXTRA_DIST += conf/xorg.conf.fglrx conf/xorg.conf.radeon
+
 # for laziness include all headers found
 EXTRA_DIST += src/*.h src/*/switching.h
 
@@ -54,6 +57,8 @@ bin_bumblebeed_LDADD = ${x11_LIBS} ${libbsd_LIBS} ${glib_LIBS} -lrt
 
 dist_doc_DATA = $(relnotes) README.markdown
 bumblebeedconf_DATA = conf/bumblebee.conf conf/xorg.conf.nouveau conf/xorg.conf.nvidia
+
+bumblebeedconf_DATA += conf/xorg.conf.fglrx conf/xorg.conf.radeon
 
 completiondir = $(sysconfdir)/bash_completion.d
 completion_DATA = scripts/bash_completion/bumblebee
@@ -80,6 +85,9 @@ do_subst = sed -e 's|[@]GITVERSION[@]|$(GITVERSION)|g' \
 	-e 's|[@]CONF_DRIVER_MODULE_NVIDIA[@]|$(CONF_DRIVER_MODULE_NVIDIA)|g' \
 	-e 's|[@]CONF_LDPATH_NVIDIA[@]|$(CONF_LDPATH_NVIDIA)|g' \
 	-e 's|[@]CONF_MODPATH_NVIDIA[@]|$(CONF_MODPATH_NVIDIA)|g' \
+	-e 's|[@]CONF_DRIVER_MODULE_FGLRX[@]|$(CONF_DRIVER_MODULE_FGLRX)|g' \
+	-e 's|[@]CONF_LDPATH_FGLRX[@]|$(CONF_LDPATH_FGLRX)|g' \
+	-e 's|[@]CONF_MODPATH_FGLRX[@]|$(CONF_MODPATH_FGLRX)|g' \
 	-e 's|[@]CONF_PIDFILE[@]|$(CONF_PIDFILE)|g'
 
 conf/bumblebee.conf: conf/bumblebee.conf.in

@@ -45,9 +45,10 @@ auto|bbswitch|switcheroo|none) ;;
 *) AC_MSG_ERROR([Invalid value for CONF_PM_METHOD]) ;;
 esac
 ])
-AC_DEFINE_CONF(CONF_DRIVER, [default driver to use, valid values are nvidia, nouveau and an empty value (for autodetection, default)], [
+AC_DEFINE_CONF(CONF_DRIVER, [default driver to use, valid values are nvidia, nouveau, fglrx, radeon and an empty value (for autodetection, default)], [
 case $CONF_DRIVER in
 nvidia|nouveau|"") ;;
+fglrx|radeon) ;;
 *) AC_MSG_ERROR([Invalid value for CONF_DRIVER]) ;;
 esac
 ])
@@ -55,6 +56,9 @@ esac
 AC_DEFINE_CONF(CONF_DRIVER_MODULE_NVIDIA, [name of module for nvidia driver, i.e. the filename without .ko. If empty, "nvidia" is assumed])
 AC_DEFINE_CONF(CONF_LDPATH_NVIDIA, [Path to nvidia libraries for nvidia driver])
 AC_DEFINE_CONF(CONF_MODPATH_NVIDIA, [ModulePath for xorg modules when using nvidia driver])
+
+AC_DEFINE_CONF(CONF_LDPATH_FGLRX, [Path to fglrx libraries for fglrx driver])
+AC_DEFINE_CONF(CONF_MODPATH_FGLRX, [ModulePath for xorg modules when using fglrx driver])
 
 # non-config related compile-time defines
 AC_DEFINE(DAEMON_NAME, "bumblebeed", "daemon name")
