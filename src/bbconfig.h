@@ -131,7 +131,7 @@ struct bb_config_struct {
     int fallback_start; /// Wheter the application should be launched on the integrated card when X is not available.
     char * vgl_compress; /// VGL transport method.
     char *vglrun_options; /* extra options passed to vglrun */
-    char * driver; /// Driver to use (nvidia or nouveau).
+    char * driver; /// Driver to use (nvidia, nouveau, fglrx, radeon).
     char * module_name; /* Kernel module to be loaded for the driver.
                                     * If empty, driver will be used. This is
                                     * for Ubuntu which uses nvidia-current */

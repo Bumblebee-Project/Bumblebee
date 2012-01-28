@@ -137,8 +137,8 @@ void print_usage(int exit_val) {
     fputs("Run an application using the discrete video card.\n", out);
   } else {
     printf("Usage: %s [OPTION]...\n", bb_status.program_name);
-    fputs("Daemon for controlling the discrete nVidia video card on Optimus"
-            " systems.\n", out);
+    fputs("Daemon for controlling the discrete nVidia video card on NVIDIA "
+            "Optimus and AMD Switchable Graphics systems.\n", out);
   }
   printf("\n");
   if (is_optirun) {
@@ -149,8 +149,10 @@ void print_usage(int exit_val) {
                                jpeg, rgb, xv and yuv. Changing this setting\n\
                                may affect performance, CPU usage and image\n\
                                quality\n\
-      --failsafe      run a program even if the nvidia card is unavailable\n\
-      --no-failsafe   do not run a program if the nvidia card is unavailable\n\
+      --failsafe      run a program even if the discrete video card is\n\
+                        unavailable\n\
+      --no-failsafe   do not run a program if the discrete video card is\n\
+                        unavailable\n\
       --vgl-options OPTS   a space-separated list of command options to be\n\
                              passed to vglrun. Useful for debugging virtualgl\n\
                              by passing options to it like +tr. These OPTS\n\
@@ -163,11 +165,13 @@ void print_usage(int exit_val) {
   -D, --daemon          run daemonized (backgrounded). Implies --use-syslog\n\
   -x, --xconf FILE      xorg.conf file to use\n\
   -g, --group GROUP     allow GROUP to communicate with the daemon\n\
-      --driver DRIVER   the driver to use for the nvidia card. Valid values\n\
-                          are nouveau and nvidia. This option also effects\n\
-                          the driver section that will be used from the\n\
-                          configuration file\n\
-  -m, --module-path PATH  ModulePath to use for Xorg (only useful for nvidia)\n\
+      --driver DRIVER   the driver to use for the discrete video card. Valid\n\
+                          values are nouveau and nvidia (for nvidia cards)\n\
+                          and fglrx and radeon (for ATI/AMD cards). This\n\
+                          option also effects the driver section that will be\n\
+                          used from the configuration file\n\
+  -m, --module-path PATH  ModulePath to use for Xorg (only useful for\n\
+                            proprietary drivers like nvidia and fglrx)\n\
   -k, --driver-module NAME    Name of kernel module to be loaded if different\n\
                                 from the driver\n\
       --pm-method METHOD  method to use for disabling the discrete video card,\n\
@@ -201,15 +205,16 @@ void print_usage(int exit_val) {
                             variable. By default, PATH is queried from the\n\
                             daemon\n\
   -l, --ldpath PATH       libraries like libGL.so are searched in PATH\n\
-                            (useful for the nvidia driver). By default, PATH\n\
+                            (useful for proprietary drivers). By default, PATH\n\
                             is queried from the\n", out);
   } else {
     fputs("\
   -d, --display VDISPLAY  start the Bumblebee X server on VDISPLAY. Do not\n\
                             confuse this option with the DISPLAY environment\n\
                             variable\n\
-  -l, --ldpath PATH       libraries like nvidia_drv.so are searched in PATH\n\
-                            (useful for the nvidia driver)\n", out);
+  -l, --ldpath PATH       libraries like nvidia_drv.so or fglrx_drv.so are\n\
+                            searched for in PATH (useful for the proprietary\n\
+                            nvidia and fglrx drivers)\n", out);
   }
   fputs("\
   -s, --socket FILENAME   use FILENAME for communication with the daemon\n\

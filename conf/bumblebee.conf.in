@@ -18,7 +18,8 @@ TurnCardOffAtExit=@CONF_TURNOFFATEXIT@
 NoEcoModeOverride=false
 # The Driver used by Bumblebee server. If this value is not set (or empty),
 # auto-detection is performed. The available drivers are nvidia and nouveau
-# (See also the driver-specific sections below)
+# for NVIDIA cards and fglrx and radeon for ATI/AMD cards (See also the
+# driver-specific sections below)
 Driver=@CONF_DRIVER@
 
 ## Client options. Will take effect on the next optirun executed.
@@ -26,7 +27,7 @@ Driver=@CONF_DRIVER@
 # The method used for VirtualGL to transport frames between X servers.
 # Possible values are proxy, jpeg, rgb, xv and yuv.
 VGLTransport=@CONF_VGLCOMPRESS@
-# Should the program run under optirun even if Bumblebee server or nvidia card
+# Should the program be run even if the Bumblebee daemon or discrete video card
 # is not available?
 AllowFallbackToIGC=@CONF_FALLBACKSTART@
 
@@ -34,11 +35,12 @@ AllowFallbackToIGC=@CONF_FALLBACKSTART@
 # Driver-specific settings are grouped under [driver-NAME]. The sections are
 # parsed if the Driver setting in [bumblebeed] is set to NAME (or if auto-
 # detection resolves to NAME).
-# PMMethod: method to use for saving power by disabling the nvidia card, valid
-# values are: auto - automatically detect which PM method to use
-#         bbswitch - new in BB 3, recommended if available
-#       switcheroo - vga_switcheroo method, use at your own risk
-#             none - disable PM completely
+# PMMethod: method to use for saving power by disabling the discrete video
+# card, valid values are:
+#        auto - automatically detect which PM method to use
+#    bbswitch - for nvidia and nouveau, recommended if available
+#  switcheroo - vga_switcheroo method, nouveau and radeon only
+#        none - disable PM completely
 # https://github.com/Bumblebee-Project/Bumblebee/wiki/Comparison-of-PM-methods
 
 ## Section with nvidia driver specific options, only parsed if Driver=nvidia
