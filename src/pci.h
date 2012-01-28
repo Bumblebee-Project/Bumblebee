@@ -21,6 +21,7 @@
 #pragma once
 #include <sys/types.h> /* necessary for int32_t */
 
+#define PCI_VENDOR_ID_ATI     0x1002
 #define PCI_VENDOR_ID_NVIDIA  0x10de
 #define PCI_VENDOR_ID_INTEL   0x8086
 #define PCI_CLASS_DISPLAY_VGA 0x0300

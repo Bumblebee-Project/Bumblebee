@@ -104,6 +104,12 @@ const char *bb_pm_method_string[PM_METHODS_COUNT];
 /* String buffer size */
 #define BUFFER_SIZE 1024
 
+enum card_type {
+    CARD_UNKNOWN,
+    CARD_NVIDIA,
+    CARD_ATI,
+};
+
 /* Structure containing the status of the application */
 struct bb_status_struct {
     enum verbosity_level verbosity; ///Verbosity level of messages.
@@ -115,6 +121,7 @@ struct bb_status_struct {
     int x_pipe[2];//pipes for reading/writing output from X's stdout/stderr
     gboolean use_syslog;
     char *program_name;
+    enum card_type card_type;
 };
 
 /* Structure containing the configuration. */
