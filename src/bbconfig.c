@@ -184,14 +184,21 @@ void print_usage(int exit_val) {
                             --quiet is used)\n\
       --debug             show all logging messsages by setting the verbosity\n\
                             level to the maximum\n\
-  -d, --display DISPLAY   the X display number to use\n\
   -C, --config FILE       retrieve settings for Bumblebee from FILE\n", out);
   if (is_optirun) {
     fputs("\
+  -d, --display VDISPLAY  find the Bumblebee X server on VDISPLAY. Do not\n\
+                            confuse this option with the DISPLAY environment\n\
+                            variable. By default, PATH is queried from the\n\
+                            daemon\n\
   -l, --ldpath PATH       libraries like libGL.so are searched in PATH\n\
-                            (useful for the nvidia driver)\n", out);
+                            (useful for the nvidia driver). By default, PATH\n\
+                            is queried from the\n", out);
   } else {
     fputs("\
+  -d, --display VDISPLAY  start the Bumblebee X server on VDISPLAY. Do not\n\
+                            confuse this option with the DISPLAY environment\n\
+                            variable\n\
   -l, --ldpath PATH       libraries like nvidia_drv.so are searched in PATH\n\
                             (useful for the nvidia driver)\n", out);
   }
