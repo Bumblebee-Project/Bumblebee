@@ -230,9 +230,6 @@ static int bbconfig_parse_common(int opt, char *value) {
     case 'd'://X display number
       set_string_value(&bb_config.x_display, value);
       break;
-    case 's'://Unix socket to use
-      set_string_value(&bb_config.socket_path, value);
-      break;
     case 'l'://LD driver path
       set_string_value(&bb_config.ld_path, value);
       break;
@@ -279,6 +276,9 @@ void bbconfig_parse_opts(int argc, char *argv[], int conf_round) {
           if (bb_status.verbosity < VERB_ALL) {
             bb_status.verbosity++;
           }
+          break;
+        case 's': /* Unix socket to use for communication */
+          set_string_value(&bb_config.socket_path, optarg);
           break;
         case 'V'://print version
           printf("%s (Bumblebee) %s\n",
