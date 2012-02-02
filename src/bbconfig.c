@@ -103,7 +103,7 @@ void set_string_value(char ** configstring, char * newvalue) {
  * @param value The string to be converted
  * @return An index in the PM methods array
  */
-static enum bb_pm_method bb_pm_method_from_string(char *value) {
+enum bb_pm_method bb_pm_method_from_string(char *value) {
   /* loop backwards through all possible values. If no valid value is found,
    * assume the first element ("none") */
   enum bb_pm_method method_index = PM_METHODS_COUNT;
@@ -169,7 +169,15 @@ void print_usage(int exit_val) {
                           configuration file\n\
   -m, --module-path PATH  ModulePath to use for Xorg (only useful for nvidia)\n\
   -k, --driver-module NAME    Name of kernel module to be loaded if different\n\
-                                from the driver\n", out);
+                                from the driver\n\
+      --pm-method METHOD  method to use for disabling the discrete video card,\n\
+                            valid values are auto, bbswitch, switcheroo and\n\
+                            none. auto selects a sensible method,\n\
+                            bbswitch (kernel module) is available for nvidia\n\
+                            and nouveau drivers,\n\
+                            switcheroo (vga_switcheroo) is for nouveau and\n\
+                            radeon drivers and none disables PM completely\n",
+            out);
 #ifdef WITH_PIDFILE
     fputs("\
       --pidfile         file in which the process ID is written\n\

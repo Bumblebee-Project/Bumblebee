@@ -358,6 +358,7 @@ const struct option *bbconfig_get_lopts(void) {
     {"pidfile", 1, 0, OPT_PIDFILE},
 #endif
     {"use-syslog", 0, 0, OPT_USE_SYSLOG},
+    {"pm-method", 1, 0, OPT_PM_METHOD},
     BBCONFIG_COMMON_LOPTS
   };
   return longOpts;
@@ -391,6 +392,9 @@ int bbconfig_parse_options(int opt, char *value) {
       break;
     case 'k'://kernel module
       set_string_value(&bb_config.module_name, value);
+      break;
+    case OPT_PM_METHOD:
+      bb_config.pm_method = bb_pm_method_from_string(value);
       break;
 #ifdef WITH_PIDFILE
     case OPT_PIDFILE:
