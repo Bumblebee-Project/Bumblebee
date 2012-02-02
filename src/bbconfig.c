@@ -107,8 +107,8 @@ enum bb_pm_method bb_pm_method_from_string(char *value) {
   /* loop backwards through all possible values. If no valid value is found,
    * assume the first element ("none") */
   enum bb_pm_method method_index = PM_METHODS_COUNT;
-  while (method_index-- > 0) {
-    if (strcmp(value, bb_pm_method_string[method_index]) == 0) {
+  while (method_index > 0) {
+    if (strcmp(value, bb_pm_method_string[--method_index]) == 0) {
       break;
     }
   }
