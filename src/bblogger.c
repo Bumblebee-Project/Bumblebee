@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <ctype.h>
+#include <time.h>
 #include "bblogger.h"
 #include "bbconfig.h"
 
