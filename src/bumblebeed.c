@@ -47,6 +47,7 @@
 #include "bbrun.h"
 #include "pci.h"
 #include "driver.h"
+#include "switch/switching.h"
 
 /**
  * Change GID and umask of the daemon
@@ -174,7 +175,21 @@ static void handle_socket(struct clientsocket * C) {
           if (bb_is_running(bb_status.x_pid)) {
             r = snprintf(buffer, BUFFER_SIZE, "Ready (%s). X is PID %i, %i applications using bumblebeed.\n", GITVERSION, bb_status.x_pid, bb_status.appcount);
           } else {
-            r = snprintf(buffer, BUFFER_SIZE, "Ready (%s). X inactive.\n", GITVERSION);
+            char *card_status;
+            switch (switch_status()) {
+              case SWITCH_OFF:
+                card_status = "off";
+                break;
+              case SWITCH_ON:
+                card_status = "on";
+                break;
+              default:
+                /* no PM available, assume it's on */
+                card_status = "likely on";
+                break;
+            }
+            r = snprintf(buffer, BUFFER_SIZE, "Ready (%s). X inactive. Discrete"
+                    " video card is %s.\n", GITVERSION, card_status);
           }
         }
         /* don't rely on result of snprintf, instead calculate length including
