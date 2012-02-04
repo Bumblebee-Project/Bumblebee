@@ -20,8 +20,14 @@
 
 #pragma once
 
+#include <glib/gtypes.h>
+
 #define DBUS_SERVICE_NAME "org.bumblebee_project.bumblebeed"
 
 int bb_dbus_init(void);
 
 int bb_dbus_fini(void);
+
+void bb_dbus_set_xorg_pid(gint pid);
+void bb_dbus_set_clients_count(gint count);
+void bb_dbus_set_card_state(gboolean state);

@@ -22,6 +22,7 @@
 #include <string.h>
 #include "../bblogger.h"
 #include "switching.h"
+#include "../dbus/dbus.h"
 
 /* increase SWITCHERS_COUNT in switching.h when more methods are added */
 struct switching_method switching_methods[SWITCHERS_COUNT] = {
@@ -57,7 +58,10 @@ struct switching_method *switcher_detect(const char *name,
 
 enum switch_state switch_status(void) {
   if (switcher) {
-    return switcher->status();
+    enum switch_state status = switcher->status();
+    /* set the card state to FALSE only if the card is off */
+    bb_dbus_set_card_state(status != SWITCH_OFF);
+    return status;
   }
   return SWITCH_UNAVAIL;
 }

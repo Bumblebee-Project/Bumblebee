@@ -18,14 +18,17 @@
  * along with Bumblebee. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <glib-2.0/glib/gtypes.h>
+#include <glib-2.0/glib/gmessages.h>
+
 #include "dbus.h"
 #include "dbus-bumblebeed.h"
 
 static guint owner_id;
+static BbdDBusBumblebeed *interface;
 
 static void on_bus_acquired(GDBusConnection *connection, const gchar *name,
         gpointer user_data) {
-  BbdDBusBumblebeed *interface;
   GError *error = NULL;
 
   g_print ("Acquired a message bus connection\n");
@@ -78,6 +81,20 @@ int bb_dbus_fini(void) {
   return 0;
 }
 
+void bb_dbus_set_xorg_pid(gint pid) {
+  if (interface) {
+    bbd_dbus_bumblebeed_set_xorg_pid(interface, pid);
+  }
+}
+void bb_dbus_set_clients_count(gint count) {
+  if (interface) {
+    bbd_dbus_bumblebeed_set_clients_count(interface, count);
+  }
+}
+void bb_dbus_set_card_state(gboolean state) {
+  if (interface) {
+    bbd_dbus_bumblebeed_set_card_state(interface, state);
+  }
 #ifdef DEBUG_BBD_DBUS
 int main(int argc, char *argv[]) {
   GMainLoop *loop;

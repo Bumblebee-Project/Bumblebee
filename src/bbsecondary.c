@@ -37,9 +37,15 @@
 #include "bbconfig.h"
 #include "pci.h"
 #include "module.h"
+#include "dbus/dbus.h"
 
 /* the PCI configuration space of the discrete video card */
 static struct pci_config_state pci_config_state_discrete;
+
+static void set_xorg_pid(pid_t pid) {
+  bb_status.x_pid = pid;
+  bb_dbus_set_xorg_pid(pid);
+}
 
 /**
  * Substitutes DRIVER in the passed path
@@ -166,7 +172,7 @@ void start_secondary(void) {
       set_bb_error("Could not create output pipe for X");
       return;
     }
-    bb_status.x_pid = bb_run_fork_ld_redirect(x_argv, bb_config.ld_path, bb_status.x_pipe[1]);
+    set_xorg_pid(bb_run_fork_ld_redirect(x_argv, bb_config.ld_path, bb_status.x_pipe[1]));
     //close the end of the pipe that is not ours
     if (bb_status.x_pipe[1] != -1){close(bb_status.x_pipe[1]); bb_status.x_pipe[1] = -1;}
   }
@@ -195,6 +201,7 @@ void start_secondary(void) {
     } else {
       //X terminated itself
       set_bb_error("X did not start properly");
+      set_xorg_pid(0);
     }
   } else {
     //X accepted the connetion - we assume it works
@@ -214,6 +221,7 @@ void stop_secondary() {
   if (bb_is_running(bb_status.x_pid)) {
     bb_log(LOG_INFO, "Stopping X server\n");
     bb_stop_wait(bb_status.x_pid);
+    set_xorg_pid(0);
   }
 
   if (bb_config.pm_method == PM_DISABLED && bb_status.runmode != BB_RUN_EXIT) {
