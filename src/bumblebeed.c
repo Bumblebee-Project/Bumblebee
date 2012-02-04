@@ -48,6 +48,7 @@
 #include "pci.h"
 #include "driver.h"
 #include "switch/switching.h"
+#include "dbus/dbus.h"
 
 /**
  * Change GID and umask of the daemon
@@ -507,6 +508,8 @@ int main(int argc, char* argv[]) {
   pidfile_write(pfh);
 #endif
 
+  bb_dbus_init();
+
   /* Initialize communication socket, enter main loop */
   bb_status.bb_socket = socketServer(bb_config.socket_path, SOCK_NOBLOCK);
   stop_secondary(); //turn off card, nobody is connected right now.
@@ -520,6 +523,7 @@ int main(int argc, char* argv[]) {
     //if shutdown state = 0, turn off card
     stop_secondary();
   }
+  bb_dbus_fini();
   bb_closelog();
 #ifdef WITH_PIDFILE
   pidfile_remove(pfh);

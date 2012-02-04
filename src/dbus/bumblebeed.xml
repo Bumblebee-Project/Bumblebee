@@ -1,0 +1,10 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node name="/org/bumblebee-project/Bumblebee">
+    <!-- bumblebee-project cannot be used due to limitations of GDBus... -->
+    <interface name="org.bumblebee_project.bumblebeed">
+        <property name="CardState" type="b" access="read" />
+        <property name="XorgPid" type="i" access="read" />
+        <property name="ClientsCount" type="i" access="read" />
+    </interface>
+</node>

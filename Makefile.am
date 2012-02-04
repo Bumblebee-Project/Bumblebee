@@ -9,7 +9,7 @@ AM_CPPFLAGS = ${regular_CPPFLAGS} \
 		-DCONFIG_FILE='"$(bumblebeedconfdir)/bumblebee.conf"' \
 		-DCONF_XORG='"$(bumblebeedconfdir)/xorg.conf.DRIVER"'
 AM_CFLAGS = ${regular_CFLAGS} \
-		${x11_CFLAGS} ${libbsd_CFLAGS} ${glib_CFLAGS} \
+		${x11_CFLAGS} ${libbsd_CFLAGS} ${glib_CFLAGS} ${gio_CFLAGS} \
 		-Wextra -funsigned-char -DGITVERSION='"${GITVERSION}"'
 
 noinst_SCRIPTS = scripts/systemd/bumblebeed.service \
@@ -33,11 +33,19 @@ EXTRA_DIST = scripts/systemd/bumblebeed.service.in \
 	$(relnotes) \
 	version.sh
 # for laziness include all headers found
-EXTRA_DIST += src/*.h src/*/switching.h
+EXTRA_DIST += src/*.h src/*/switching.h src/dbus/dbus.h
 
 if WITH_PIDFILE
 EXTRA_DIST += scripts/sysvinit/bumblebeed.in
 endif
+
+BUILT_SOURCES = src/dbus/dbus-bumblebeed.c
+src/dbus/dbus-bumblebeed.c:
+	gdbus-codegen --generate-c-code src/dbus/dbus-bumblebeed \
+		--c-namespace BbdDBus \
+		--interface-prefix org.bumblebee_project. \
+		src/dbus/bumblebeed.xml
+CLEANFILES += src/dbus/dbus-bumblebeed.c src/dbus/dbus-bumblebeed.h
 
 sbin_PROGRAMS = bin/bumblebeed
 bin_PROGRAMS = bin/optirun
@@ -48,8 +56,9 @@ bin_optirun_LDADD = ${glib_LIBS}
 bin_bumblebeed_SOURCES = src/pci.c src/bbconfig.c src/bblogger.c src/bbrun.c \
 	src/bbsocket.c src/module.c src/bbsecondary.c src/switch/switching.c \
 	src/switch/sw_bbswitch.c src/switch/sw_switcheroo.c \
+	src/dbus/server.c src/dbus/dbus-bumblebeed.c \
 	src/driver.c src/bumblebeed.c
-bin_bumblebeed_LDADD = ${x11_LIBS} ${libbsd_LIBS} ${glib_LIBS}
+bin_bumblebeed_LDADD = ${x11_LIBS} ${libbsd_LIBS} ${glib_LIBS} ${gio_LIBS}
 
 dist_doc_DATA = $(relnotes) README.markdown
 bumblebeedconf_DATA = conf/bumblebee.conf conf/xorg.conf.nouveau conf/xorg.conf.nvidia
