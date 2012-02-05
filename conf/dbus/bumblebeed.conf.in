@@ -1,0 +1,17 @@
+<!DOCTYPE busconfig PUBLIC "-//freedesktop//DTD D-Bus Bus Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd">
+
+<busconfig>
+    <policy user="root">
+        <allow own="org.bumblebee_project.bumblebeed" />
+        <!-- root is allowed to query -->
+        <allow send_destination="org.bumblebee_project.bumblebeed" />
+        <allow send_interface="org.bumblebee_project.bumblebeed" />
+    </policy>
+    <policy group="@CONF_GID@">
+        <allow send_destination="org.bumblebee_project.bumblebeed" />
+    </policy>
+    <policy context="default">
+        <deny send_destination="org.bumblebee_project.bumblebeed" />
+    </policy>
+</busconfig>

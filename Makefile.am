@@ -27,6 +27,7 @@ EXTRA_DIST = scripts/systemd/bumblebeed.service.in \
 	conf/bumblebee.conf.in \
 	conf/xorg.conf.nvidia \
 	conf/xorg.conf.nouveau \
+	conf/dbus/bumblebeed.conf.in \
 	README.markdown \
 	scripts/bash_completion/bumblebee \
 	scripts/bumblebee-bugreport.in \
@@ -46,6 +47,7 @@ src/dbus/dbus-bumblebeed.c:
 		--interface-prefix org.bumblebee_project. \
 		src/dbus/bumblebeed.xml
 CLEANFILES += src/dbus/dbus-bumblebeed.c src/dbus/dbus-bumblebeed.h
+CLEANFILES += conf/dbus/bumblebeed.conf
 
 sbin_PROGRAMS = bin/bumblebeed
 bin_PROGRAMS = bin/optirun
@@ -62,6 +64,10 @@ bin_bumblebeed_LDADD = ${x11_LIBS} ${libbsd_LIBS} ${glib_LIBS} ${gio_LIBS}
 
 dist_doc_DATA = $(relnotes) README.markdown
 bumblebeedconf_DATA = conf/bumblebee.conf conf/xorg.conf.nouveau conf/xorg.conf.nvidia
+
+dbusconfdir = $(sysconfdir)/dbus-1/system.d
+dbusconf_DATA = conf/dbus/bumblebeed.conf
+
 
 completiondir = $(sysconfdir)/bash_completion.d
 completion_DATA = scripts/bash_completion/bumblebee
@@ -100,6 +106,9 @@ scripts/sysvinit/bumblebeed: scripts/sysvinit/bumblebeed.in
 endif
 
 scripts/upstart/bumblebeed.conf: scripts/upstart/bumblebeed.conf.in
+	$(do_subst) < $@.in > $@
+
+conf/dbus/bumblebeed.conf: conf/dbus/bumblebeed.conf.in
 	$(do_subst) < $@.in > $@
 
 if HAVE_HELP2MAN

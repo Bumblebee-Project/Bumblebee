@@ -65,7 +65,7 @@ int bb_dbus_init(void) {
   flags = G_BUS_NAME_OWNER_FLAGS_NONE;
   flags |= G_BUS_NAME_OWNER_FLAGS_REPLACE;
 
-  owner_id = g_bus_own_name(G_BUS_TYPE_SESSION,
+  owner_id = g_bus_own_name(G_BUS_TYPE_SYSTEM,
           DBUS_SERVICE_NAME,
           flags,
           on_bus_acquired,
@@ -97,10 +97,19 @@ void bb_dbus_set_card_state(gboolean state) {
   }
 }
 #ifdef DEBUG_BBD_DBUS
+#include <stdlib.h>
+static gboolean go_away(gpointer data) {
+  g_print("Stopping...\n");
+  g_main_quit(data);
+  return FALSE;
+}
 int main(int argc, char *argv[]) {
   GMainLoop *loop;
   bb_dbus_init();
   loop = g_main_loop_new(NULL, FALSE);
+  if (argc >= 2) {
+    g_timeout_add_seconds(atoi(argv[1]), (GSourceFunc)go_away, loop);
+  }
   g_main_loop_run(loop);
   bb_dbus_fini();
   return 0;
