@@ -95,6 +95,7 @@ void bb_dbus_set_card_state(gboolean state) {
   if (interface) {
     bbd_dbus_bumblebeed_set_card_state(interface, state);
   }
+}
 #ifdef DEBUG_BBD_DBUS
 int main(int argc, char *argv[]) {
   GMainLoop *loop;
