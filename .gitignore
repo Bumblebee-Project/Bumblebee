@@ -12,8 +12,12 @@ Makefile.in
 /configure
 /stamp-h1
 
+/src/dbus/dbus-bumblebeed.h
+/src/dbus/dbus-bumblebeed.c
+
 /bin/
 /conf/bumblebee.conf
+/conf/dbus/bumblebeed.conf
 /scripts/systemd/bumblebeed.service
 /scripts/sysvinit/bumblebeed
 /scripts/upstart/bumblebeed.conf
