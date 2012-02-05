@@ -233,7 +233,7 @@ void stop_secondary() {
   if (switcher) {
     if (switcher->need_driver_unloaded) {
       /* do not unload the drivers nor disable the card if the card is not on */
-      if (switcher->status() != SWITCH_ON) {
+      if (switch_status() != SWITCH_ON) {
         return;
       }
       if (pci_config_save(pci_bus_id_discrete, &pci_config_state_discrete)) {

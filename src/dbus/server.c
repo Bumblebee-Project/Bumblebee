@@ -23,6 +23,7 @@
 
 #include "dbus.h"
 #include "dbus-bumblebeed.h"
+#include "../switch/switching.h"
 
 static guint owner_id;
 static BbdDBusBumblebeed *interface;
@@ -36,6 +37,8 @@ static void on_bus_acquired(GDBusConnection *connection, const gchar *name,
   interface = bbd_dbus_bumblebeed_skeleton_new();
 
   bbd_dbus_bumblebeed_set_card_state(interface, TRUE);
+  /* update card status */
+  switch_status();
   bbd_dbus_bumblebeed_set_clients_count(interface, 0);
   bbd_dbus_bumblebeed_set_xorg_pid(interface, 0);
   g_dbus_interface_skeleton_export(G_DBUS_INTERFACE_SKELETON(interface),
