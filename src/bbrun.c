@@ -217,16 +217,21 @@ void bb_run_fork_wait(char** argv, int timeout) {
   }
   bb_log(LOG_DEBUG, "Process %s started, PID %i.\n", argv[0], pid);
   pidlist_add(pid);
-  g_child_watch_add(pid, (GChildWatchFunc)child_died_handler, argv[0]);
+  int status;
   int i = 0;
-  while (bb_is_running(pid) && ((i < timeout) || (timeout == 0)) && dowait) {
+  while (((i < timeout) || (timeout == 0)) && dowait) {
+    if (waitpid(pid, &status, WNOHANG) != 0) {
+      if (WIFEXITED(status) || WTERMSIG(status)) {
+        pidlist_remove(pid);
+        break;
+      }
+    }
     usleep(1000000);
     i++;
   }
   /* make a single attempt to kill the process if timed out, without waiting */
-  if (bb_is_running(pid)) {
-    bb_stop(pid);
-  }
+  g_child_watch_add(pid, (GChildWatchFunc)child_died_handler, argv[0]);
+  bb_stop(pid);
 }
 
 /// Returns 1 if a process is currently running, 0 otherwise.
