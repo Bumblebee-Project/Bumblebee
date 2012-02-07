@@ -253,7 +253,7 @@ void bb_stop(pid_t proc) {
 void bb_stop_wait(pid_t proc) {
   int i = 0;
   while (bb_is_running(proc)) {
-    int kill_res;
+    int kill_res, sleep_res;
     ++i;
     //the first 10 attempts, use SIGTERM
     if (i < 10) {
@@ -268,9 +268,16 @@ void bb_stop_wait(pid_t proc) {
       break;
     }
     if (dowait) {
-      usleep(1000000); //sleep up to a second, waiting for process
+      sleep_res = usleep(1000000); //sleep up to a second, waiting for process
     } else {
-      usleep(10000); //sleep only 10ms, because we are in a hurry
+      sleep_res = usleep(10000); //sleep only 10ms, because we are in a hurry
+    }
+    if (sleep_res) {
+      /* g_watch_child functions cannot dispatch while this loop is running.
+       * Therefore call waitpid() in case the process has become a zombie to
+       * avoid an infinite loop here */
+      bb_log(LOG_DEBUG, "usleep failed in bb_stop_wait, SIGCHLD signal?\n");
+      waitpid(proc, NULL, WNOHANG);
     }
   }
 }
