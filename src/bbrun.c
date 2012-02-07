@@ -253,13 +253,19 @@ void bb_stop(pid_t proc) {
 void bb_stop_wait(pid_t proc) {
   int i = 0;
   while (bb_is_running(proc)) {
+    int kill_res;
     ++i;
     //the first 10 attempts, use SIGTERM
     if (i < 10) {
-      kill(proc, SIGTERM);
+      kill_res = kill(proc, SIGTERM);
     } else {
       //after that, use SIGKILL
-      kill(proc, SIGKILL);
+      kill_res = kill(proc, SIGKILL);
+    }
+    if (kill_res) {
+      /* already exited but not cleaned up yet */
+      pidlist_remove(proc);
+      break;
     }
     if (dowait) {
       usleep(1000000); //sleep up to a second, waiting for process
