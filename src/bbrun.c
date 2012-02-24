@@ -29,6 +29,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <glib.h>
 #include "bbrun.h"
 #include "bblogger.h"
@@ -172,10 +173,10 @@ static void set_ld_library_path(gpointer path) {
  *
  * @param argv The arguments values, the first one is the program
  * @param ldpath The library path to be used if any (may be NULL)
- * @param redirect The file descriptor to redirect stdout/stderr to. Must be valid and open.
+ * @param redirect A pointer to save stderr in
  * @return The childs process ID
  */
-pid_t bb_run_fork_ld_redirect(char **argv, char *ldpath, int redirect) {
+pid_t bb_run_fork_ld_redirect(char **argv, char *ldpath, int *redirect) {
   gint standard_output = -1, standard_error = -1;
   GSpawnFlags flags;
   GPid pid;
@@ -192,9 +193,13 @@ pid_t bb_run_fork_ld_redirect(char **argv, char *ldpath, int redirect) {
   }
   bb_log(LOG_DEBUG, "Process %s started, PID %i.\n", argv[0], pid);
   pidlist_add(pid);
-  /* redirect stdout and stderr to the given fd */
-  dup2(redirect, standard_output);
-  dup2(redirect, standard_error);
+  /* close stdout, make reads on stderr non-blocking and save stderr fd */
+  close(standard_output);
+  if (fcntl(standard_error, F_SETFL, O_NONBLOCK)) {
+    bb_log(LOG_DEBUG, "Setting non-blocking mode for %s failed: %s\n",
+            argv[0], strerror(errno));
+  }
+  *redirect = standard_error;
   g_child_watch_add(pid, (GChildWatchFunc)child_died_handler, argv[0]);
   return pid;
 }

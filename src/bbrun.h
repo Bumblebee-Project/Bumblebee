@@ -28,7 +28,7 @@
 int bb_run_fork(char** argv, int detached);
 
 /// Forks and runs the given application, using an LD_LIBRARY_PATH.
-pid_t bb_run_fork_ld_redirect(char** argv, char * ldpath, int redirect);
+pid_t bb_run_fork_ld_redirect(char** argv, char * ldpath, int *redirect);
 
 /// Forks and runs the given application, waits for a maximum of timeout seconds for process to finish.
 void bb_run_fork_wait(char** argv, int timeout);

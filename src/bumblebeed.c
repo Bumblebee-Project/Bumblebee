@@ -353,8 +353,10 @@ int main(int argc, char* argv[]) {
   pidfile_remove(pfh);
 #endif
   bb_stop_all(); //stop any started processes that are left
-  //close X pipe, if any parts of it are open still
-  if (bb_status.x_pipe[0] != -1){close(bb_status.x_pipe[0]); bb_status.x_pipe[0] = -1;}
-  if (bb_status.x_pipe[1] != -1){close(bb_status.x_pipe[1]); bb_status.x_pipe[1] = -1;}
+  /* close xorg standard output if there is an open one */
+  if (bb_status.x_err_fd != -1) {
+    close(bb_status.x_err_fd);
+    bb_status.x_err_fd = -1;
+  }
   return (EXIT_SUCCESS);
 }

@@ -164,17 +164,12 @@ void start_secondary(void) {
     if (!*bb_config.mod_path) {
       x_argv[12] = 0; //remove -modulepath if not set
     }
-    //close any previous pipe, if it (still) exists
-    if (bb_status.x_pipe[0] != -1){close(bb_status.x_pipe[0]); bb_status.x_pipe[0] = -1;}
-    if (bb_status.x_pipe[1] != -1){close(bb_status.x_pipe[1]); bb_status.x_pipe[1] = -1;}
-    //create a new pipe
-    if (pipe2(bb_status.x_pipe, O_NONBLOCK)){
-      set_bb_error("Could not create output pipe for X");
-      return;
+    /* close previous open file descriptors if any */
+    if (bb_status.x_err_fd != -1) {
+      close(bb_status.x_err_fd);
+      bb_status.x_err_fd = -1;
     }
-    set_xorg_pid(bb_run_fork_ld_redirect(x_argv, bb_config.ld_path, bb_status.x_pipe[1]));
-    //close the end of the pipe that is not ours
-    if (bb_status.x_pipe[1] != -1){close(bb_status.x_pipe[1]); bb_status.x_pipe[1] = -1;}
+    set_xorg_pid(bb_run_fork_ld_redirect(x_argv, bb_config.ld_path, &bb_status.x_err_fd));
   }
 
   //check if X is available, for maximum 10 seconds.
