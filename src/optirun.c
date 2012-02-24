@@ -263,7 +263,6 @@ int main(int argc, char *argv[]) {
   bbconfig_parse_opts(argc, argv, PARSE_STAGE_PRECONF);
   GKeyFile *bbcfg = bbconfig_parse_conf();
 
-  bb_log(LOG_DEBUG, "%s version %s starting...\n", "optirun", GITVERSION);
 
   /* Connect to listening daemon */
   bb_status.bb_socket = socketConnect(bb_config.socket_path, SOCK_NOBLOCK);
@@ -287,6 +286,7 @@ int main(int argc, char *argv[]) {
 
   /* parse remaining common and optirun-specific options */
   bbconfig_parse_opts(argc, argv, PARSE_STAGE_OTHER);
+  bb_log(LOG_DEBUG, "%s version %s starting...\n", "optirun", GITVERSION);
   config_dump();
 
   /* Request status */

@@ -54,13 +54,13 @@ bin_PROGRAMS = bin/optirun
 
 bin_optirun_SOURCES = src/module.c src/bbconfig.c src/bblogger.c src/bbrun.c \
 	src/bbsocket.c src/driver.c src/optirun.c src/bbsocketclient.c
-bin_optirun_LDADD = ${glib_LIBS}
+bin_optirun_LDADD = ${glib_LIBS} -lrt
 bin_bumblebeed_SOURCES = src/pci.c src/bbconfig.c src/bblogger.c src/bbrun.c \
 	src/bbsocket.c src/module.c src/bbsecondary.c src/switch/switching.c \
 	src/switch/sw_bbswitch.c src/switch/sw_switcheroo.c \
 	src/dbus/server.c src/dbus/dbus-bumblebeed.c \
 	src/driver.c src/connections-handler.c src/bumblebeed.c
-bin_bumblebeed_LDADD = ${x11_LIBS} ${libbsd_LIBS} ${glib_LIBS} ${gio_LIBS}
+bin_bumblebeed_LDADD = ${x11_LIBS} ${libbsd_LIBS} ${glib_LIBS} ${gio_LIBS} -lrt
 
 dist_doc_DATA = $(relnotes) README.markdown
 bumblebeedconf_DATA = conf/bumblebee.conf conf/xorg.conf.nouveau conf/xorg.conf.nvidia
