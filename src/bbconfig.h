@@ -112,7 +112,7 @@ struct bb_status_struct {
     char * errors; /// Error message if any. First byte is 0 otherwise.
     enum bb_run_mode runmode; /// Running mode.
     pid_t x_pid;
-    int x_pipe[2];//pipes for reading/writing output from X's stdout/stderr
+    int x_err_fd; /* fd of the Xorg stderr or -1 if there is none */
     gboolean use_syslog;
     char *program_name;
 };

@@ -209,13 +209,13 @@ static void parse_xorg_output(char * string){
  * Doesn't take any parameters and doesn't return anything.
  */
 void check_xorg_pipe(void){
-  if (bb_status.x_pipe[0] == -1){return;}
+  if (bb_status.x_err_fd == -1){return;}
   int repeat;
 
   do{
     repeat = 0;
     /* attempt to read at most the entire buffer full. */
-    int r = read(bb_status.x_pipe[0], x_output_buffer + x_buffer_pos,
+    int r = read(bb_status.x_err_fd, x_output_buffer + x_buffer_pos,
             sizeof (x_output_buffer) - x_buffer_pos - 1);
     if (r > 0){
       x_buffer_pos += r;
@@ -228,8 +228,10 @@ void check_xorg_pipe(void){
     }else{
       if (r == 0 || (errno != EAGAIN && r == -1)){
         /* the pipe is closed/invalid. Clean up. */
-        if (bb_status.x_pipe[0] != -1){close(bb_status.x_pipe[0]); bb_status.x_pipe[0] = -1;}
-        if (bb_status.x_pipe[1] != -1){close(bb_status.x_pipe[1]); bb_status.x_pipe[1] = -1;}
+        if (bb_status.x_err_fd != -1) {
+          close(bb_status.x_err_fd);
+          bb_status.x_err_fd = -1;
+        }
       }
     }
     /* while x_buffer_pos>0 and a \n is in the buffer, parse.
