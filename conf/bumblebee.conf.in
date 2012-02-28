@@ -37,7 +37,7 @@ AllowFallbackToIGC=@CONF_FALLBACKSTART@
 # PMMethod: method to use for saving power by disabling the nvidia card, valid
 # values are: auto - automatically detect which PM method to use
 #         bbswitch - new in BB 3, recommended if available
-#       switcheroo - vga_switcheroo method
+#       switcheroo - vga_switcheroo method, use at your own risk
 #             none - disable PM completely
 # https://github.com/Bumblebee-Project/Bumblebee/wiki/Comparison-of-PM-methods
 

@@ -175,8 +175,9 @@ void print_usage(int exit_val) {
                             none. auto selects a sensible method,\n\
                             bbswitch (kernel module) is available for nvidia\n\
                             and nouveau drivers,\n\
-                            switcheroo (vga_switcheroo) is for nouveau and\n\
-                            radeon drivers and none disables PM completely\n",
+                            switcheroo (vga_switcheroo) is usually for\n\
+			    nouveau and radeon drivers and none disables PM\n\
+			    completely\n",
             out);
 #ifdef WITH_PIDFILE
     fputs("\
