@@ -265,7 +265,7 @@ int main(int argc, char *argv[]) {
 
 
   /* Connect to listening daemon */
-  bb_status.bb_socket = socketConnect(bb_config.socket_path, SOCK_NOBLOCK);
+  bb_status.bb_socket = socketConnect(bb_config.socket_path, SOCK_BLOCK);
   if (bb_status.bb_socket < 0) {
     bb_log(LOG_ERR, "Could not connect to bumblebee daemon - is it running?\n");
     run_fallback(argv + optind);
