@@ -4,6 +4,9 @@ Highlights:
 - [bugfix] Busy socket polling in optirun has received a temporary fix. This
   solves issues like "NVRM: GPU at... has fallen off the bus", hard shutdown,
   "Failed to initialize the NVIDIA GPU", and maybe some others.
+- [new] New PM Method arg for bumblebeed
+- [enhancement] Some background changes (protocol)
+- [bugfixes] Some others minor bugfixes have been done.
 
 Notes:
 - bbswitch is independent of the driver; vga_switcheroo works for nouveau only.
