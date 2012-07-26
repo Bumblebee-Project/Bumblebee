@@ -67,7 +67,8 @@ enum {
     OPT_STATUS,
     OPT_PIDFILE,
     OPT_USE_SYSLOG,
-    OPT_DEBUG
+    OPT_DEBUG,
+    OPT_PM_METHOD,
 };
 
 /* Verbosity levels */
@@ -173,3 +174,5 @@ GKeyFile *bbconfig_parse_conf(void);
 void bbconfig_parse_conf_driver(GKeyFile *bbcfg, char *driver);
 
 gboolean bb_bool_from_string(char* str);
+
+enum bb_pm_method bb_pm_method_from_string(char *value);

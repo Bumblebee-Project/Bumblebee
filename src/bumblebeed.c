@@ -47,6 +47,7 @@
 #include "bbrun.h"
 #include "pci.h"
 #include "driver.h"
+#include "switch/switching.h"
 
 /**
  * Change GID and umask of the daemon
@@ -174,7 +175,21 @@ static void handle_socket(struct clientsocket * C) {
           if (bb_is_running(bb_status.x_pid)) {
             r = snprintf(buffer, BUFFER_SIZE, "Ready (%s). X is PID %i, %i applications using bumblebeed.\n", GITVERSION, bb_status.x_pid, bb_status.appcount);
           } else {
-            r = snprintf(buffer, BUFFER_SIZE, "Ready (%s). X inactive.\n", GITVERSION);
+            char *card_status;
+            switch (switch_status()) {
+              case SWITCH_OFF:
+                card_status = "off";
+                break;
+              case SWITCH_ON:
+                card_status = "on";
+                break;
+              default:
+                /* no PM available, assume it's on */
+                card_status = "likely on";
+                break;
+            }
+            r = snprintf(buffer, BUFFER_SIZE, "Ready (%s). X inactive. Discrete"
+                    " video card is %s.\n", GITVERSION, card_status);
           }
         }
         /* don't rely on result of snprintf, instead calculate length including
@@ -207,6 +222,26 @@ static void handle_socket(struct clientsocket * C) {
         break;
       case 'D'://done, close the socket.
         socketClose(&C->sock);
+        break;
+      case 'Q': /* query for configuration details */
+        /* required since labels can only be attached on statements */;
+        char *conf_key = strchr(buffer, ' ');
+        if (conf_key) {
+          conf_key++;
+          if (strcmp(conf_key, "VirtualDisplay") == 0) {
+            snprintf(buffer, BUFFER_SIZE, "Value: %s\n", bb_config.x_display);
+          } else if (strcmp(conf_key, "LibraryPath") == 0) {
+            snprintf(buffer, BUFFER_SIZE, "Value: %s\n", bb_config.ld_path);
+          } else if (strcmp(conf_key, "Driver") == 0) {
+            /* note: this is not the auto-detected value, but the actual one */
+            snprintf(buffer, BUFFER_SIZE, "Value: %s\n", bb_config.driver);
+          } else {
+            snprintf(buffer, BUFFER_SIZE, "Unknown key requested.\n");
+          }
+        } else {
+          snprintf(buffer, BUFFER_SIZE, "Error: invalid protocol message.\n");
+        }
+        socketWrite(&C->sock, buffer, strlen(buffer) + 1);
         break;
       default:
         bb_log(LOG_WARNING, "Unhandled message received: %*s\n", r, buffer);
@@ -323,6 +358,7 @@ const struct option *bbconfig_get_lopts(void) {
     {"pidfile", 1, 0, OPT_PIDFILE},
 #endif
     {"use-syslog", 0, 0, OPT_USE_SYSLOG},
+    {"pm-method", 1, 0, OPT_PM_METHOD},
     BBCONFIG_COMMON_LOPTS
   };
   return longOpts;
@@ -356,6 +392,9 @@ int bbconfig_parse_options(int opt, char *value) {
       break;
     case 'k'://kernel module
       set_string_value(&bb_config.module_name, value);
+      break;
+    case OPT_PM_METHOD:
+      bb_config.pm_method = bb_pm_method_from_string(value);
       break;
 #ifdef WITH_PIDFILE
     case OPT_PIDFILE:

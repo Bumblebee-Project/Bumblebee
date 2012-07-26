@@ -39,6 +39,7 @@ PKG_QUERY_TOOLS=(
     'apt-cache policy'
     'dpkg-query --show'
     'pacman -Q'
+    'mpkg-show'
 )
 PKG_QUERY_TOOL=
 PACKAGES=
@@ -56,15 +57,19 @@ done
 # XXX: perhaps LIST_DIRS_RECURSIVE can be separated from the tools
 case "$PKG_QUERY_TOOL" in
   apt-cache*|dpkg-query*)
-    PACKAGES=(bumblebee virtualgl nvidia-current nvidia-glx libgl1-mesa-glx)
+    PACKAGES=(bumblebee virtualgl nvidia-current nvidia-kernel-dkms nvidia-glx libgl1-mesa-glx)
     LIST_DIRS_RECURSIVE=(
-        /usr/lib/nvidia-current /usr/lib32/nvidia-current /usr/lib/nvidia
+        /usr/lib/nvidia-current /usr/lib32/nvidia-current /usr/lib/nvidia /usr/lib/*/nvidia
         /etc/ld.so.conf.d /usr/lib/xorg
     )
     ;;
   pacman*)
     PACKAGES=(bumblebee bumblebee-git xf86-video-nouveau nouveau-dri mesa libgl lib32-nvidia-utils-bumblebee nvidia-utils-bumblebee virtualgl-bin virtualgl32-bin)
     LIST_DIRS_RECURSIVE=(/usr/lib/nvidia-bumblebee /usr/lib32/nvidia-bumblebee)
+    ;;
+  mpkg-show*)
+    PACKAGES=(bumblebeed xf86-video-nouveau mesa libgl nvidia-driver-optimus nvidia-driver-optimus32 virtualgl virtualgl32)
+    LIST_DIRS_RECURSIVE=(/usr/lib64/nvidia-optimus /usr/lib/nvidia-optimus)
     ;;
   *)
     # unknown package management tool :/
@@ -209,7 +214,7 @@ lsmod
 
 if [ -d /etc/alternatives ]; then
     header "Alternatives links"
-    alt_links=(/etc/alternatives/*gl_conf* /etc/alternatives/*xorg*)
+    alt_links=(/etc/alternatives/*gl_conf* /etc/alternatives/*xorg* /etc/alternatives/*glx* /etc/alternatives/*GL*)
     # only show links if there are any
     [ "${#alt_links[@]}" -eq 0 ] || ls -ld "${alt_links[@]}"
 
@@ -252,6 +257,9 @@ header "Driver information"
 ls -ld /usr/lib/libnvidia*
 ls -ld /usr/lib/libGL.so*
 ls -ld /usr/lib/libvdpau.so*
+ls -ld /usr/lib/*/libnvidia*
+ls -ld /usr/lib/*/libGL.so*
+ls -ld /usr/lib/*/libvdpau.so*
 # non-empty containing 'log' and 1[0-9][0-9] files if the driver was installed
 # from nvidia.com
 ls -la /var/lib/nvidia

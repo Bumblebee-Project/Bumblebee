@@ -103,12 +103,12 @@ void set_string_value(char ** configstring, char * newvalue) {
  * @param value The string to be converted
  * @return An index in the PM methods array
  */
-static enum bb_pm_method bb_pm_method_from_string(char *value) {
+enum bb_pm_method bb_pm_method_from_string(char *value) {
   /* loop backwards through all possible values. If no valid value is found,
    * assume the first element ("none") */
   enum bb_pm_method method_index = PM_METHODS_COUNT;
-  while (method_index-- > 0) {
-    if (strcmp(value, bb_pm_method_string[method_index]) == 0) {
+  while (method_index > 0) {
+    if (strcmp(value, bb_pm_method_string[--method_index]) == 0) {
       break;
     }
   }
@@ -169,7 +169,16 @@ void print_usage(int exit_val) {
                           configuration file\n\
   -m, --module-path PATH  ModulePath to use for Xorg (only useful for nvidia)\n\
   -k, --driver-module NAME    Name of kernel module to be loaded if different\n\
-                                from the driver\n", out);
+                                from the driver\n\
+      --pm-method METHOD  method to use for disabling the discrete video card,\n\
+                            valid values are auto, bbswitch, switcheroo and\n\
+                            none. auto selects a sensible method,\n\
+                            bbswitch (kernel module) is available for nvidia\n\
+                            and nouveau drivers,\n\
+                            switcheroo (vga_switcheroo) is usually for\n\
+			    nouveau and radeon drivers and none disables PM\n\
+			    completely\n",
+            out);
 #ifdef WITH_PIDFILE
     fputs("\
       --pidfile         file in which the process ID is written\n\
@@ -184,14 +193,21 @@ void print_usage(int exit_val) {
                             --quiet is used)\n\
       --debug             show all logging messsages by setting the verbosity\n\
                             level to the maximum\n\
-  -d, --display DISPLAY   the X display number to use\n\
   -C, --config FILE       retrieve settings for Bumblebee from FILE\n", out);
   if (is_optirun) {
     fputs("\
+  -d, --display VDISPLAY  find the Bumblebee X server on VDISPLAY. Do not\n\
+                            confuse this option with the DISPLAY environment\n\
+                            variable. By default, PATH is queried from the\n\
+                            daemon\n\
   -l, --ldpath PATH       libraries like libGL.so are searched in PATH\n\
-                            (useful for the nvidia driver)\n", out);
+                            (useful for the nvidia driver). By default, PATH\n\
+                            is queried from the\n", out);
   } else {
     fputs("\
+  -d, --display VDISPLAY  start the Bumblebee X server on VDISPLAY. Do not\n\
+                            confuse this option with the DISPLAY environment\n\
+                            variable\n\
   -l, --ldpath PATH       libraries like nvidia_drv.so are searched in PATH\n\
                             (useful for the nvidia driver)\n", out);
   }
@@ -229,9 +245,6 @@ static int bbconfig_parse_common(int opt, char *value) {
       break;
     case 'd'://X display number
       set_string_value(&bb_config.x_display, value);
-      break;
-    case 's'://Unix socket to use
-      set_string_value(&bb_config.socket_path, value);
       break;
     case 'l'://LD driver path
       set_string_value(&bb_config.ld_path, value);
@@ -279,6 +292,9 @@ void bbconfig_parse_opts(int argc, char *argv[], int conf_round) {
           if (bb_status.verbosity < VERB_ALL) {
             bb_status.verbosity++;
           }
+          break;
+        case 's': /* Unix socket to use for communication */
+          set_string_value(&bb_config.socket_path, optarg);
           break;
         case 'V'://print version
           printf("%s (Bumblebee) %s\n",
@@ -407,7 +423,14 @@ void bbconfig_parse_conf_driver(GKeyFile *bbcfg, char *driver) {
 
   key = "KernelDriver";
   if (g_key_file_has_key(bbcfg, section, key, NULL)) {
-    free_and_set_value(&bb_config.module_name, g_key_file_get_string(bbcfg, section, key, NULL));
+    char *module_name = g_key_file_get_string(bbcfg, section, key, NULL);
+    /* if KernelDriver is empty, the default behavior is to copy Driver which
+     * is done in driver_detect() */
+    if (*module_name) {
+      free_and_set_value(&bb_config.module_name, module_name);
+    } else {
+      g_free(module_name);
+    }
   }
   key = "LibraryPath";
   if (g_key_file_has_key(bbcfg, section, key, NULL)) {

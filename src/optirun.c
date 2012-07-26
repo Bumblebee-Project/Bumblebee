@@ -30,6 +30,7 @@
 #include <getopt.h>
 #include "bbconfig.h"
 #include "bbsocket.h"
+#include "bbsocketclient.h"
 #include "bblogger.h"
 #include "bbrun.h"
 #include "driver.h"
@@ -261,26 +262,32 @@ int main(int argc, char *argv[]) {
   init_config(argc, argv);
   bbconfig_parse_opts(argc, argv, PARSE_STAGE_PRECONF);
   GKeyFile *bbcfg = bbconfig_parse_conf();
-  /* XXX load the driver (or even better, the ldpath) through the protocol */
-  bbconfig_parse_opts(argc, argv, PARSE_STAGE_DRIVER);
-  driver_detect();
-  if (bbcfg) {
-    bbconfig_parse_conf_driver(bbcfg, bb_config.driver);
-    g_key_file_free(bbcfg);
-  }
-  bbconfig_parse_opts(argc, argv, PARSE_STAGE_OTHER);
-  config_dump();
 
-  bb_log(LOG_DEBUG, "%s version %s starting...\n", "optirun", GITVERSION);
 
   /* Connect to listening daemon */
-  bb_status.bb_socket = socketConnect(bb_config.socket_path, SOCK_NOBLOCK);
+  bb_status.bb_socket = socketConnect(bb_config.socket_path, SOCK_BLOCK);
   if (bb_status.bb_socket < 0) {
     bb_log(LOG_ERR, "Could not connect to bumblebee daemon - is it running?\n");
     run_fallback(argv + optind);
     bb_closelog();
     return exitcode;
   }
+
+  free_and_set_value(&bb_config.ld_path, malloc(BUFFER_SIZE));
+  if (bbsocket_query("LibraryPath", bb_config.ld_path, BUFFER_SIZE)) {
+    bb_log(LOG_ERR, "Failed to retrieve LibraryPath setting.\n");
+    return EXIT_FAILURE;
+  }
+  free_and_set_value(&bb_config.x_display, malloc(BUFFER_SIZE));
+  if (bbsocket_query("VirtualDisplay", bb_config.x_display, BUFFER_SIZE)) {
+    bb_log(LOG_ERR, "Failed to retrieve VirtualDisplay setting.\n");
+    return EXIT_FAILURE;
+  }
+
+  /* parse remaining common and optirun-specific options */
+  bbconfig_parse_opts(argc, argv, PARSE_STAGE_OTHER);
+  bb_log(LOG_DEBUG, "%s version %s starting...\n", "optirun", GITVERSION);
+  config_dump();
 
   /* Request status */
   if (bb_status.runmode == BB_RUN_STATUS) {

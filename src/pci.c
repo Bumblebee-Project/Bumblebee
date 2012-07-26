@@ -153,7 +153,7 @@ size_t pci_get_driver(char *dest, struct pci_bus_id *bus_id, size_t len) {
   /* save the name if a valid destination and buffer size was given */
   if (dest && len > 0) {
     strncpy(dest, name, len - 1);
-    dest[len] = 0;
+    dest[len - 1] = 0;
   }
 
   return strlen(name);
