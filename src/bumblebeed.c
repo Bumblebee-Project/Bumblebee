@@ -113,6 +113,7 @@ static int daemonize(void) {
   dup2(devnull, STDIN_FILENO);
   dup2(devnull, STDOUT_FILENO);
   dup2(devnull, STDERR_FILENO);
+  close(devnull);
   return EXIT_SUCCESS;
 }
 
