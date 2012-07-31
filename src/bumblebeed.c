@@ -261,33 +261,60 @@ static void main_loop(void) {
   bb_log(LOG_INFO, "Initialization completed - now handling client requests\n");
   /* Listen for Optirun conections and act accordingly */
   while (bb_status.bb_socket != -1) {
-    usleep(100000); //sleep 100ms to prevent 100% CPU time usage
+    fd_set readfds;
+    int max_fd = 0;
 
-    /* Accept a connection. */
-    optirun_socket_fd = socketAccept(&bb_status.bb_socket, SOCK_NOBLOCK);
-    if (optirun_socket_fd >= 0) {
-      bb_log(LOG_DEBUG, "Accepted new connection\n", optirun_socket_fd, bb_status.appcount);
+    FD_ZERO(&readfds);
+#define FD_SET_AND_MAX(fd)                   \
+    do if ((fd) >= 0 && (fd) < FD_SETSIZE) { \
+      FD_SET((fd), &readfds);                \
+      if (max_fd < (fd))                     \
+        max_fd = (fd);                       \
+    } while (0)
+    FD_SET_AND_MAX(bb_status.bb_socket);
+    FD_SET_AND_MAX(bb_status.x_pipe[0]);
+    for (client = last; client; client = client->prev)
+      FD_SET_AND_MAX(client->sock);
+#undef FD_SET_AND_MAX
 
-      /* add to list of sockets */
-      client = malloc(sizeof (struct clientsocket));
-      client->sock = optirun_socket_fd;
-      client->inuse = 0;
-      client->prev = last;
-      client->next = 0;
-      if (last) {
-        last->next = client;
+    if (select(max_fd + 1, &readfds, NULL, NULL, NULL) < 0) {
+      if (errno == EINTR)
+        continue;
+      bb_log(LOG_ERR, "select() failed: %s\n", strerror(errno));
+      break;
+    }
+
+#define FD_EVENT(fd) ((fd) >= 0 && FD_ISSET((fd), &readfds))
+    if (FD_EVENT(bb_status.bb_socket)) {
+      /* Accept a connection. */
+      optirun_socket_fd = socketAccept(&bb_status.bb_socket, SOCK_NOBLOCK);
+      if (optirun_socket_fd >= 0) {
+        bb_log(LOG_DEBUG, "Accepted new connection\n", optirun_socket_fd, bb_status.appcount);
+
+        /* add to list of sockets */
+        client = malloc(sizeof (struct clientsocket));
+        client->sock = optirun_socket_fd;
+        client->inuse = 0;
+        client->prev = last;
+        client->next = 0;
+        if (last) {
+          last->next = client;
+        }
+        last = client;
       }
-      last = client;
     }
 
     //check the X output pipe, if open
-    check_xorg_pipe();
+    if (FD_EVENT(bb_status.x_pipe[0]))
+      check_xorg_pipe();
 
     /* loop through all connections, removing dead ones, receiving/sending data to the rest */
     struct clientsocket *next_iter;
     for (client = last; client; client = next_iter) {
       /* set the next client here because client may be free()'d */
       next_iter = client->prev;
+      if (FD_EVENT(client->sock))
+        handle_socket(client);
       if (client->sock < 0) {
         //remove from list
         if (client->inuse > 0) {
@@ -306,11 +333,9 @@ static void main_loop(void) {
           client->prev->next = client->next;
         }
         free(client);
-      } else {
-        //active connection, handle it.
-        handle_socket(client);
       }
     }
+#undef FD_EVENT
   }//socket server loop
 
   /* loop through all connections, closing all of them */
