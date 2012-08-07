@@ -248,7 +248,7 @@ int bbconfig_parse_options(int opt, char *value) {
 int main(int argc, char *argv[]) {
   int exitcode = EXIT_FAILURE;
 
-  init_early_config(argc, argv, BB_RUN_APP);
+  init_early_config(argv, BB_RUN_APP);
 
   /* Setup signal handling before anything else */
   signal(SIGHUP, handle_signal);
@@ -259,7 +259,7 @@ int main(int argc, char *argv[]) {
   bb_init_log();
 
   /* Initializing configuration */
-  init_config(argc, argv);
+  init_config();
   bbconfig_parse_opts(argc, argv, PARSE_STAGE_PRECONF);
   GKeyFile *bbcfg = bbconfig_parse_conf();
 

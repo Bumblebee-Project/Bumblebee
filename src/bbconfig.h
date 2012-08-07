@@ -145,9 +145,9 @@ extern struct bb_status_struct bb_status;
 extern struct bb_config_struct bb_config;
 
 /* Early initialization of bb_status */
-void init_early_config(int argc, char **argv, int runmode);
+void init_early_config(char **argv, int runmode);
 /* Parse configuration from command line and configuration files */
-void init_config(int argc, char **argv);
+void init_config(void);
 void config_dump(void);
 int config_validate(void);
 

@@ -441,7 +441,7 @@ int main(int argc, char* argv[]) {
 #endif
 
   /* the logs needs to be ready before the signal handlers */
-  init_early_config(argc, argv, BB_RUN_SERVER);
+  init_early_config(argv, BB_RUN_SERVER);
   bbconfig_parse_opts(argc, argv, PARSE_STAGE_LOG);
   bb_init_log();
 
@@ -455,7 +455,7 @@ int main(int argc, char* argv[]) {
   signal(SIGPIPE, handle_signal);
 
   /* first load the config to make the logging verbosity level available */
-  init_config(argc, argv);
+  init_config();
   bbconfig_parse_opts(argc, argv, PARSE_STAGE_PRECONF);
 
   pci_bus_id_discrete = pci_find_gfx_by_vendor(PCI_VENDOR_ID_NVIDIA);
