@@ -218,6 +218,7 @@ pid_t bb_run_fork_ld_redirect(char **argv, char *ldpath, int redirect) {
     //redirect stdout and stderr to the given filenum.
     dup2(redirect, STDOUT_FILENO);
     dup2(redirect, STDERR_FILENO);
+    close(devnull);
     //ok, all ready, now actually execute
     bb_run_exec(argv);
   } else {
@@ -346,6 +347,7 @@ static void bb_run_exec_detached(char **argv) {
   dup2(devnull, STDIN_FILENO);
   dup2(devnull, STDOUT_FILENO);
   dup2(devnull, STDERR_FILENO);
+  close(devnull);
   //done redirecting, do the exec
   execvp(argv[0], argv);
   /* note: the below lines are only executed if execvp fails */

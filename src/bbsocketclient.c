@@ -59,7 +59,6 @@ int bbsocket_query(const char *key, char *target, size_t max_len) {
       }
       return 0;
     }
-    usleep(100000); // delay before polling the socket again
   }
   bb_log(LOG_DEBUG, "Read failed for query of %s\n", key);
   return 1;

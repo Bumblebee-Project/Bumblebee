@@ -48,7 +48,7 @@
 
 int socketConnect(char * address, int nonblock) {
   //create the socket itself
-  int sock = socket(PF_UNIX, SOCK_STREAM, 0);
+  int sock = socket(PF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
   if (sock < 0) {
     bb_log(LOG_ERR, "Could not create socket. Error: %s\n", strerror(errno));
     return -1;
@@ -172,7 +172,7 @@ int socketServer(char * address, int nonblock) {
   //delete the file currently there, if any
   unlink(address);
   //create the socket
-  int sock = socket(AF_UNIX, SOCK_STREAM, 0);
+  int sock = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
   if (sock < 0) {
     bb_log(LOG_ERR, "Could not create socket! Error: %s\n", strerror(errno));
     return -1;
