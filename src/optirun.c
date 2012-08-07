@@ -262,7 +262,7 @@ int main(int argc, char *argv[]) {
   init_config();
   bbconfig_parse_opts(argc, argv, PARSE_STAGE_PRECONF);
   GKeyFile *bbcfg = bbconfig_parse_conf();
-
+  if (bbcfg) g_key_file_free(bbcfg);
 
   /* Connect to listening daemon */
   bb_status.bb_socket = socketConnect(bb_config.socket_path, SOCK_BLOCK);
