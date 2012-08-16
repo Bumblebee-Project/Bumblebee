@@ -174,6 +174,9 @@ static int run_app(int argc, char *argv[]) {
             vglrun_args[r + optno] = argv[optind + r];
           }
           vglrun_args[optno+=r] = 0;
+          /* set envvar for better performance on some systems, but allow the
+           * user for manually override */
+          setenv("VGL_READBACK", "pbo", 0);
           exitcode = bb_run_fork(vglrun_args, 0);
           free(vglrun_args);
           socketClose(&bb_status.bb_socket);
