@@ -45,7 +45,6 @@ AllowFallbackToIGC=@CONF_FALLBACKSTART@
 [driver-nvidia]
 # Module name to load, defaults to Driver if empty or unset
 KernelDriver=@CONF_DRIVER_MODULE_NVIDIA@
-Module=nvidia
 PMMethod=@CONF_PM_METHOD@
 # colon-separated path to the nvidia libraries
 LibraryPath=@CONF_LDPATH_NVIDIA@
