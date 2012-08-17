@@ -9,6 +9,7 @@ Section "Device"
     VendorName "NVIDIA Corporation"
     Option "NoLogo" "true"
     Option "UseEDID" "false"
+    Option "UseDisplayDevice" "none"
     Option "ConnectedMonitor" "DFP"
 EndSection
 
