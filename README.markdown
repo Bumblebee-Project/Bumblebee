@@ -14,7 +14,7 @@ Build Requirements
 Source tarballs can be downloaded from
 https://github.com/Bumblebee-Project/Bumblebee/downloads
 
-The following packages are dependencies for the build processs:
+The following packages are dependencies for the build process:
 
 - pkg-config
 - glib-2.0 and development headers
@@ -42,8 +42,9 @@ If you want to make use of Power Management, you will need:
 
 - [bbswitch](https://github.com/Bumblebee-Project/bbswitch)
 - If you're brave and want to try the `switcheroo` method, install at least the
-  [optimus patch](http://lekensteyn.nl/files/nouveau-switcheroo-optimus.patch).
-  Note that suspend is not yet supported by this method.
+  [optimus patch](http://lekensteyn.nl/files/nouveau-switcheroo-optimus.patch)
+  (merged in Linux 3.3). Note that suspend is not yet supported by this
+  method.
 
 Building
 ---------
@@ -89,7 +90,10 @@ For packagers you need to add DESTDIR=$pkgdir
     make install DESTDIR=$pkgdir
 
 Example initscripts are available in the `scripts/` directory. Currently,
-Upstart, SystemD and SysV initscripts are available
+Upstart, systemd and Sys V initscripts are available. If you are going to use
+the proprietary nvidia driver, you may have to install the
+`conf/99-remove-nvidia-dev.rules` file to prevent the nvidia card from waking
+up under certain circumstances.
 
 Usage
 ------
