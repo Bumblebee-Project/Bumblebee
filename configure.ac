@@ -72,6 +72,19 @@ AS_IF([test "x$with_pidfile" != xno],
 	])
 AM_CONDITIONAL([WITH_PIDFILE], [test "x$with_pidfile" != xno])
 
+UDEV_RULES_DIR=/lib/udev/rules.d
+AC_ARG_WITH([udev-rules],
+	[AS_HELP_STRING([--with-udev-rules@<:@=DIR@:>@],
+	[install nvidia udev rule @<:@default=/lib/udev/rules.d@:>@])],
+	[],
+	[with_udev_rules=yes])
+AS_CASE([$with_udev_rules],
+	[no], [UDEV_RULES_DIR=],
+	[yes], [], # --with-udev-rules: keep the default
+	[UDEV_RULES_DIR=$with_udev_rules])
+AC_SUBST([UDEV_RULES_DIR])
+AM_CONDITIONAL([WITH_UDEV_RULES], [test -n "$UDEV_RULES_DIR"])
+
 # Checks for programs.
 AC_PROG_CC
 AM_PROG_CC_C_O

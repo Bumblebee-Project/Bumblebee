@@ -81,7 +81,8 @@ You can build the binaries and set the system wide paths at configure time
     make
 
 After building the binaries and bash completion script, it can be installed
-using `make`:
+together with an udev rule (unless `--without-udev-rules` was passed) using
+`make`:
 
     sudo make install
 
@@ -90,10 +91,7 @@ For packagers you need to add DESTDIR=$pkgdir
     make install DESTDIR=$pkgdir
 
 Example initscripts are available in the `scripts/` directory. Currently,
-Upstart, systemd and Sys V initscripts are available. If you are going to use
-the proprietary nvidia driver, you may have to install the
-`conf/99-remove-nvidia-dev.rules` file to prevent the nvidia card from waking
-up under certain circumstances.
+Upstart, systemd and Sys V initscripts are available.
 
 Usage
 ------

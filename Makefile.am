@@ -24,6 +24,7 @@ bin_SCRIPTS = scripts/bumblebee-bugreport
 CLEANFILES = $(noinst_SCRIPTS) conf/bumblebee.conf $(bin_SCRIPTS)
 EXTRA_DIST = scripts/systemd/bumblebeed.service.in \
 	scripts/upstart/bumblebeed.conf.in \
+	conf/99-remove-nvidia-dev.rules \
 	conf/bumblebee.conf.in \
 	conf/xorg.conf.nvidia \
 	conf/xorg.conf.nouveau \
@@ -56,6 +57,11 @@ bumblebeedconf_DATA = conf/bumblebee.conf conf/xorg.conf.nouveau conf/xorg.conf.
 
 completiondir = $(sysconfdir)/bash_completion.d
 completion_DATA = scripts/bash_completion/bumblebee
+
+if WITH_UDEV_RULES
+udevrulesdir = $(UDEV_RULES_DIR)
+udevrules_DATA = conf/99-remove-nvidia-dev.rules
+endif
 
 do_subst = sed -e 's|[@]GITVERSION[@]|$(GITVERSION)|g' \
 	-e 's|[@]CONF_XDISP[@]|$(CONF_XDISP)|g' \
