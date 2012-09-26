@@ -76,10 +76,11 @@ int pci_get_class(struct pci_bus_id *bus_id) {
 /**
  * Finds the Bus ID a graphics card by vendor ID
  * @param vendor_id A numeric vendor ID
+ * @param index A numeric index (the card we want when we have many of a vendor)
  * @return A bus ID struct if a device was found, NULL if no device is found or
  * no memory could be allocated
  */
-struct pci_bus_id *pci_find_gfx_by_vendor(unsigned int vendor_id) {
+struct pci_bus_id *pci_find_gfx_by_vendor(unsigned int vendor_id, unsigned int idx) {
   FILE *fp;
   char buf[512];
   unsigned int bus_id_numeric, vendor_device;
@@ -105,7 +106,11 @@ struct pci_bus_id *pci_find_gfx_by_vendor(unsigned int vendor_id) {
         int pci_class = pci_get_class(result);
         if (pci_class == PCI_CLASS_DISPLAY_VGA ||
                 pci_class == PCI_CLASS_DISPLAY_3D) {
-          /* yay, found device. Now clean up and return */
+          /* yay, found device. Now get next, or clean up and return */
+          if (idx--) {
+            /* It's not yet our device */
+            continue;
+          }
           fclose(fp);
           return result;
         }
