@@ -90,6 +90,70 @@ static int run_fallback(char *argv[]) {
   return EXIT_FAILURE;
 }
 
+static int run_virtualgl(int argc, char **argv) {
+  //run vglclient if any method other than proxy is used
+  if (strncmp(bb_config.vgl_compress, "proxy", BUFFER_SIZE) != 0) {
+    char * vglclient_args[] = {
+      "vglclient",
+      "-detach",
+      0
+    };
+    bb_run_fork(vglclient_args, 1);
+  }
+  /* number of options passed to --vgl-options */
+  unsigned int vglrun_opts_count = 0;
+  char *next_arg = bb_config.vglrun_options;
+  /* read vglrun options only if there is an arguments list */
+  if (next_arg && next_arg[0]) {
+    do {
+      ++vglrun_opts_count;
+    } while ((next_arg = strchr(next_arg + 1, ' ')));
+  }
+  /* position of next option */
+  unsigned int optno = 0;
+
+  /* 7 for the first options, 1 for the -- and 1 for the trailing 0 */
+  char ** vglrun_args = malloc(sizeof (char *) *
+      (9 + vglrun_opts_count + argc - optind));
+  vglrun_args[0] = "vglrun";
+  vglrun_args[1] = "-c";
+  vglrun_args[2] = bb_config.vgl_compress;
+  vglrun_args[3] = "-d";
+  vglrun_args[4] = bb_config.x_display;
+  vglrun_args[5] = "-ld";
+  vglrun_args[6] = bb_config.ld_path;
+  optno = 7;
+
+  next_arg = bb_config.vglrun_options;
+  if (next_arg && next_arg[0]) {
+    char *current_arg;
+    do {
+      current_arg = next_arg;
+      next_arg = strchr(current_arg, ' ');
+      /* cut the string if a space is found */
+      if (next_arg) {
+        *next_arg = 0;
+        /* the next argument starts at the position after the space */
+        next_arg++;
+      }
+      vglrun_args[optno++] = current_arg;
+    } while (next_arg);
+  }
+
+  vglrun_args[optno++] = "--";
+  int r;
+  for (r = 0; r < argc - optind; r++) {
+    vglrun_args[r + optno] = argv[optind + r];
+  }
+  vglrun_args[optno+=r] = 0;
+  /* set envvar for better performance on some systems, but allow the
+   * user for manually override */
+  setenv("VGL_READBACK", "pbo", 0);
+  int exitcode = bb_run_fork(vglrun_args, 0);
+  free(vglrun_args);
+  return exitcode;
+}
+
 /**
  * Starts a program with Bumblebee if possible
  *
@@ -120,65 +184,7 @@ static int run_app(int argc, char *argv[]) {
         case 'Y': //Yes, run through vglrun
           bb_log(LOG_INFO, "Running application through vglrun.\n");
           ranapp = 1;
-          //run vglclient if any method other than proxy is used
-          if (strncmp(bb_config.vgl_compress, "proxy", BUFFER_SIZE) != 0) {
-            char * vglclient_args[] = {
-              "vglclient",
-              "-detach",
-              0
-            };
-            bb_run_fork(vglclient_args, 1);
-          }
-          /* number of options passed to --vgl-options */
-          unsigned int vglrun_opts_count = 0;
-          char *next_arg = bb_config.vglrun_options;
-          /* read vglrun options only if there is an arguments list */
-          if (next_arg && next_arg[0]) {
-            do {
-              ++vglrun_opts_count;
-            } while ((next_arg = strchr(next_arg + 1, ' ')));
-          }
-          /* position of next option */
-          unsigned int optno = 0;
-
-          /* 7 for the first options, 1 for the -- and 1 for the trailing 0 */
-          char ** vglrun_args = malloc(sizeof (char *) *
-                  (9 + vglrun_opts_count + argc - optind));
-          vglrun_args[0] = "vglrun";
-          vglrun_args[1] = "-c";
-          vglrun_args[2] = bb_config.vgl_compress;
-          vglrun_args[3] = "-d";
-          vglrun_args[4] = bb_config.x_display;
-          vglrun_args[5] = "-ld";
-          vglrun_args[6] = bb_config.ld_path;
-          optno = 7;
-
-          next_arg = bb_config.vglrun_options;
-          if (next_arg && next_arg[0]) {
-            char *current_arg;
-            do {
-              current_arg = next_arg;
-              next_arg = strchr(current_arg, ' ');
-              /* cut the string if a space is found */
-              if (next_arg) {
-                *next_arg = 0;
-                /* the next argument starts at the position after the space */
-                next_arg++;
-              }
-              vglrun_args[optno++] = current_arg;
-            } while (next_arg);
-          }
-
-          vglrun_args[optno++] = "--";
-          for (r = 0; r < argc - optind; r++) {
-            vglrun_args[r + optno] = argv[optind + r];
-          }
-          vglrun_args[optno+=r] = 0;
-          /* set envvar for better performance on some systems, but allow the
-           * user for manually override */
-          setenv("VGL_READBACK", "pbo", 0);
-          exitcode = bb_run_fork(vglrun_args, 0);
-          free(vglrun_args);
+          exitcode = run_virtualgl(argc, argv);
           socketClose(&bb_status.bb_socket);
           break;
         default: //Something went wrong - output and exit.
