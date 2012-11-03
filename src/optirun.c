@@ -164,6 +164,9 @@ static int run_primus(int argc, char **argv) {
   }
   primusrun_args[r + 1] = 0;
 
+  /* primus starts the X server when needed, fixes long-standing fork issue */
+  setenv("BUMBLEBEE_SOCKET", bb_config.socket_path, 1);
+
   setenv("PRIMUS_DISPLAY", bb_config.x_display, 0);
   if (bb_config.ld_path[0]) {
     char *current_path = getenv("LD_LIBRARY_PATH");
