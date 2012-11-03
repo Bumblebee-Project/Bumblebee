@@ -16,7 +16,7 @@ _optirun() {
             in_option=false
         else
             case "$prev" in
-	      -c|--vgl-compress|--failsafe|--display|-d|--config|-C|--ldpath|-l|--socket|-s)
+              -c|--vgl-compress|--failsafe|--display|-d|--config|-C|--ldpath|-l|--socket|-s|-b|--bridge)
                 in_option=true
                 ;;
               --)
@@ -34,6 +34,9 @@ _optirun() {
 
     if [ $last_optirun_offset -eq $COMP_CWORD ]; then
         case "$prev" in
+          -b|--bridge)
+            COMPREPLY=( $(compgen -W "auto primus virtualgl" -- "$cur") )
+            ;;
           -c|--vgl-compress)
             COMPREPLY=( $(compgen -W "$compress_types" -- "$cur") )
             ;;
