@@ -24,6 +24,9 @@
  * C-coded version of the Bumblebee daemon and optirun.
  */
 
+/* for strchrnul */
+#define _GNU_SOURCE
+
 #include <stdlib.h>
 #include <signal.h>
 #include <stdio.h>
@@ -182,8 +185,41 @@ static int run_primus(int argc, char **argv) {
       setenv("LD_LIBRARY_PATH", bb_config.ld_path, 1);
     }
   }
-  /* TODO: adjust libGL path for acceleration and rendering */
-  //setenv("PRIMUS_libGLa", libgl, 0);
+
+  char *libgl_mesa = "/usr/$LIB/libGL.so.1:/usr/lib/$LIB/libGL.so.1:/usr/lib/$LIB/mesa/libGL.so.1";
+  if (bb_config.ld_path[0]) { /* build new library path for PRIMUS_libGLa */
+    int libgl_size = strlen(bb_config.ld_path) + 1;
+    { /* calculate additional memories for adding "/libGL.so.1" */
+      char *p = bb_config.ld_path;
+      do {
+        p = strchr(p, ':');
+        libgl_size += sizeof("/libGL.so.1") - 1;
+      } while (p++);
+    }
+    char *libgl = malloc(libgl_size);
+    { /* from library path A:B build A/libGL.so.1:B/libGL.so.1 */
+      int pos = 0;
+      char *path = bb_config.ld_path;
+      do {
+        char *p = strchrnul(path, ':');
+        int part_len = p - path;
+        if (part_len > 0) {
+          memcpy(libgl + pos, path, part_len);
+          pos += part_len;
+          snprintf(libgl + pos, libgl_size - pos, "/libGL.so.1%c", *p);
+          pos += sizeof("/libGL.so.1:") - 1;
+        }
+        path = p;
+      } while (*path++ == ':'); /* after check, move to part after ':' */
+    }
+    /* override PRIMUS_libGLa because PRIMUS does not know our driver */
+    setenv("PRIMUS_libGLa", libgl, 0);
+    free(libgl);
+  } else { /* no LibraryPath is set, assume OSS drivers */
+    setenv("PRIMUS_libGLa", libgl_mesa, 0);
+  }
+  /* assume OSS drivers for primary display (Mesa for Intel) */
+  setenv("PRIMUS_libGLd", libgl_mesa, 0);
 
   int exitcode = bb_run_fork(primusrun_args, 0);
   free(primusrun_args);
