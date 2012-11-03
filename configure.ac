@@ -32,6 +32,14 @@ AC_DEFINE_SUBST(CONF_FALLBACKSTART, "false", [make optirun start applications no
 AC_DEFINE_SUBST(CONF_VGLCOMPRESS, "proxy", [vglclient transport method])
 AC_DEFINE_SUBST(CONF_TURNOFFATEXIT, "false", [state of card when shutting off daemon])
 
+AC_DEFINE_CONF(CONF_BRIDGE, [optirun display/render bridge, valid values are auto (default), primus and virtualgl], [
+case $CONF_BRIDGE in
+auto|primus|virtualgl) ;;
+"") CONF_BRIDGE=auto ;;
+*) AC_MSG_ERROR([Invalid value for CONF_BRIDGE]) ;;
+esac
+])
+
 AC_DEFINE_CONF(CONF_PIDFILE, [Path to the pidfile or /var/run/bumblebeed.pid if empty], [
 if test "x" = "x$CONF_PIDFILE"; then
 	CONF_PIDFILE=/var/run/bumblebeed.pid

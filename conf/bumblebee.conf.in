@@ -23,6 +23,9 @@ Driver=@CONF_DRIVER@
 
 ## Client options. Will take effect on the next optirun executed.
 [optirun]
+# Acceleration/ rendering bridge, possible values are auto, virtualgl and
+# primus.
+Bridge=@CONF_BRIDGE@
 # The method used for VirtualGL to transport frames between X servers.
 # Possible values are proxy, jpeg, rgb, xv and yuv.
 VGLTransport=@CONF_VGLCOMPRESS@

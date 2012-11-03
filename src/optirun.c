@@ -2,6 +2,7 @@
  * Copyright (C) 2011 Bumblebee Project
  * Author: Joaquín Ignacio Aramendía <samsagax@gmail.com>
  * Author: Jaron Viëtor AKA "Thulinma" <jaron@vietors.com>
+ * Author: Lekensteyn <lekensteyn@gmail.com>
  *
  * This file is part of Bumblebee.
  *
@@ -154,6 +155,17 @@ static int run_virtualgl(int argc, char **argv) {
   return exitcode;
 }
 
+struct optirun_bridge {
+  const char *name;
+  const char *program;
+  int (*run)(int argc, char **argv);
+};
+
+static struct optirun_bridge backends[] = {
+  {"virtualgl", "vglrun", run_virtualgl},
+  {NULL, NULL, NULL}
+};
+
 /**
  * Starts a program with Bumblebee if possible
  *
@@ -167,6 +179,14 @@ static int run_app(int argc, char *argv[]) {
   char buffer[BUFFER_SIZE];
   int r;
   int ranapp = 0;
+
+  struct optirun_bridge *back = backends;
+    while (back->name && strcmp(bb_config.optirun_bridge, back->name)) ++back;
+    if (!back->name) {
+      bb_log(LOG_ERR, "Unknown accel/display bridge: %s\n", bb_config.optirun_bridge);
+      goto out;
+    }
+
   r = snprintf(buffer, BUFFER_SIZE, "Checking availability...");
   socketWrite(&bb_status.bb_socket, buffer, r + 1);
   while (bb_status.bb_socket != -1) {
@@ -182,9 +202,9 @@ static int run_app(int argc, char *argv[]) {
           }
           break;
         case 'Y': //Yes, run through vglrun
-          bb_log(LOG_INFO, "Running application through vglrun.\n");
+          bb_log(LOG_INFO, "Running application using %s.\n", back->name);
           ranapp = 1;
-          exitcode = run_virtualgl(argc, argv);
+          exitcode = back->run(argc, argv);
           socketClose(&bb_status.bb_socket);
           break;
         default: //Something went wrong - output and exit.
@@ -194,6 +214,7 @@ static int run_app(int argc, char *argv[]) {
       }
     }
   }
+out:
   if (!ranapp) {
     exitcode = run_fallback(argv + optind);
   }
@@ -205,7 +226,7 @@ static int run_app(int argc, char *argv[]) {
  * @return An option string which can be used for getopt
  */
 const char *bbconfig_get_optstr(void) {
-  return BBCONFIG_COMMON_OPTSTR "c:";
+  return BBCONFIG_COMMON_OPTSTR "c:b:";
 }
 
 /**
@@ -216,6 +237,7 @@ const struct option *bbconfig_get_lopts(void) {
   static struct option longOpts[] = {
     {"failsafe", 0, 0, OPT_FAILSAFE},
     {"no-failsafe", 0, 0, OPT_NO_FAILSAFE},
+    {"bridge", 1, 0, 'b'},
     {"vgl-compress", 1, 0, 'c'},
     {"vgl-options", 1, 0, OPT_VGL_OPTIONS},
     {"status", 0, 0, OPT_STATUS},
@@ -232,6 +254,9 @@ const struct option *bbconfig_get_lopts(void) {
  */
 int bbconfig_parse_options(int opt, char *value) {
   switch (opt) {
+    case 'b':/* accel/display bridge, e.g. virtualgl or primus */
+      set_string_value(&bb_config.optirun_bridge, value);
+      break;
     case 'c'://vglclient method
       set_string_value(&bb_config.vgl_compress, value);
       break;
