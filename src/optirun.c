@@ -155,6 +155,38 @@ static int run_virtualgl(int argc, char **argv) {
   return exitcode;
 }
 
+static int run_primus(int argc, char **argv) {
+  char **primusrun_args = malloc(sizeof (char *) * (2 + argc - optind));
+  int r;
+  primusrun_args[0] = "primusrun";
+  for (r = 0; r < argc - optind; r++) {
+    primusrun_args[r + 1] = argv[optind + r];
+  }
+  primusrun_args[r + 1] = 0;
+
+  setenv("PRIMUS_DISPLAY", bb_config.x_display, 0);
+  if (bb_config.ld_path[0]) {
+    char *current_path = getenv("LD_LIBRARY_PATH");
+    if (current_path) {
+      char *ldpath_new = malloc(strlen(bb_config.ld_path) + 1 +
+          strlen(current_path) + 1);
+      strcpy(ldpath_new, bb_config.ld_path);
+      strcat(ldpath_new, ":");
+      strcat(ldpath_new, current_path);
+      setenv("LD_LIBRARY_PATH", ldpath_new, 1);
+      free(ldpath_new);
+    } else {
+      setenv("LD_LIBRARY_PATH", bb_config.ld_path, 1);
+    }
+  }
+  /* TODO: adjust libGL path for acceleration and rendering */
+  //setenv("PRIMUS_libGLa", libgl, 0);
+
+  int exitcode = bb_run_fork(primusrun_args, 0);
+  free(primusrun_args);
+  return exitcode;
+}
+
 struct optirun_bridge {
   const char *name;
   const char *program;
@@ -162,6 +194,7 @@ struct optirun_bridge {
 };
 
 static struct optirun_bridge backends[] = {
+  {"primus", "primusrun", run_primus},
   {"virtualgl", "vglrun", run_virtualgl},
   {NULL, NULL, NULL}
 };
