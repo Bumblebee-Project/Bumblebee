@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2011 Bumblebee Project
  * Author: Jaron Viëtor AKA "Thulinma" <jaron@vietors.com>
+ * Author: Lekensteyn <lekensteyn@gmail.com>
  *
  * This file is part of Bumblebee.
  *
@@ -22,6 +23,10 @@
  * Run command functions for Bumblebee
  */
 
+/* for strchrnul */
+#define _GNU_SOURCE
+
+#include <linux/limits.h> /* for PATH_MAX */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -362,4 +367,49 @@ static void bb_run_exec_detached(char **argv) {
  */
 void bb_run_stopwaiting(void){
   dowait = 0;
+}
+
+
+/**
+ * Finds a program in PATH, similar to which(1).
+ * @param program_name A program to find in $PATH. Must not be empty or NULL.
+ * @returns path to the program if found (need to be free'd) or NULL otherwise.
+ */
+char * which_program(const char * program_name) {
+  size_t prog_len = strlen(program_name);
+  char * env_path = getenv("PATH");
+  char * search_path = env_path;
+  char * program_path = NULL;
+  if (!search_path) {
+    int n = confstr(_CS_PATH, NULL, 0);
+    search_path = malloc(n);
+    confstr(_CS_PATH, search_path, n);
+  }
+
+  char * path = search_path;
+  do {
+    char cmd[PATH_MAX];
+    char * p = strchrnul(path, ':');
+    size_t path_len = p - path;
+    path += path_len;
+
+    if (path_len + prog_len + 1 > sizeof(cmd))
+      continue; /* silently skip impossible long paths */
+
+    if (path_len) {
+      strncpy(cmd, path - path_len, path_len);
+      cmd[path_len] = '/';
+      cmd[path_len + 1] = 0;
+    } else { /* treat empty as currect dir */
+      strcpy(cmd, "./");
+    }
+    strcat(cmd, program_name);
+    /* not fool-proof, e.g. a directory named "program" */
+    if (!access(cmd, X_OK))
+      program_path = strdup(cmd);
+  } while (!program_path && *path++ == ':');
+
+  if (!env_path) free(search_path);
+
+  return program_path;
 }

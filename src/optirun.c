@@ -181,11 +181,28 @@ static int run_app(int argc, char *argv[]) {
   int ranapp = 0;
 
   struct optirun_bridge *back = backends;
+  if (!strcmp(bb_config.optirun_bridge, "auto")) {
+    char *p = NULL;
+    while (back->name && !(p = which_program(back->program))) ++back;
+    if (p) free(p);
+    else {
+      bb_log(LOG_ERR, "No bridge found. Try installing primus or virtualgl\n");
+      goto out;
+    }
+    bb_log(LOG_DEBUG, "Using auto-detected bridge %s\n", back->name);
+  } else {
     while (back->name && strcmp(bb_config.optirun_bridge, back->name)) ++back;
     if (!back->name) {
       bb_log(LOG_ERR, "Unknown accel/display bridge: %s\n", bb_config.optirun_bridge);
       goto out;
     }
+    char *p;
+    if ((p = which_program(back->program))) free(p);
+    else {
+      bb_log(LOG_ERR, "Accel/display bridge %s is not installed.\n", back->name);
+      goto out;
+    }
+  }
 
   r = snprintf(buffer, BUFFER_SIZE, "Checking availability...");
   socketWrite(&bb_status.bb_socket, buffer, r + 1);
