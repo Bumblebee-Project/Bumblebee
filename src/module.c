@@ -96,7 +96,6 @@ int module_unload(char *driver) {
     bb_log(LOG_INFO, "Unloading %s driver\n", driver);
     char *mod_argv[] = {
       "rmmod",
-      "--wait",
       driver,
       NULL
     };
