@@ -93,6 +93,7 @@ int module_load(char *module_name, char *driver) {
  */
 int module_unload(char *driver) {
   if (module_is_loaded(driver) == 1) {
+    int retries = 30;
     bb_log(LOG_INFO, "Unloading %s driver\n", driver);
     char *mod_argv[] = {
       "rmmod",
@@ -100,6 +101,9 @@ int module_unload(char *driver) {
       NULL
     };
     bb_run_fork_wait(mod_argv, 10);
+    while (retries-- > 0 && module_is_loaded(driver) == 1) {
+      usleep(100000);
+    }
     if (module_is_loaded(driver) == 1) {
       bb_log(LOG_ERR, "Unloading %s driver timed out.\n", driver);
       return 0;
