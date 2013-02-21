@@ -111,18 +111,20 @@ int module_unload(char *driver) {
 /**
  * Checks whether a kernel module is available for loading
  *
- * @param module_name The module name to be checked (filename)
+ * @param module_name The module name to be checked (filename or alias)
  * @return 1 if the module is available for loading, 0 otherwise
  */
 int module_is_available(char *module_name) {
   /* HACK to support call from optirun */
-  char *modinfo_bin = "/sbin/modinfo";
-  if (access(modinfo_bin, X_OK)) {
-    /* if /sbin/modinfo is not found, pray that PATH contains it*/
-    modinfo_bin = "modinfo";
+  char *modprobe_bin = "/sbin/modprobe";
+  if (access(modprobe_bin, X_OK)) {
+    /* if /sbin/modprobe is not found, pray that PATH contains it */
+    modprobe_bin = "modprobe";
   }
   char *mod_argv[] = {
-    modinfo_bin,
+    modprobe_bin,
+    "--dry-run",
+    "--quiet",
     module_name,
     NULL
   };
