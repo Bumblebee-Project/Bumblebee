@@ -2,6 +2,7 @@
  * Copyright (C) 2011 Bumblebee Project
  * Author: Joaquín Ignacio Aramendía <samsagax@gmail.com>
  * Author: Jaron Viëtor AKA "Thulinma" <jaron@vietors.com>
+ * Author: Lekensteyn <lekensteyn@gmail.com>
  *
  * This file is part of Bumblebee.
  *
@@ -22,6 +23,9 @@
 /*
  * C-coded version of the Bumblebee daemon and optirun.
  */
+
+/* for strchrnul */
+#define _GNU_SOURCE
 
 #include <stdlib.h>
 #include <signal.h>
@@ -90,6 +94,150 @@ static int run_fallback(char *argv[]) {
   return EXIT_FAILURE;
 }
 
+static int run_virtualgl(int argc, char **argv) {
+  //run vglclient if any method other than proxy is used
+  if (strncmp(bb_config.vgl_compress, "proxy", BUFFER_SIZE) != 0) {
+    char * vglclient_args[] = {
+      "vglclient",
+      "-detach",
+      0
+    };
+    bb_run_fork(vglclient_args, 1);
+  }
+  /* number of options passed to --vgl-options */
+  unsigned int vglrun_opts_count = 0;
+  char *next_arg = bb_config.vglrun_options;
+  /* read vglrun options only if there is an arguments list */
+  if (next_arg && next_arg[0]) {
+    do {
+      ++vglrun_opts_count;
+    } while ((next_arg = strchr(next_arg + 1, ' ')));
+  }
+  /* position of next option */
+  unsigned int optno = 0;
+
+  /* 7 for the first options, 1 for the -- and 1 for the trailing 0 */
+  char ** vglrun_args = malloc(sizeof (char *) *
+      (9 + vglrun_opts_count + argc - optind));
+  vglrun_args[0] = "vglrun";
+  vglrun_args[1] = "-c";
+  vglrun_args[2] = bb_config.vgl_compress;
+  vglrun_args[3] = "-d";
+  vglrun_args[4] = bb_config.x_display;
+  vglrun_args[5] = "-ld";
+  vglrun_args[6] = bb_config.ld_path;
+  optno = 7;
+
+  next_arg = bb_config.vglrun_options;
+  if (next_arg && next_arg[0]) {
+    char *current_arg;
+    do {
+      current_arg = next_arg;
+      next_arg = strchr(current_arg, ' ');
+      /* cut the string if a space is found */
+      if (next_arg) {
+        *next_arg = 0;
+        /* the next argument starts at the position after the space */
+        next_arg++;
+      }
+      vglrun_args[optno++] = current_arg;
+    } while (next_arg);
+  }
+
+  vglrun_args[optno++] = "--";
+  int r;
+  for (r = 0; r < argc - optind; r++) {
+    vglrun_args[r + optno] = argv[optind + r];
+  }
+  vglrun_args[optno+=r] = 0;
+  /* set envvar for better performance on some systems, but allow the
+   * user for manually override */
+  setenv("VGL_READBACK", "pbo", 0);
+  int exitcode = bb_run_fork(vglrun_args, 0);
+  free(vglrun_args);
+  return exitcode;
+}
+
+static int run_primus(int argc, char **argv) {
+  char **primusrun_args = malloc(sizeof (char *) * (2 + argc - optind));
+  int r;
+  primusrun_args[0] = "primusrun";
+  for (r = 0; r < argc - optind; r++) {
+    primusrun_args[r + 1] = argv[optind + r];
+  }
+  primusrun_args[r + 1] = 0;
+
+  /* primus starts the X server when needed, fixes long-standing fork issue */
+  setenv("BUMBLEBEE_SOCKET", bb_config.socket_path, 1);
+
+  setenv("PRIMUS_DISPLAY", bb_config.x_display, 0);
+  if (bb_config.ld_path[0]) {
+    char *current_path = getenv("LD_LIBRARY_PATH");
+    if (current_path) {
+      char *ldpath_new = malloc(strlen(bb_config.ld_path) + 1 +
+          strlen(current_path) + 1);
+      strcpy(ldpath_new, bb_config.ld_path);
+      strcat(ldpath_new, ":");
+      strcat(ldpath_new, current_path);
+      setenv("LD_LIBRARY_PATH", ldpath_new, 1);
+      free(ldpath_new);
+    } else {
+      setenv("LD_LIBRARY_PATH", bb_config.ld_path, 1);
+    }
+  }
+
+  char *libgl_mesa = "/usr/$LIB/libGL.so.1:/usr/lib/$LIB/libGL.so.1:/usr/lib/$LIB/mesa/libGL.so.1";
+  if (bb_config.ld_path[0]) { /* build new library path for PRIMUS_libGLa */
+    int libgl_size = strlen(bb_config.ld_path) + 1;
+    { /* calculate additional memories for adding "/libGL.so.1" */
+      char *p = bb_config.ld_path;
+      do {
+        p = strchr(p, ':');
+        libgl_size += sizeof("/libGL.so.1") - 1;
+      } while (p++);
+    }
+    char *libgl = malloc(libgl_size);
+    { /* from library path A:B build A/libGL.so.1:B/libGL.so.1 */
+      int pos = 0;
+      char *path = bb_config.ld_path;
+      do {
+        char *p = strchrnul(path, ':');
+        int part_len = p - path;
+        if (part_len > 0) {
+          memcpy(libgl + pos, path, part_len);
+          pos += part_len;
+          snprintf(libgl + pos, libgl_size - pos, "/libGL.so.1%c", *p);
+          pos += sizeof("/libGL.so.1:") - 1;
+        }
+        path = p;
+      } while (*path++ == ':'); /* after check, move to part after ':' */
+    }
+    /* override PRIMUS_libGLa because PRIMUS does not know our driver */
+    setenv("PRIMUS_libGLa", libgl, 0);
+    free(libgl);
+  } else { /* no LibraryPath is set, assume OSS drivers */
+    setenv("PRIMUS_libGLa", libgl_mesa, 0);
+  }
+  /* assume OSS drivers for primary display (Mesa for Intel) */
+  setenv("PRIMUS_libGLd", libgl_mesa, 0);
+
+  int exitcode = bb_run_fork(primusrun_args, 0);
+  free(primusrun_args);
+  return exitcode;
+}
+
+struct optirun_bridge {
+  const char *name;
+  const char *program;
+  int (*run)(int argc, char **argv);
+};
+
+static struct optirun_bridge backends[] = {
+  {"virtualgl", "vglrun", run_virtualgl},
+  {"primus", "primusrun", run_primus},
+  {NULL, NULL, NULL}
+};
+
 /**
  * Starts a program with Bumblebee if possible
  *
@@ -103,6 +251,31 @@ static int run_app(int argc, char *argv[]) {
   char buffer[BUFFER_SIZE];
   int r;
   int ranapp = 0;
+
+  struct optirun_bridge *back = backends;
+  if (!strcmp(bb_config.optirun_bridge, "auto")) {
+    char *p = NULL;
+    while (back->name && !(p = which_program(back->program))) ++back;
+    if (p) free(p);
+    else {
+      bb_log(LOG_ERR, "No bridge found. Try installing primus or virtualgl\n");
+      goto out;
+    }
+    bb_log(LOG_DEBUG, "Using auto-detected bridge %s\n", back->name);
+  } else {
+    while (back->name && strcmp(bb_config.optirun_bridge, back->name)) ++back;
+    if (!back->name) {
+      bb_log(LOG_ERR, "Unknown accel/display bridge: %s\n", bb_config.optirun_bridge);
+      goto out;
+    }
+    char *p;
+    if ((p = which_program(back->program))) free(p);
+    else {
+      bb_log(LOG_ERR, "Accel/display bridge %s is not installed.\n", back->name);
+      goto out;
+    }
+  }
+
   r = snprintf(buffer, BUFFER_SIZE, "Checking availability...");
   socketWrite(&bb_status.bb_socket, buffer, r + 1);
   while (bb_status.bb_socket != -1) {
@@ -118,67 +291,9 @@ static int run_app(int argc, char *argv[]) {
           }
           break;
         case 'Y': //Yes, run through vglrun
-          bb_log(LOG_INFO, "Running application through vglrun.\n");
+          bb_log(LOG_INFO, "Running application using %s.\n", back->name);
           ranapp = 1;
-          //run vglclient if any method other than proxy is used
-          if (strncmp(bb_config.vgl_compress, "proxy", BUFFER_SIZE) != 0) {
-            char * vglclient_args[] = {
-              "vglclient",
-              "-detach",
-              0
-            };
-            bb_run_fork(vglclient_args, 1);
-          }
-          /* number of options passed to --vgl-options */
-          unsigned int vglrun_opts_count = 0;
-          char *next_arg = bb_config.vglrun_options;
-          /* read vglrun options only if there is an arguments list */
-          if (next_arg && next_arg[0]) {
-            do {
-              ++vglrun_opts_count;
-            } while ((next_arg = strchr(next_arg + 1, ' ')));
-          }
-          /* position of next option */
-          unsigned int optno = 0;
-
-          /* 7 for the first options, 1 for the -- and 1 for the trailing 0 */
-          char ** vglrun_args = malloc(sizeof (char *) *
-                  (9 + vglrun_opts_count + argc - optind));
-          vglrun_args[0] = "vglrun";
-          vglrun_args[1] = "-c";
-          vglrun_args[2] = bb_config.vgl_compress;
-          vglrun_args[3] = "-d";
-          vglrun_args[4] = bb_config.x_display;
-          vglrun_args[5] = "-ld";
-          vglrun_args[6] = bb_config.ld_path;
-          optno = 7;
-
-          next_arg = bb_config.vglrun_options;
-          if (next_arg && next_arg[0]) {
-            char *current_arg;
-            do {
-              current_arg = next_arg;
-              next_arg = strchr(current_arg, ' ');
-              /* cut the string if a space is found */
-              if (next_arg) {
-                *next_arg = 0;
-                /* the next argument starts at the position after the space */
-                next_arg++;
-              }
-              vglrun_args[optno++] = current_arg;
-            } while (next_arg);
-          }
-
-          vglrun_args[optno++] = "--";
-          for (r = 0; r < argc - optind; r++) {
-            vglrun_args[r + optno] = argv[optind + r];
-          }
-          vglrun_args[optno+=r] = 0;
-          /* set envvar for better performance on some systems, but allow the
-           * user for manually override */
-          setenv("VGL_READBACK", "pbo", 0);
-          exitcode = bb_run_fork(vglrun_args, 0);
-          free(vglrun_args);
+          exitcode = back->run(argc, argv);
           socketClose(&bb_status.bb_socket);
           break;
         default: //Something went wrong - output and exit.
@@ -188,6 +303,7 @@ static int run_app(int argc, char *argv[]) {
       }
     }
   }
+out:
   if (!ranapp) {
     exitcode = run_fallback(argv + optind);
   }
@@ -199,7 +315,7 @@ static int run_app(int argc, char *argv[]) {
  * @return An option string which can be used for getopt
  */
 const char *bbconfig_get_optstr(void) {
-  return BBCONFIG_COMMON_OPTSTR "c:";
+  return BBCONFIG_COMMON_OPTSTR "c:b:";
 }
 
 /**
@@ -210,6 +326,7 @@ const struct option *bbconfig_get_lopts(void) {
   static struct option longOpts[] = {
     {"failsafe", 0, 0, OPT_FAILSAFE},
     {"no-failsafe", 0, 0, OPT_NO_FAILSAFE},
+    {"bridge", 1, 0, 'b'},
     {"vgl-compress", 1, 0, 'c'},
     {"vgl-options", 1, 0, OPT_VGL_OPTIONS},
     {"status", 0, 0, OPT_STATUS},
@@ -226,6 +343,9 @@ const struct option *bbconfig_get_lopts(void) {
  */
 int bbconfig_parse_options(int opt, char *value) {
   switch (opt) {
+    case 'b':/* accel/display bridge, e.g. virtualgl or primus */
+      set_string_value(&bb_config.optirun_bridge, value);
+      break;
     case 'c'://vglclient method
       set_string_value(&bb_config.vgl_compress, value);
       break;

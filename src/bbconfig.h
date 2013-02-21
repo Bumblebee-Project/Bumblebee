@@ -129,6 +129,7 @@ struct bb_config_struct {
     enum bb_pm_method pm_method; /// Which method to use for power management.
     int stop_on_exit; /// Whether to stop the X server on last optirun instance exit.
     int fallback_start; /// Wheter the application should be launched on the integrated card when X is not available.
+    char * optirun_bridge; /// Accel/display bridge for optirun.
     char * vgl_compress; /// VGL transport method.
     char *vglrun_options; /* extra options passed to vglrun */
     char * driver; /// Driver to use (nvidia or nouveau).

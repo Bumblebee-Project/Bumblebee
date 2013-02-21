@@ -70,6 +70,7 @@ do_subst = sed -e 's|[@]GITVERSION[@]|$(GITVERSION)|g' \
 	-e 's|[@]CONF_PM_METHOD[@]|$(CONF_PM_METHOD)|g' \
 	-e 's|[@]CONF_KEEPONEXIT[@]|$(CONF_KEEPONEXIT)|g' \
 	-e 's|[@]CONF_FALLBACKSTART[@]|$(CONF_FALLBACKSTART)|g' \
+	-e 's|[@]CONF_BRIDGE[@]|$(CONF_BRIDGE)|g' \
 	-e 's|[@]CONF_VGLCOMPRESS[@]|$(CONF_VGLCOMPRESS)|g' \
 	-e 's|[@]CONF_DRIVER[@]|$(CONF_DRIVER)|g' \
 	-e 's|[@]CONF_TURNOFFATEXIT[@]|$(CONF_TURNOFFATEXIT)|g' \
