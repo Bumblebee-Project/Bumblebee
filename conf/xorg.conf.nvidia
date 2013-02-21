@@ -1,12 +1,12 @@
 Section "ServerLayout"
-    Identifier "Layout0"
-    Option "AutoAddDevices" "false"
+    Identifier  "Layout0"
+    Option      "AutoAddDevices" "false"
 EndSection
 
 Section "Device"
-    Identifier "Device1"
-    Driver "nvidia"
-    VendorName "NVIDIA Corporation"
+    Identifier  "Device1"
+    Driver      "nvidia"
+    VendorName  "NVIDIA Corporation"
 
 #   If the X server does not automatically detect your VGA device,
 #   you can manually set it here.
