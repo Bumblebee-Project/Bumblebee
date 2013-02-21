@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.68])
-AC_INIT([bumblebee], [3.0.1])
+AC_INIT([bumblebee], [3.1])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_SRCDIR([src/bbsocket.c])
 #AC_CONFIG_HEADERS([config.h])
@@ -31,6 +31,14 @@ AC_DEFINE_SUBST(CONF_KEEPONEXIT, "false", [stop secondary X on exit of last opti
 AC_DEFINE_SUBST(CONF_FALLBACKSTART, "false", [make optirun start applications normally if secondary is unavailable])
 AC_DEFINE_SUBST(CONF_VGLCOMPRESS, "proxy", [vglclient transport method])
 AC_DEFINE_SUBST(CONF_TURNOFFATEXIT, "false", [state of card when shutting off daemon])
+
+AC_DEFINE_CONF(CONF_BRIDGE, [optirun display/render bridge, valid values are auto (default), primus and virtualgl], [
+case $CONF_BRIDGE in
+auto|primus|virtualgl) ;;
+"") CONF_BRIDGE=auto ;;
+*) AC_MSG_ERROR([Invalid value for CONF_BRIDGE]) ;;
+esac
+])
 
 AC_DEFINE_CONF(CONF_PIDFILE, [Path to the pidfile or /var/run/bumblebeed.pid if empty], [
 if test "x" = "x$CONF_PIDFILE"; then
@@ -71,6 +79,19 @@ AS_IF([test "x$with_pidfile" != xno],
 	[AC_DEFINE(WITH_PIDFILE, [1], [Define if pidfiles should be available])
 	])
 AM_CONDITIONAL([WITH_PIDFILE], [test "x$with_pidfile" != xno])
+
+UDEV_RULES_DIR=/lib/udev/rules.d
+AC_ARG_WITH([udev-rules],
+	[AS_HELP_STRING([--with-udev-rules@<:@=DIR@:>@],
+	[install nvidia udev rule @<:@default=/lib/udev/rules.d@:>@])],
+	[],
+	[with_udev_rules=yes])
+AS_CASE([$with_udev_rules],
+	[no], [UDEV_RULES_DIR=],
+	[yes], [], # --with-udev-rules: keep the default
+	[UDEV_RULES_DIR=$with_udev_rules])
+AC_SUBST([UDEV_RULES_DIR])
+AM_CONDITIONAL([WITH_UDEV_RULES], [test -n "$UDEV_RULES_DIR"])
 
 # Checks for programs.
 AC_PROG_CC

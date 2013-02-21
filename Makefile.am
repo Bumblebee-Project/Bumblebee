@@ -24,6 +24,7 @@ bin_SCRIPTS = scripts/bumblebee-bugreport
 CLEANFILES = $(noinst_SCRIPTS) conf/bumblebee.conf $(bin_SCRIPTS)
 EXTRA_DIST = scripts/systemd/bumblebeed.service.in \
 	scripts/upstart/bumblebeed.conf.in \
+	conf/99-remove-nvidia-dev.rules \
 	conf/bumblebee.conf.in \
 	conf/xorg.conf.nvidia \
 	conf/xorg.conf.nouveau \
@@ -57,6 +58,11 @@ bumblebeedconf_DATA = conf/bumblebee.conf conf/xorg.conf.nouveau conf/xorg.conf.
 completiondir = $(sysconfdir)/bash_completion.d
 completion_DATA = scripts/bash_completion/bumblebee
 
+if WITH_UDEV_RULES
+udevrulesdir = $(UDEV_RULES_DIR)
+udevrules_DATA = conf/99-remove-nvidia-dev.rules
+endif
+
 do_subst = sed -e 's|[@]GITVERSION[@]|$(GITVERSION)|g' \
 	-e 's|[@]CONF_XDISP[@]|$(CONF_XDISP)|g' \
 	-e 's|[@]CONF_SOCKPATH[@]|$(CONF_SOCKPATH)|g' \
@@ -64,6 +70,7 @@ do_subst = sed -e 's|[@]GITVERSION[@]|$(GITVERSION)|g' \
 	-e 's|[@]CONF_PM_METHOD[@]|$(CONF_PM_METHOD)|g' \
 	-e 's|[@]CONF_KEEPONEXIT[@]|$(CONF_KEEPONEXIT)|g' \
 	-e 's|[@]CONF_FALLBACKSTART[@]|$(CONF_FALLBACKSTART)|g' \
+	-e 's|[@]CONF_BRIDGE[@]|$(CONF_BRIDGE)|g' \
 	-e 's|[@]CONF_VGLCOMPRESS[@]|$(CONF_VGLCOMPRESS)|g' \
 	-e 's|[@]CONF_DRIVER[@]|$(CONF_DRIVER)|g' \
 	-e 's|[@]CONF_TURNOFFATEXIT[@]|$(CONF_TURNOFFATEXIT)|g' \
@@ -76,22 +83,27 @@ do_subst = sed -e 's|[@]GITVERSION[@]|$(GITVERSION)|g' \
 	-e 's|[@]CONF_MODPATH_NVIDIA[@]|$(CONF_MODPATH_NVIDIA)|g' \
 	-e 's|[@]CONF_PIDFILE[@]|$(CONF_PIDFILE)|g'
 
-conf/bumblebee.conf: conf/bumblebee.conf.in
-	$(do_subst) < $@.in > $@
+conf/bumblebee.conf: $(srcdir)/conf/bumblebee.conf.in
+	mkdir -p conf
+	$(do_subst) < $< > $@
 
-scripts/systemd/bumblebeed.service: scripts/systemd/bumblebeed.service.in
-	$(do_subst) < $@.in > $@
+scripts/systemd/bumblebeed.service: $(srcdir)/scripts/systemd/bumblebeed.service.in
+	mkdir -p scripts/systemd
+	$(do_subst) < $< > $@
 
-scripts/bumblebee-bugreport: scripts/bumblebee-bugreport.in
-	$(do_subst) < $@.in > $@
+scripts/bumblebee-bugreport: $(srcdir)/scripts/bumblebee-bugreport.in
+	mkdir -p scripts
+	$(do_subst) < $< > $@
 
 if WITH_PIDFILE
-scripts/sysvinit/bumblebeed: scripts/sysvinit/bumblebeed.in
-	$(do_subst) < $@.in > $@
+scripts/sysvinit/bumblebeed: $(srcdir)/scripts/sysvinit/bumblebeed.in
+	mkdir -p scripts/sysvinit
+	$(do_subst) < $< > $@
 endif
 
-scripts/upstart/bumblebeed.conf: scripts/upstart/bumblebeed.conf.in
-	$(do_subst) < $@.in > $@
+scripts/upstart/bumblebeed.conf: $(srcdir)/scripts/upstart/bumblebeed.conf.in
+	mkdir -p scripts/upstart
+	$(do_subst) < $< > $@
 
 if HAVE_HELP2MAN
 man_MANS = bumblebeed.1 optirun.1

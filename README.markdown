@@ -14,7 +14,7 @@ Build Requirements
 Source tarballs can be downloaded from
 https://github.com/Bumblebee-Project/Bumblebee/downloads
 
-The following packages are dependencies for the build processs:
+The following packages are dependencies for the build process:
 
 - pkg-config
 - glib-2.0 and development headers
@@ -42,8 +42,9 @@ If you want to make use of Power Management, you will need:
 
 - [bbswitch](https://github.com/Bumblebee-Project/bbswitch)
 - If you're brave and want to try the `switcheroo` method, install at least the
-  [optimus patch](http://lekensteyn.nl/files/nouveau-switcheroo-optimus.patch).
-  Note that suspend is not yet supported by this method.
+  [optimus patch](http://lekensteyn.nl/files/nouveau-switcheroo-optimus.patch)
+  (merged in Linux 3.3). Note that suspend is not yet supported by this
+  method.
 
 Building
 ---------
@@ -80,7 +81,8 @@ You can build the binaries and set the system wide paths at configure time
     make
 
 After building the binaries and bash completion script, it can be installed
-using `make`:
+together with an udev rule (unless `--without-udev-rules` was passed) using
+`make`:
 
     sudo make install
 
@@ -89,7 +91,7 @@ For packagers you need to add DESTDIR=$pkgdir
     make install DESTDIR=$pkgdir
 
 Example initscripts are available in the `scripts/` directory. Currently,
-Upstart, SystemD and SysV initscripts are available
+Upstart, systemd and Sys V initscripts are available.
 
 Usage
 ------

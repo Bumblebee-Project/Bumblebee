@@ -144,13 +144,16 @@ void print_usage(int exit_val) {
   if (is_optirun) {
     //client-only options
     fputs("\
+      --failsafe      run a program even if the nvidia card is unavailable\n\
+      --no-failsafe   do not run a program if the nvidia card is unavailable\n\
+  -b, --bridge METHOD  acceleration/displaying bridge to use. Valid values\n\
+                       are auto, virtualgl and primus. The --vgl-* options\n\
+                       only make sense when using the virtualgl bridge\n\
   -c, --vgl-compress METHOD  image compression or transport to use with \n\
                                VirtualGL. Valid values for METHOD are proxy,\n\
                                jpeg, rgb, xv and yuv. Changing this setting\n\
                                may affect performance, CPU usage and image\n\
                                quality\n\
-      --failsafe      run a program even if the nvidia card is unavailable\n\
-      --no-failsafe   do not run a program if the nvidia card is unavailable\n\
       --vgl-options OPTS   a space-separated list of command options to be\n\
                              passed to vglrun. Useful for debugging virtualgl\n\
                              by passing options to it like +tr. These OPTS\n\
@@ -360,6 +363,10 @@ GKeyFile *bbconfig_parse_conf(void) {
   // Client settings
   // [optirun]
   section = "optirun";
+  key = "Bridge";
+  if (g_key_file_has_key(bbcfg, section, key, NULL)) {
+    free_and_set_value(&bb_config.optirun_bridge, g_key_file_get_string(bbcfg, section, key, NULL));
+  }
   key = "VGLTransport";
   if (g_key_file_has_key(bbcfg, section, key, NULL)) {
     free_and_set_value(&bb_config.vgl_compress, g_key_file_get_string(bbcfg, section, key, NULL));
@@ -459,11 +466,10 @@ void bbconfig_parse_conf_driver(GKeyFile *bbcfg, char *driver) {
 
 /**
  * Set options that must be set before opening logs or loading configuration
- * @param argc Arguments count
  * @param argv Argument values
  * @param runmode The running mode of the program
  */
-void init_early_config(int argc, char **argv, int runmode) {
+void init_early_config(char **argv, int runmode) {
   /* clear existing configuration and reset pointers */
   memset(&bb_status, 0, sizeof bb_status);
   set_string_value(&bb_status.errors, ""); //we start without errors, yay!
@@ -479,10 +485,8 @@ void init_early_config(int argc, char **argv, int runmode) {
 
 /**
  * Parse configuration file and command line arguments
- * @param argc Arguments count
- * @param argv Argument values
  */
-void init_config(int argc, char **argv) {
+void init_config(void) {
   /* clear pointers and settings */
   memset(&bb_config, 0, sizeof bb_config);
   /* set defaults if not set already */
@@ -493,6 +497,7 @@ void init_config(int argc, char **argv) {
   set_string_value(&bb_config.socket_path, CONF_SOCKPATH);
   set_string_value(&bb_config.gid_name, CONF_GID);
   set_string_value(&bb_config.x_conf_file, CONF_XORG);
+  set_string_value(&bb_config.optirun_bridge, CONF_BRIDGE);
   set_string_value(&bb_config.vgl_compress, CONF_VGLCOMPRESS);
   // default to auto-detect
   set_string_value(&bb_config.driver, "");
@@ -534,6 +539,7 @@ void config_dump(void) {
             bb_config.card_shutdown_state);
   } else {
     /* client options */
+    bb_log(LOG_DEBUG, " Accel/display bridge: %s\n", bb_config.optirun_bridge);
     bb_log(LOG_DEBUG, " VGL Compression: %s\n", bb_config.vgl_compress);
   }
 }

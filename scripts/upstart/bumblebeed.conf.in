@@ -4,8 +4,8 @@ description "Bumblebee supporting nVidia Optimus cards"
 author      "Lekensteyn <lekensteyn@gmail.com>"
 
 # XXX: do we need to stop before / after a graphical DE like kdm?
-start on    (runlevel [2345])
-stop on     (runlevel [016])
+start on    (login-session-start or desktop-session-start)
+stop on     (desktop-shutdown)
 
 # restart in case it crashed for some reason
 respawn

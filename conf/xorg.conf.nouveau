@@ -1,15 +1,17 @@
 Section "ServerLayout"
-    Identifier     "Layout0"
-    Screen         "Screen0"
-    Option         "AutoAddDevices" "false"
+    Identifier  "Layout0"
+    Screen      "Screen0"
+    Option      "AutoAddDevices" "false"
+    # Prevent device detection from failing in Xorg 1.13
+    Option      "AutoAddGPU" "false"
 EndSection
 
 Section "Device"
-    Identifier     "Device0"
-    Driver         "nouveau"
+    Identifier  "Device0"
+    Driver      "nouveau"
 EndSection
 
 Section "Screen"
-    Identifier     "Screen0"
-    Device         "Device0"
+    Identifier  "Screen0"
+    Device      "Device0"
 EndSection

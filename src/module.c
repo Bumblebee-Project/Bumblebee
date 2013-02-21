@@ -93,14 +93,17 @@ int module_load(char *module_name, char *driver) {
  */
 int module_unload(char *driver) {
   if (module_is_loaded(driver) == 1) {
+    int retries = 30;
     bb_log(LOG_INFO, "Unloading %s driver\n", driver);
     char *mod_argv[] = {
       "rmmod",
-      "--wait",
       driver,
       NULL
     };
     bb_run_fork_wait(mod_argv, 10);
+    while (retries-- > 0 && module_is_loaded(driver) == 1) {
+      usleep(100000);
+    }
     if (module_is_loaded(driver) == 1) {
       bb_log(LOG_ERR, "Unloading %s driver timed out.\n", driver);
       return 0;
@@ -112,18 +115,20 @@ int module_unload(char *driver) {
 /**
  * Checks whether a kernel module is available for loading
  *
- * @param module_name The module name to be checked (filename)
+ * @param module_name The module name to be checked (filename or alias)
  * @return 1 if the module is available for loading, 0 otherwise
  */
 int module_is_available(char *module_name) {
   /* HACK to support call from optirun */
-  char *modinfo_bin = "/sbin/modinfo";
-  if (access(modinfo_bin, X_OK)) {
-    /* if /sbin/modinfo is not found, pray that PATH contains it*/
-    modinfo_bin = "modinfo";
+  char *modprobe_bin = "/sbin/modprobe";
+  if (access(modprobe_bin, X_OK)) {
+    /* if /sbin/modprobe is not found, pray that PATH contains it */
+    modprobe_bin = "modprobe";
   }
   char *mod_argv[] = {
-    modinfo_bin,
+    modprobe_bin,
+    "--dry-run",
+    "--quiet",
     module_name,
     NULL
   };
