@@ -4,6 +4,7 @@ Highlights:
 - [enhancement] Use of non-blocking sockets, replacing former 3.0.1 hotfix for
   socket polling.
 - [enhancement] Added an udev rule to fix nvidia card randomly turning on.
+- [enhancement] Support for primus as an alternative to virtualgl.
 - [fix] Fixed the three remaining compilation warnings.
 - [fix] A little fix for Kepler generation cards was added in xorg.conf.nvidia.
 - [fix] A little fix for dual nvidia hybrid systems.
@@ -20,15 +21,14 @@ Notes:
   be sure that the toolchain used for building the kernel matches the one that
   is used for building the module. This means that Ubuntu mainline kernels do
   not work and will cause crashes.
-- Certain machines need the "ConnectedMonitor" setting to be changed if using
-  the nvidia driver. optirun will inform you if this change is neccesary on
-  your machine, as well as report a value that should work and what file to
-  edit. This will be changed in a future version.
 - VirtualGL performance is very dependent on the Transport method set. The
   default "proxy" setting appears to perform bad in some situations. Try other
   available settings like "rgb" or "yuv".
 - Do not combine power management methods (i.e. bbswitch with the deprecated
   acpi_call), it does not save more power and will break your machine.
+- primus is supposed to result in better performance, but is not compatible with
+  all programs supported by virtualgl, hence virtualgl is preferred when
+  auto-detecting the backend.
 
 Known issues:
 - vga-switcheroo won't survive suspension/hibernation (patch for newer Optimus 
@@ -38,8 +38,5 @@ Known issues:
   Vostro 360 desktop with Synergy. If you have a machine using that technology,
   please submit your machine information on: 
   https://bugs.launchpad.net/bugs/752542
-- After a configuration change in drivers, the daemon needs to be restarted for
-  the changes to take effect. However, optirun reads the configuration
-  immediately which may cause unexpected behavior.
 - Some laptops (mainly Lenovo) are neither supported by bbswitch nor the video 
   drivers. See https://github.com/Bumblebee-Project/bbswitch/issues/2
