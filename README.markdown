@@ -32,7 +32,9 @@ Runtime dependencies
 If you want to use `optirun` for running applications with the discrete nVidia
 card, you will also need:
 
-- [virtualgl](http://virtualgl.org/)
+- At least one back-end for `optirun`:
+  - [virtualgl](http://virtualgl.org/)
+  - [primus](https://github.com/amonakov/primus) (experimental)
 - Driver for nvidia graphics card: [nouveau](http://nouveau.freedesktop.org/)
   or the proprietary nvidia driver. Don't install it directly from nvidia.com
   as it will break 3D capabilities on the Intel graphics card and therefore
@@ -100,7 +102,7 @@ The first time you install Bumblebee, the `bumblebee` group has to be created.
 Users who are allowed to use Bumblebee need to be added to the group:
 
     sudo groupadd bumblebee
-    sudo usermod -a -G bumblebee $USER
+    sudo gpasswd -a $USER bumblebee
 
 To run Bumblebee after installing it system-wide, run:
 
