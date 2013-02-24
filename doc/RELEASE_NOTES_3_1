@@ -1,10 +1,14 @@
-Version 3.1 - 21 February 2013
+Version 3.1 - 25 February 2013
 
 Highlights:
+- [new] Support for primus as an alternative to virtualgl as optirun back-end.
+  Added a new Bridge option in bumblebee.conf to set the default back-end (auto
+  as default currently, selects VirtualGL if installed, else primus, detection
+  order may change in 4.0). optirun gained a -b/--bridge option for on-the-fly
+  back-end choice.
 - [enhancement] Use of non-blocking sockets, replacing former 3.0.1 hotfix for
   socket polling.
 - [enhancement] Added an udev rule to fix nvidia card randomly turning on.
-- [enhancement] Support for primus as an alternative to virtualgl.
 - [fix] Fixed the three remaining compilation warnings.
 - [fix] A little fix for Kepler generation cards was added in xorg.conf.nvidia.
 - [fix] A little fix for dual nvidia hybrid systems.
