@@ -127,7 +127,7 @@ struct bb_config_struct {
     char * socket_path; /// Path to the server socket.
     char * gid_name; /// Group name for setgid.
     enum bb_pm_method pm_method; /// Which method to use for power management.
-    int stop_on_exit; /// Whether to stop the X server on last optirun instance exit.
+    int keep_unused_xserver; /// Whether the X server should stay active after the last optirun instance exited.
     int fallback_start; /// Wheter the application should be launched on the integrated card when X is not available.
     char * optirun_bridge; /// Accel/display bridge for optirun.
     char * vgl_compress; /// VGL transport method.
