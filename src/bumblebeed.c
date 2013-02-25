@@ -321,7 +321,7 @@ static void main_loop(void) {
         if (client->inuse > 0) {
           bb_status.appcount--;
           //stop X / card if there is no need to keep it running
-          if ((bb_status.appcount == 0) && (bb_config.keep_unused_xserver)) {
+          if ((bb_status.appcount == 0) && (bb_config.stop_on_exit)) {
             stop_secondary();
           }
         }

@@ -385,7 +385,7 @@ GKeyFile *bbconfig_parse_conf(void) {
   }
   key = "KeepUnusedXServer";
   if (g_key_file_has_key(bbcfg, section, key, NULL)) {
-    bb_config.keep_unused_xserver = !g_key_file_get_boolean(bbcfg, section, key, NULL);
+    bb_config.stop_on_exit = !g_key_file_get_boolean(bbcfg, section, key, NULL);
   }
   key = "Driver";
   if (g_key_file_has_key(bbcfg, section, key, NULL)) {
@@ -503,7 +503,7 @@ void init_config(void) {
   set_string_value(&bb_config.driver, "");
   set_string_value(&bb_config.module_name, "");
   bb_config.pm_method = bb_pm_method_from_string(CONF_PM_METHOD);
-  bb_config.keep_unused_xserver = bb_bool_from_string(CONF_KEEPONEXIT);
+  bb_config.stop_on_exit = bb_bool_from_string(CONF_KEEPONEXIT);
   bb_config.fallback_start = bb_bool_from_string(CONF_FALLBACKSTART);
   bb_config.card_shutdown_state = bb_bool_from_string(CONF_TURNOFFATEXIT);
 #ifdef WITH_PIDFILE
@@ -532,7 +532,7 @@ void config_dump(void) {
     bb_log(LOG_DEBUG, " GID name: %s\n", bb_config.gid_name);
     bb_log(LOG_DEBUG, " Power method: %s\n",
             bb_pm_method_string[bb_config.pm_method]);
-    bb_log(LOG_DEBUG, " Keep unused X server: %i\n", bb_config.keep_unused_xserver);
+    bb_log(LOG_DEBUG, " Stop X on exit: %i\n", bb_config.stop_on_exit);
     bb_log(LOG_DEBUG, " Driver: %s\n", bb_config.driver);
     bb_log(LOG_DEBUG, " Driver module: %s\n", bb_config.module_name);
     bb_log(LOG_DEBUG, " Card shutdown state: %i\n",
