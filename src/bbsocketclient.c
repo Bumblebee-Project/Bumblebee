@@ -46,7 +46,9 @@ int bbsocket_query(const char *key, char *target, size_t max_len) {
     return 1;
   }
   while (bb_status.bb_socket != -1) {
-    if (socketRead(&bb_status.bb_socket, buff, sizeof (buff))) {
+    int r = socketRead(&bb_status.bb_socket, buff, sizeof (buff));
+    if (r > 0) {
+      ensureZeroTerminated(buff, r, sizeof (buff));
       if (strncmp("Value: ", buff, strlen("Value: "))) {
         bb_log(LOG_DEBUG, "Failed to query for %s: %s\n", key, buff);
         return 1;

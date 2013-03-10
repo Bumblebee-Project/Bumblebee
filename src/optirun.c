@@ -71,7 +71,8 @@ static int report_daemon_status(void) {
   while (bb_status.bb_socket != -1) {
     r = socketRead(&bb_status.bb_socket, buffer, BUFFER_SIZE);
     if (r > 0) {
-      printf("Bumblebee status: %*s\n", r, buffer);
+      ensureZeroTerminated(buffer, r, BUFFER_SIZE);
+      printf("Bumblebee status: %s\n", buffer);
       socketClose(&bb_status.bb_socket);
       return EXIT_SUCCESS;
     }
@@ -281,10 +282,12 @@ static int run_app(int argc, char *argv[]) {
   while (bb_status.bb_socket != -1) {
     r = socketRead(&bb_status.bb_socket, buffer, BUFFER_SIZE);
     if (r > 0) {
+      r = ensureZeroTerminated(buffer, r, BUFFER_SIZE);
       bb_log(LOG_INFO, "Response: %s\n", buffer);
       switch (buffer[0]) {
         case 'N': //No, run normally.
-          bb_log(LOG_ERR, "Cannot access secondary GPU%s\n", buffer+2);
+          // buffer should contain "No, ..." or "No - ..."
+          bb_log(LOG_ERR, "Cannot access secondary GPU%s\n", r > 2 ? buffer+2 : "");
           socketClose(&bb_status.bb_socket);
           if (!bb_config.fallback_start) {
             bb_log(LOG_ERR, "Aborting because fallback start is disabled.\n");
@@ -297,7 +300,7 @@ static int run_app(int argc, char *argv[]) {
           socketClose(&bb_status.bb_socket);
           break;
         default: //Something went wrong - output and exit.
-          bb_log(LOG_ERR, "Problem: %*s\n", r, buffer);
+          bb_log(LOG_ERR, "Problem: %s\n", buffer);
           socketClose(&bb_status.bb_socket);
           break;
       }
