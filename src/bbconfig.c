@@ -184,7 +184,9 @@ void print_usage(int exit_val) {
             out);
 #ifdef WITH_PIDFILE
     fputs("\
-      --pidfile         file in which the process ID is written\n\
+      --pidfile FILE    file in which the process ID is written. An empty\n\
+                          value disables cretion of a pidfile. Note that\n\
+                          the file must not already exist\n\
       --use-syslog      redirect all messages to syslog\n", out);
 #endif
   }
