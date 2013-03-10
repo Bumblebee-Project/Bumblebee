@@ -168,6 +168,7 @@ static void handle_socket(struct clientsocket * C) {
   //since these are local sockets, we can safely assume we get whole messages at a time
   int r = socketRead(&C->sock, buffer, BUFFER_SIZE);
   if (r > 0) {
+    ensureZeroTerminated(buffer, r, BUFFER_SIZE);
     switch (buffer[0]) {
       case 'S'://status
         if (bb_status.errors[0] != 0) {
@@ -245,7 +246,7 @@ static void handle_socket(struct clientsocket * C) {
         socketWrite(&C->sock, buffer, strlen(buffer) + 1);
         break;
       default:
-        bb_log(LOG_WARNING, "Unhandled message received: %*s\n", r, buffer);
+        bb_log(LOG_WARNING, "Unhandled message received: %s\n", buffer);
         break;
     }
   }
