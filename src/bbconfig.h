@@ -177,3 +177,5 @@ void bbconfig_parse_conf_driver(GKeyFile *bbcfg, char *driver);
 gboolean bb_bool_from_string(char* str);
 
 enum bb_pm_method bb_pm_method_from_string(char *value);
+
+size_t ensureZeroTerminated(char *buff, size_t size, size_t max);
