@@ -69,6 +69,7 @@ enum {
     OPT_USE_SYSLOG,
     OPT_DEBUG,
     OPT_PM_METHOD,
+    OPT_PRIMUS_LD_PATH,
 };
 
 /* Verbosity levels */
@@ -130,8 +131,9 @@ struct bb_config_struct {
     int stop_on_exit; /// Whether to stop the X server on last optirun instance exit.
     int fallback_start; /// Wheter the application should be launched on the integrated card when X is not available.
     char * optirun_bridge; /// Accel/display bridge for optirun.
+    char * primus_ld_path; /// LD_LIBRARY_PATH containing primus libGL.so.1
     char * vgl_compress; /// VGL transport method.
-    char *vglrun_options; /* extra options passed to vglrun */
+    char * vglrun_options; /* extra options passed to vglrun */
     char * driver; /// Driver to use (nvidia or nouveau).
     char * module_name; /* Kernel module to be loaded for the driver.
                                     * If empty, driver will be used. This is
