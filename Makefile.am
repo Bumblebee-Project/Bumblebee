@@ -72,6 +72,7 @@ do_subst = sed -e 's|[@]GITVERSION[@]|$(GITVERSION)|g' \
 	-e 's|[@]CONF_FALLBACKSTART[@]|$(CONF_FALLBACKSTART)|g' \
 	-e 's|[@]CONF_BRIDGE[@]|$(CONF_BRIDGE)|g' \
 	-e 's|[@]CONF_VGLCOMPRESS[@]|$(CONF_VGLCOMPRESS)|g' \
+	-e 's|[@]CONF_PRIMUS_LD_PATH[@]|$(CONF_PRIMUS_LD_PATH)|g' \
 	-e 's|[@]CONF_DRIVER[@]|$(CONF_DRIVER)|g' \
 	-e 's|[@]CONF_TURNOFFATEXIT[@]|$(CONF_TURNOFFATEXIT)|g' \
 	-e 's|[@]BINDIR[@]|$(bindir)|g' \
