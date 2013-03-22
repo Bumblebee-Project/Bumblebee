@@ -40,6 +40,12 @@ auto|primus|virtualgl) ;;
 esac
 ])
 
+AC_DEFINE_CONF(CONF_PRIMUS_LD_PATH, [List of paths which are searched for the primus libGL.so.1 when using the primus bridge], [
+if test "x" = "x$CONF_PRIMUS_LD_PATH"; then
+	CONF_PRIMUS_LD_PATH="/usr/lib/primus:/usr/lib32/primus"
+fi
+])
+
 AC_DEFINE_CONF(CONF_PIDFILE, [Path to the pidfile or /var/run/bumblebeed.pid if empty], [
 if test "x" = "x$CONF_PIDFILE"; then
 	CONF_PIDFILE=/var/run/bumblebeed.pid
