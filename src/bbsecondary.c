@@ -38,9 +38,6 @@
 #include "pci.h"
 #include "module.h"
 
-/* the PCI configuration space of the discrete video card */
-static struct pci_config_state pci_config_state_discrete;
-
 /**
  * Substitutes DRIVER in the passed path
  * @param x_conf_file A path to be processed
@@ -98,10 +95,6 @@ void start_secondary(void) {
     if (switch_on() != SWITCH_ON) {
       set_bb_error("Could not enable discrete graphics card");
       return;
-    }
-    if (pci_config_restore(pci_bus_id_discrete, &pci_config_state_discrete)) {
-      bb_log(LOG_WARNING, "Could not restore PCI configuration space: %s\n",
-              strerror(errno));
     }
   }
 
@@ -227,10 +220,6 @@ void stop_secondary() {
       /* do not unload the drivers nor disable the card if the card is not on */
       if (switcher->status() != SWITCH_ON) {
         return;
-      }
-      if (pci_config_save(pci_bus_id_discrete, &pci_config_state_discrete)) {
-        bb_log(LOG_WARNING, "Could not save PCI configuration space: %s\n",
-                strerror(errno));
       }
       /* unload the driver loaded by the graphica card */
       if (pci_get_driver(driver, pci_bus_id_discrete, sizeof driver)) {
