@@ -222,7 +222,7 @@ static int run_primus(int argc, char **argv) {
   free(ldpath_new);
 
   /* set PRIMUS_libGLa */
-  char *libgl_mesa = "/usr/$LIB/libGL.so.1:/usr/lib/$LIB/libGL.so.1:/usr/lib/$LIB/mesa/libGL.so.1";
+  char *libgl_mesa = "/usr/$LIB/libGL.so.1:/usr/lib/$LIB/libGL.so.1:/usr/$LIB/mesa/libGL.so.1:/usr/lib/$LIB/mesa/libGL.so.1";
   if (bb_config.ld_path[0]) { /* build new library path for PRIMUS_libGLa */
     int libgl_size = strlen(bb_config.ld_path) + 1;
     { /* calculate additional memories for adding "/libGL.so.1" */
