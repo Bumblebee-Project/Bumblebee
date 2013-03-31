@@ -16,7 +16,7 @@ _optirun() {
             in_option=false
         else
             case "$prev" in
-              -c|--vgl-compress|--failsafe|--display|-d|--config|-C|--ldpath|-l|--socket|-s|-b|--bridge)
+              -c|--vgl-compress|--failsafe|--display|-d|--config|-C|--ldpath|-l|--primus-ldpath|--socket|-s|-b|--bridge)
                 in_option=true
                 ;;
               --)
@@ -49,12 +49,12 @@ _optirun() {
           -C|--config|-s|--socket)
             _filedir
             ;;
-	  -l|--ldpath)
+	  -l|--ldpath|--primus-ldpath)
 	    ;;
           *)
             COMPREPLY=( $(compgen -W "--vgl-compress -c --failsafe --quiet \
 	        --silent -q --verbose -v --display -d --config -C --ldpath -l \
-                --socket -s --help -h --" -- "$cur") )
+                --primus-ldpath --socket -s --help -h --" -- "$cur") )
             ;;
         esac
         return 0
