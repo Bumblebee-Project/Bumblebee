@@ -269,8 +269,8 @@ struct optirun_bridge {
 };
 
 static struct optirun_bridge backends[] = {
-  {"primus", "primusrun", run_primus},
-  {"virtualgl", "vglrun", run_virtualgl},
+  {"primus", check_primus, run_primus},
+  {"virtualgl", check_virtualgl, run_virtualgl},
   {NULL, NULL, NULL}
 };
 
