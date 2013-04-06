@@ -29,6 +29,7 @@
 #include <time.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <errno.h>
 #include "bbsecondary.h"
 #include "switch/switching.h"
@@ -84,23 +85,22 @@ static char *xorg_path_w_driver(char *x_conf_file, char *driver) {
 }
 
 /**
- * Start the X server by fork-exec, turn card on and load driver if needed.
- * If after this method finishes X is running, it was successfull.
- * If it somehow fails, X should not be running after this method finishes.
+ * Load the kernel module, powering on the card beforehand
  */
-void start_secondary(void) {
+static bool switch_and_load(void)
+{
   char driver[BUFFER_SIZE] = {0};
   /* enable card if the switcher is available */
   if (switcher) {
     if (switch_on() != SWITCH_ON) {
       set_bb_error("Could not enable discrete graphics card");
-      return;
+      return false;
     }
   }
 
   //if runmode is BB_RUN_EXIT, do not start X, we are shutting down.
   if (bb_status.runmode == BB_RUN_EXIT) {
-    return;
+    return false;
   }
 
   if (pci_get_driver(driver, pci_bus_id_discrete, sizeof driver)) {
@@ -108,7 +108,7 @@ void start_secondary(void) {
     if (strcasecmp(bb_config.driver, driver)) {
       if (!module_unload(driver)) {
         /* driver failed to unload, aborting */
-        return;
+        return false;
       }
     }
   }
@@ -120,10 +120,20 @@ void start_secondary(void) {
     char *driver_name = bb_config.driver;
     if (!module_load(module_name, driver_name)) {
       set_bb_error("Could not load GPU driver");
-      return;
+      return false;
     }
   }
+  return true;
+}
 
+/**
+ * Start the X server by fork-exec, turn card on and load driver if needed.
+ * If after this method finishes X is running, it was successfull.
+ * If it somehow fails, X should not be running after this method finishes.
+ */
+void start_secondary(void) {
+  if (!switch_and_load())
+    return;
   //no problems, start X if not started yet
   if (!bb_is_running(bb_status.x_pid)) {
     char pci_id[12];
@@ -200,15 +210,11 @@ void start_secondary(void) {
 }//start_secondary
 
 /**
- * Kill the second X server if any, turn card off if requested.
+ * Unload the kernel module and power down the card
  */
-void stop_secondary() {
+static void switch_and_unload(void)
+{
   char driver[BUFFER_SIZE];
-  // kill X if it is running
-  if (bb_is_running(bb_status.x_pid)) {
-    bb_log(LOG_INFO, "Stopping X server\n");
-    bb_stop_wait(bb_status.x_pid);
-  }
 
   if (bb_config.pm_method == PM_DISABLED && bb_status.runmode != BB_RUN_EXIT) {
     /* do not disable the card if PM is disabled unless exiting */
@@ -237,6 +243,18 @@ void stop_secondary() {
       bb_log(LOG_WARNING, "Unable to disable discrete card.");
     }
   }
+}
+
+/**
+ * Kill the second X server if any, turn card off if requested.
+ */
+void stop_secondary() {
+  // kill X if it is running
+  if (bb_is_running(bb_status.x_pid)) {
+    bb_log(LOG_INFO, "Stopping X server\n");
+    bb_stop_wait(bb_status.x_pid);
+  }
+  switch_and_unload();
 }//stop_secondary
 
 /**
