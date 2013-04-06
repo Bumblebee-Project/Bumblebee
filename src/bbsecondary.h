@@ -34,7 +34,7 @@
 struct pci_bus_id *pci_bus_id_discrete;
 
 /// Start the X server by fork-exec, turn card on if needed.
-void start_secondary(void);
+bool start_secondary(bool);
 
 /// Kill the second X server if any, turn card off if requested.
 void stop_secondary(void);

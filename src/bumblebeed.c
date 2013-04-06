@@ -27,6 +27,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <grp.h>
 #include <signal.h>
 #include <stdio.h>
@@ -164,11 +165,13 @@ struct clientsocket {
 /// \param sock Pointer to socket. Assumed to be valid.
 
 static void handle_socket(struct clientsocket * C) {
-  static char buffer[BUFFER_SIZE];
+  static char buffer[BUFFER_SIZE], *conf_key;
+  bool need_secondary;
   //since these are local sockets, we can safely assume we get whole messages at a time
   int r = socketRead(&C->sock, buffer, BUFFER_SIZE);
   if (r > 0) {
     ensureZeroTerminated(buffer, r, BUFFER_SIZE);
+    conf_key = strchr(buffer, ' ');
     switch (buffer[0]) {
       case 'S'://status
         if (bb_status.errors[0] != 0) {
@@ -200,12 +203,8 @@ static void handle_socket(struct clientsocket * C) {
         break;
       case 'F'://force VirtualGL if possible
       case 'C'://check if VirtualGL is allowed
-        /// \todo Handle power management cases and powering card on/off.
-        //no X? attempt to start it
-        if (!bb_is_running(bb_status.x_pid)) {
-          start_secondary();
-        }
-        if (bb_is_running(bb_status.x_pid)) {
+        need_secondary = conf_key ? strcmp(conf_key + 1, "NoX") : true;
+        if (start_secondary(need_secondary)) {
           r = snprintf(buffer, BUFFER_SIZE, "Yes. X is active.\n");
           if (C->inuse == 0) {
             C->inuse = 1;
@@ -227,7 +226,6 @@ static void handle_socket(struct clientsocket * C) {
         break;
       case 'Q': /* query for configuration details */
         /* required since labels can only be attached on statements */;
-        char *conf_key = strchr(buffer, ' ');
         if (conf_key) {
           conf_key++;
           if (strcmp(conf_key, "VirtualDisplay") == 0) {
@@ -561,7 +559,7 @@ int main(int argc, char* argv[]) {
   bb_status.runmode = BB_RUN_EXIT; //make sure all methods understand we are shutting down
   if (bb_config.card_shutdown_state) {
     //if shutdown state = 1, turn on card
-    start_secondary();
+    start_secondary(false);
   } else {
     //if shutdown state = 0, turn off card
     stop_secondary();

@@ -131,9 +131,11 @@ static bool switch_and_load(void)
  * If after this method finishes X is running, it was successfull.
  * If it somehow fails, X should not be running after this method finishes.
  */
-void start_secondary(void) {
+bool start_secondary(bool need_secondary) {
   if (!switch_and_load())
-    return;
+    return false;
+  if (!need_secondary)
+    return true;
   //no problems, start X if not started yet
   if (!bb_is_running(bb_status.x_pid)) {
     char pci_id[12];
@@ -168,7 +170,7 @@ void start_secondary(void) {
     //create a new pipe
     if (pipe2(bb_status.x_pipe, O_NONBLOCK | O_CLOEXEC)){
       set_bb_error("Could not create output pipe for X");
-      return;
+      return false;
     }
     bb_status.x_pid = bb_run_fork_ld_redirect(x_argv, bb_config.ld_path, bb_status.x_pipe[1]);
     //close the end of the pipe that is not ours
@@ -206,7 +208,9 @@ void start_secondary(void) {
     bb_log(LOG_INFO, "X successfully started in %i seconds\n", time(0) - xtimer);
     //reset errors, if any
     set_bb_error(0);
+    return true;
   }
+  return false;
 }//start_secondary
 
 /**
