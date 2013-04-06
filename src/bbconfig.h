@@ -70,6 +70,7 @@ enum {
     OPT_DEBUG,
     OPT_PM_METHOD,
     OPT_PRIMUS_LD_PATH,
+    OPT_X_CONF_DIR_PATH,
 };
 
 /* Verbosity levels */
@@ -122,6 +123,7 @@ struct bb_status_struct {
 struct bb_config_struct {
     char * x_display; /// X display number to use.
     char * x_conf_file; /// Path to the X configuration file.
+    char * x_conf_dir; /// Path to the dummy X configuration directory.
     char * bb_conf_file; /// Path to the bumblebeed configuration file.
     char * ld_path; /// LD_LIBRARY_PATH to launch applications.
     char * mod_path; /// ModulePath for xorg.

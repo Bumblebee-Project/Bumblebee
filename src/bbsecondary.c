@@ -139,6 +139,7 @@ void start_secondary(void) {
       XORG_BINARY,
       bb_config.x_display,
       "-config", x_conf_file,
+      "-configdir", bb_config.x_conf_dir,
       "-sharevts",
       "-nolisten", "tcp",
       "-noreset",

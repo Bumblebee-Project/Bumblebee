@@ -20,6 +20,8 @@ NoEcoModeOverride=false
 # auto-detection is performed. The available drivers are nvidia and nouveau
 # (See also the driver-specific sections below)
 Driver=@CONF_DRIVER@
+# Directory with a dummy config file to pass as a -configdir to secondary X
+XorgConfDir=@BBCONFDIR@/xorg.conf.d
 
 ## Client options. Will take effect on the next optirun executed.
 [optirun]

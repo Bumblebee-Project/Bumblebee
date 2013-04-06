@@ -7,7 +7,8 @@ bumblebeedconfdir=$(sysconfdir)/bumblebee
 
 AM_CPPFLAGS = ${regular_CPPFLAGS} \
 		-DCONFIG_FILE='"$(bumblebeedconfdir)/bumblebee.conf"' \
-		-DCONF_XORG='"$(bumblebeedconfdir)/xorg.conf.DRIVER"'
+		-DCONF_XORG='"$(bumblebeedconfdir)/xorg.conf.DRIVER"' \
+		-DCONF_XORG_DIR='"$(bumblebeedconfdir)/xorg.conf.d"'
 AM_CFLAGS = ${regular_CFLAGS} \
 		${x11_CFLAGS} ${libbsd_CFLAGS} ${glib_CFLAGS} \
 		-Wextra -funsigned-char -DGITVERSION='"${GITVERSION}"'
@@ -78,7 +79,6 @@ do_subst = sed -e 's|[@]GITVERSION[@]|$(GITVERSION)|g' \
 	-e 's|[@]BINDIR[@]|$(bindir)|g' \
 	-e 's|[@]SBINDIR[@]|$(sbindir)|g' \
 	-e 's|[@]BBCONFDIR[@]|$(bumblebeedconfdir)|g' \
-	-e 's|[@]CONF_XORG[@]|$(bumblebeedconfdir)/xorg.conf.DRIVER|g' \
 	-e 's|[@]CONF_DRIVER_MODULE_NVIDIA[@]|$(CONF_DRIVER_MODULE_NVIDIA)|g' \
 	-e 's|[@]CONF_LDPATH_NVIDIA[@]|$(CONF_LDPATH_NVIDIA)|g' \
 	-e 's|[@]CONF_MODPATH_NVIDIA[@]|$(CONF_MODPATH_NVIDIA)|g' \

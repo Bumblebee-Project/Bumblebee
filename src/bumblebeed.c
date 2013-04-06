@@ -377,6 +377,7 @@ const struct option *bbconfig_get_lopts(void) {
   static struct option longOpts[] = {
     {"daemon", 0, 0, 'D'},
     {"xconf", 1, 0, 'x'},
+    {"xconfdir", 1, 0, OPT_X_CONF_DIR_PATH},
     {"group", 1, 0, 'g'},
     {"module-path", 1, 0, 'm'},
     {"driver-module", 1, 0, 'k'},
@@ -407,6 +408,9 @@ int bbconfig_parse_options(int opt, char *value) {
       break;
     case 'x'://xorg.conf path
       set_string_value(&bb_config.x_conf_file, value);
+      break;
+    case OPT_X_CONF_DIR_PATH://xorg.conf.d path
+      set_string_value(&bb_config.x_conf_dir, value);
       break;
     case 'g'://group name to use
       set_string_value(&bb_config.gid_name, value);

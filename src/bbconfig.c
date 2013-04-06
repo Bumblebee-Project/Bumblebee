@@ -169,6 +169,7 @@ void print_usage(int exit_val) {
     fputs("\
   -D, --daemon          run daemonized (backgrounded). Implies --use-syslog\n\
   -x, --xconf FILE      xorg.conf file to use\n\
+      --xconfdir DIR    xorg.conf.d directory to use\n\
   -g, --group GROUP     allow GROUP to communicate with the daemon\n\
       --driver DRIVER   the driver to use for the nvidia card. Valid values\n\
                           are nouveau and nvidia. This option also effects\n\
@@ -416,6 +417,10 @@ GKeyFile *bbconfig_parse_conf(void) {
   if (g_key_file_has_key(bbcfg, section, key, NULL)) {
     bb_config.card_shutdown_state = !g_key_file_get_boolean(bbcfg, section, key, NULL);
   }
+  key = "XorgConfDir";
+  if (g_key_file_has_key(bbcfg, section, key, NULL)) {
+    free_and_set_value(&bb_config.x_conf_dir, g_key_file_get_string(bbcfg, section, key, NULL));
+  }
   return bbcfg;
 }
 
@@ -507,6 +512,7 @@ void init_config(void) {
   set_string_value(&bb_config.socket_path, CONF_SOCKPATH);
   set_string_value(&bb_config.gid_name, CONF_GID);
   set_string_value(&bb_config.x_conf_file, CONF_XORG);
+  set_string_value(&bb_config.x_conf_dir, CONF_XORG_DIR);
   set_string_value(&bb_config.optirun_bridge, CONF_BRIDGE);
   set_string_value(&bb_config.primus_ld_path, CONF_PRIMUS_LD_PATH);
   set_string_value(&bb_config.vgl_compress, CONF_VGLCOMPRESS);
@@ -539,6 +545,7 @@ void config_dump(void) {
     bb_log(LOG_DEBUG, " pidfile: %s\n", bb_config.pid_file);
 #endif
     bb_log(LOG_DEBUG, " xorg.conf file: %s\n", bb_config.x_conf_file);
+    bb_log(LOG_DEBUG, " xorg.conf.d dir: %s\n", bb_config.x_conf_dir);
     bb_log(LOG_DEBUG, " ModulePath: %s\n", bb_config.mod_path);
     bb_log(LOG_DEBUG, " GID name: %s\n", bb_config.gid_name);
     bb_log(LOG_DEBUG, " Power method: %s\n",
