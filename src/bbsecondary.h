@@ -41,6 +41,3 @@ void stop_secondary(void);
 
 /* check for the availability of PM methods */
 void check_pm_method(void);
-
-/// Returns 0 if card is off, 1 if card is on, -1 if not-switchable.
-int status_secondary(void);

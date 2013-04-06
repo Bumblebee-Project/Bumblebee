@@ -258,22 +258,6 @@ void stop_secondary() {
 }//stop_secondary
 
 /**
- * Check the status of the discrete card
- * @return 0 if card is off, 1 if card is on, -1 if not-switchable.
- */
-int status_secondary(void) {
-  switch (switch_status()) {
-    case SWITCH_ON:
-      return 1;
-    case SWITCH_OFF:
-      return 0;
-    case SWITCH_UNAVAIL:
-    default:
-      return -1;
-  }
-}
-
-/**
  * Check for the availability of a PM method, warn if no method is available
  */
 void check_pm_method(void) {
