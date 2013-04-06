@@ -146,6 +146,7 @@ void print_usage(int exit_val) {
     fputs("\
       --failsafe      run a program even if the nvidia card is unavailable\n\
       --no-failsafe   do not run a program if the nvidia card is unavailable\n\
+      --no-xorg       do not start secondary X server (implies -b none)\n\
   -b, --bridge METHOD  acceleration/displaying bridge to use. Valid values\n\
                        are auto, virtualgl and primus. The --vgl-* options\n\
                        only make sense when using the virtualgl bridge,\n\

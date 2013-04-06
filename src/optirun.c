@@ -338,7 +338,7 @@ static int run_app(int argc, char *argv[]) {
     }
   }
 
-  r = snprintf(buffer, BUFFER_SIZE, "Checking availability...");
+  r = snprintf(buffer, BUFFER_SIZE, "Connect %s", bb_config.no_xorg ? "NoX" : "");
   socketWrite(&bb_status.bb_socket, buffer, r + 1);
   while (bb_status.bb_socket != -1) {
     r = socketRead(&bb_status.bb_socket, buffer, BUFFER_SIZE);
@@ -390,6 +390,7 @@ const struct option *bbconfig_get_lopts(void) {
   static struct option longOpts[] = {
     {"failsafe", 0, 0, OPT_FAILSAFE},
     {"no-failsafe", 0, 0, OPT_NO_FAILSAFE},
+    {"no-xorg", 0, 0, OPT_NO_XORG},
     {"bridge", 1, 0, 'b'},
     {"vgl-compress", 1, 0, 'c'},
     {"vgl-options", 1, 0, OPT_VGL_OPTIONS},
@@ -419,6 +420,10 @@ int bbconfig_parse_options(int opt, char *value) {
       break;
     case OPT_NO_FAILSAFE:
       bb_config.fallback_start = 0;
+      break;
+    case OPT_NO_XORG:
+      bb_config.no_xorg = 1;
+      set_string_value(&bb_config.optirun_bridge, "none");
       break;
     case OPT_VGL_OPTIONS:
       set_string_value(&bb_config.vglrun_options, value);
