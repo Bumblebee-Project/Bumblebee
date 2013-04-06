@@ -262,6 +262,35 @@ static int run_primus(int argc, char **argv) {
   return exitcode;
 }
 
+static int check_none(void) {
+  return 1;
+}
+
+static int run_none(int argc, char **argv) {
+  char **run_args = malloc(sizeof (char *) * (1 + argc - optind));
+  int r;
+  for (r = 0; r < argc - optind; r++) {
+    run_args[r] = argv[optind + r];
+  }
+  run_args[r] = 0;
+
+  if (bb_config.ld_path[0]) {
+    char *ldpath_cur = getenv("LD_LIBRARY_PATH");
+    char *ldpath_new = malloc(strlen(bb_config.ld_path) + 1 + (ldpath_cur ? strlen(ldpath_cur) : 0) + 1);
+    strcpy(ldpath_new, bb_config.ld_path);
+    if (ldpath_cur) {
+      strcat(ldpath_new, ":");
+      strcat(ldpath_new, ldpath_cur);
+    }
+    setenv("LD_LIBRARY_PATH", ldpath_new, 1);
+    free(ldpath_new);
+  }
+
+  int exitcode = bb_run_fork(run_args, 0);
+  free(run_args);
+  return exitcode;
+}
+
 struct optirun_bridge {
   const char *name;
   int (*check_availability)(void);
@@ -271,6 +300,7 @@ struct optirun_bridge {
 static struct optirun_bridge backends[] = {
   {"primus", check_primus, run_primus},
   {"virtualgl", check_virtualgl, run_virtualgl},
+  {"none", check_none, run_none}, // keep last
   {NULL, NULL, NULL}
 };
 
@@ -291,7 +321,7 @@ static int run_app(int argc, char *argv[]) {
   struct optirun_bridge *back = backends;
   if (!strcmp(bb_config.optirun_bridge, "auto")) {
     while (back->name && !back->check_availability()) ++back;
-    if (!back->name) {
+    if (!back->name || !strcmp(back->name, "none")) {
       bb_log(LOG_ERR, "No bridge found. Try installing primus or virtualgl.\n");
       goto out;
     }

@@ -151,6 +151,9 @@ void print_usage(int exit_val) {
                        only make sense when using the virtualgl bridge,\n\
                        while the --primus-* options apply only when using\n\
                        the primus bridge.\n\
+		       Additionally, value none is recognized, and its effect\n\
+		       is to add paths to driver libraries to LD_LIBRARY_PATH\n\
+		       (useful for nvidia-settings and CUDA applications)\n\
   -c, --vgl-compress METHOD  image compression or transport to use with \n\
                                VirtualGL. Valid values for METHOD are proxy,\n\
                                jpeg, rgb, xv and yuv. Changing this setting\n\
