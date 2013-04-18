@@ -563,6 +563,8 @@ void config_dump(void) {
     /* client options */
     bb_log(LOG_DEBUG, " Accel/display bridge: %s\n", bb_config.optirun_bridge);
     bb_log(LOG_DEBUG, " VGL Compression: %s\n", bb_config.vgl_compress);
+    bb_log(LOG_DEBUG, " VGLrun extra options: %s\n", bb_config.vglrun_options ? bb_config.vglrun_options : "");
+    bb_log(LOG_DEBUG, " Primus LD Path: %s\n", bb_config.primus_ld_path);
   }
 }
 
