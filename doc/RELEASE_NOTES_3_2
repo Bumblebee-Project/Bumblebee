@@ -14,11 +14,12 @@ Highlights:
  - [enhancement] Minor changes in xorg.conf files: unified Device[01] to
    DiscreteNvidia, moved BusID to xorg.conf.d/busid.conf.
  - [enhancement] Added --primus-ldpath and PrimusLibraryPath options to set
- - [enhancement] PRIMUS_LD_LIBRARY_PATH.We do not depend on primusrun script
-   anymore for primus backend, note that primusrun and optirun -b primus will
-   have different behavior, the first one will power on the discrete GPU when
-   needed, while the second one will do it immediately; the difference in
-   behavior is most noticeable with WebGL content in Firefox.
+   PRIMUS_LD_LIBRARY_PATH.
+ - [enhancement] We do not depend on primusrun script anymore for primus
+   backend, note that primusrun and optirun -b primus will have different
+   behavior, the first one will power on the discrete GPU when needed, while the
+   second one will do it immediately; the difference in behavior is most
+   noticeable with WebGL content in Firefox.
  - [fix] Added /usr/$LIB/mesa/libGL.so.1 to default primus libGLd for supporting
    Ubuntu 13.04.
  - [fix] Fixed --pidfile documentation.
