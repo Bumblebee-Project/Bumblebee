@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Bumblebee Project
+ * Copyright (c) 2011-2013, The Bumblebee Project
  * Author: Peter Lekensteyn <lekensteyn@gmail.com>
  *
  * This file is part of Bumblebee.

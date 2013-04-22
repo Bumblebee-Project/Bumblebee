@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 
 GITVERSION = $(shell "$(top_srcdir)/version.sh" "$(top_srcdir)")
-relnotes = doc/RELEASE_NOTES_3_1
+relnotes = doc/RELEASE_NOTES_3_2
 
 bumblebeedconfdir=$(sysconfdir)/bumblebee
 
@@ -25,7 +25,7 @@ bin_SCRIPTS = scripts/bumblebee-bugreport
 CLEANFILES = $(noinst_SCRIPTS) conf/bumblebee.conf $(bin_SCRIPTS)
 EXTRA_DIST = scripts/systemd/bumblebeed.service.in \
 	scripts/upstart/bumblebeed.conf.in \
-	conf/99-remove-nvidia-dev.rules \
+	conf/99-bumblebee-nvidia-dev.rules \
 	conf/bumblebee.conf.in \
 	conf/xorg.conf.nvidia \
 	conf/xorg.conf.nouveau \
@@ -61,7 +61,7 @@ completion_DATA = scripts/bash_completion/bumblebee
 
 if WITH_UDEV_RULES
 udevrulesdir = $(UDEV_RULES_DIR)
-udevrules_DATA = conf/99-remove-nvidia-dev.rules
+udevrules_DATA = conf/99-bumblebee-nvidia-dev.rules
 endif
 
 do_subst = sed -e 's|[@]GITVERSION[@]|$(GITVERSION)|g' \

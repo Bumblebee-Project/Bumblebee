@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, The Bumblebee Project
+ * Copyright (c) 2011-2013, The Bumblebee Project
  * Author: Joaquín Ignacio Aramendía samsagax@gmail.com
  *
  * This file is part of Bumblebee.
