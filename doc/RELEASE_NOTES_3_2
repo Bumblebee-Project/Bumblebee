@@ -1,0 +1,64 @@
+Version 3.2 - 22 April 2013
+
+Highlights:
+ - [new] Implemented -b none option for optirun to disable injection of any
+   render offloading bridge (primus or VirtualGL). Use this to invoke
+   nvidia-settings (optirun -b none nvidia-settings -c :8).
+ - [new] Implemented --no-xorg option for optirun to disable starting secondary
+   X server. Use this to run CUDA or OpenCL applications that do not need the
+   graphics rendering capabilities. Implies -b none.
+ - [enhancement] Added support for passing -configdir to X, defaulting to
+   /etc/bumblebee/xorg.conf.d, --xconfdir option added to bumblebeed and
+   XorgConfDir added to bumblebee.conf; this finally fixes a long-standing
+   annoyance with SNA config option for the Intel driver.
+ - [enhancement] Minor changes in xorg.conf files: unified Device[01] to
+   DiscreteNvidia, moved BusID to xorg.conf.d/busid.conf.
+ - [enhancement] Added --primus-ldpath and PrimusLibraryPath options to set
+ - [enhancement] PRIMUS_LD_LIBRARY_PATH.We do not depend on primusrun script
+   anymore for primus backend, note that primusrun and optirun -b primus will
+   have different behavior, the first one will power on the discrete GPU when
+   needed, while the second one will do it immediately; the difference in
+   behavior is most noticeable with WebGL content in Firefox.
+ - [fix] Added /usr/$LIB/mesa/libGL.so.1 to default primus libGLd for supporting
+   Ubuntu 13.04.
+ - [fix] Fixed --pidfile documentation.
+ - [fix] Fixed a "buffer overflow" issue in bumblebeed.
+ - [fix] Removed accesses to PCI config space from the daemon process.
+
+Important note for packagers:
+In this release, we have extended our nvidia-specific udev rule file to add
+device files (/dev/nvidia*) when the module is loaded (previously it would only
+remove those files when the module is unloaded). Consequently, we also changed
+its name. Some distributions, for example Gentoo, do not need to install this
+rule file because they already have a similar mechanism in place. Please also
+note that the rule file sets file permissions to 0666; you may want to adjust it
+to set permissions/owner/group more strictly according to your distribution's
+practice before installing. If you already use the kernel module options to
+declare permissions, simply running nvidia-smi on module load will do the job.
+
+Notes:
+- bbswitch is independent of the driver; vga_switcheroo works for nouveau only.
+  See also the Known Issues section above and
+  https://github.com/Bumblebee-Project/Bumblebee/wiki/Comparison-of-PM-methods
+- the video drivers must be unloadable. This means that it should not be
+  compiled into the kernel. When using dynamically built modules like nvidia,
+  be sure that the toolchain used for building the kernel matches the one that
+  is used for building the module. This means that Ubuntu mainline kernels do
+  not work and will cause crashes.
+- VirtualGL performance is very dependent on the Transport method set. The
+  default "proxy" setting appears to perform bad in some situations. Try other
+  available settings like "rgb" or "yuv".
+- primus is supposed to result in better performance, but is not compatible with
+  all programs supported by virtualgl (however it's going far better each day),
+  hence virtualgl is preferred when auto-detecting the backend.
+
+Known issues:
+- vga-switcheroo won't survive suspension/hibernation (patch for newer Optimus 
+  machines for OFF to work has been published in Kernel 3.3; a good patch for 
+  suspend is still being prepared).
+- bbswitch cannot disable the discrete nvidia card for the Dell Vostro 360
+  desktop with Synergy. If you have a machine using that technology, please
+  submit your machine information on: https://bugs.launchpad.net/bugs/752542
+- Some laptops (mainly Lenovo) are neither supported by bbswitch nor the video 
+  drivers. See https://github.com/Bumblebee-Project/bbswitch/issues/2. This is
+  fixed in Linux Kernel 3.9.
