@@ -29,6 +29,8 @@ EXTRA_DIST = scripts/systemd/bumblebeed.service.in \
 	conf/bumblebee.conf.in \
 	conf/xorg.conf.nvidia \
 	conf/xorg.conf.nouveau \
+	conf/xorg.conf.d/10-dummy.conf \
+	conf/xorg.conf.d/busid.conf \
 	README.markdown \
 	scripts/bash_completion/bumblebee \
 	scripts/bumblebee-bugreport.in \
