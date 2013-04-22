@@ -34,7 +34,7 @@ card, you will also need:
 
 - At least one back-end for `optirun`:
   - [virtualgl](http://virtualgl.org/)
-  - [primus](https://github.com/amonakov/primus) (experimental)
+  - [primus](https://github.com/amonakov/primus) (beta)
 - Driver for nvidia graphics card: [nouveau](http://nouveau.freedesktop.org/)
   or the proprietary nvidia driver. Don't install it directly from nvidia.com
   as it will break 3D capabilities on the Intel graphics card and therefore
