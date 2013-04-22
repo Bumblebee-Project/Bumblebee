@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Bumblebee Project
+ * Copyright (c) 2011-2013, The Bumblebee Project
  * Author: Jaron Viëtor AKA "Thulinma" <jaron@vietors.com>
  * Author: Lekensteyn <lekensteyn@gmail.com>
  *

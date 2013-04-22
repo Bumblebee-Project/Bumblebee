@@ -1,7 +1,5 @@
-/// \file bbsecondary.c Contains code for enabling and disabling the secondary GPU.
-
 /*
- * Copyright (C) 2011 Bumblebee Project
+ * Copyright (c) 2011-2013, The Bumblebee Project
  * Author: Joaquín Ignacio Aramendía <samsagax@gmail.com>
  * Author: Jaron Viëtor AKA "Thulinma" <jaron@vietors.com>
  *
