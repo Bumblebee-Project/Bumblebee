@@ -49,9 +49,11 @@ Notes:
 - VirtualGL performance is very dependent on the Transport method set. The
   default "proxy" setting appears to perform bad in some situations. Try other
   available settings like "rgb" or "yuv".
-- primus is supposed to result in better performance, but is not compatible with
-  all programs supported by virtualgl (however it's going far better each day),
-  hence virtualgl is preferred when auto-detecting the backend.
+- in many cases, primus offers better performance; please try it and report
+  compatibility issues in primus tracker, if you find any; for now VirtualGL is
+  still preferred as the default autodetected render bridge, while primus is
+  being tested at larger scales before being released as default. Try it and
+  ensure everything you use works to help us build the best backend.
 
 Known issues:
 - vga-switcheroo won't survive suspension/hibernation (patch for newer Optimus 
