@@ -22,6 +22,11 @@ endif
 
 bin_SCRIPTS = scripts/bumblebee-bugreport
 
+xconfddir = $(bumblebeedconfdir)/xorg.conf.d
+xconfd_DATA = \
+	conf/xorg.conf.d/10-dummy.conf \
+	conf/xorg.conf.d/busid.conf
+
 CLEANFILES = $(noinst_SCRIPTS) conf/bumblebee.conf $(bin_SCRIPTS)
 EXTRA_DIST = scripts/systemd/bumblebeed.service.in \
 	scripts/upstart/bumblebeed.conf.in \
@@ -29,8 +34,7 @@ EXTRA_DIST = scripts/systemd/bumblebeed.service.in \
 	conf/bumblebee.conf.in \
 	conf/xorg.conf.nvidia \
 	conf/xorg.conf.nouveau \
-	conf/xorg.conf.d/10-dummy.conf \
-	conf/xorg.conf.d/busid.conf \
+	$(xconfd_DATA) \
 	README.markdown \
 	scripts/bash_completion/bumblebee \
 	scripts/bumblebee-bugreport.in \
@@ -81,6 +85,7 @@ do_subst = sed -e 's|[@]GITVERSION[@]|$(GITVERSION)|g' \
 	-e 's|[@]BINDIR[@]|$(bindir)|g' \
 	-e 's|[@]SBINDIR[@]|$(sbindir)|g' \
 	-e 's|[@]BBCONFDIR[@]|$(bumblebeedconfdir)|g' \
+	-e 's|[@]XCONFDDIR[@]|$(xconfddir)|g' \
 	-e 's|[@]CONF_DRIVER_MODULE_NVIDIA[@]|$(CONF_DRIVER_MODULE_NVIDIA)|g' \
 	-e 's|[@]CONF_LDPATH_NVIDIA[@]|$(CONF_LDPATH_NVIDIA)|g' \
 	-e 's|[@]CONF_MODPATH_NVIDIA[@]|$(CONF_MODPATH_NVIDIA)|g' \
