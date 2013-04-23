@@ -1,7 +1,5 @@
-/// \file bbsecondary.c Contains code for enabling and disabling the secondary GPU.
-
 /*
- * Copyright (C) 2011 Bumblebee Project
+ * Copyright (c) 2011-2013, The Bumblebee Project
  * Author: Joaquín Ignacio Aramendía <samsagax@gmail.com>
  * Author: Jaron Viëtor AKA "Thulinma" <jaron@vietors.com>
  *
@@ -29,6 +27,7 @@
 #include <time.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <errno.h>
 #include "bbsecondary.h"
 #include "switch/switching.h"
@@ -37,9 +36,6 @@
 #include "bbconfig.h"
 #include "pci.h"
 #include "module.h"
-
-/* the PCI configuration space of the discrete video card */
-static struct pci_config_state pci_config_state_discrete;
 
 /**
  * Substitutes DRIVER in the passed path
@@ -87,27 +83,22 @@ static char *xorg_path_w_driver(char *x_conf_file, char *driver) {
 }
 
 /**
- * Start the X server by fork-exec, turn card on and load driver if needed.
- * If after this method finishes X is running, it was successfull.
- * If it somehow fails, X should not be running after this method finishes.
+ * Load the kernel module, powering on the card beforehand
  */
-void start_secondary(void) {
+static bool switch_and_load(void)
+{
   char driver[BUFFER_SIZE] = {0};
   /* enable card if the switcher is available */
   if (switcher) {
     if (switch_on() != SWITCH_ON) {
       set_bb_error("Could not enable discrete graphics card");
-      return;
-    }
-    if (pci_config_restore(pci_bus_id_discrete, &pci_config_state_discrete)) {
-      bb_log(LOG_WARNING, "Could not restore PCI configuration space: %s\n",
-              strerror(errno));
+      return false;
     }
   }
 
   //if runmode is BB_RUN_EXIT, do not start X, we are shutting down.
   if (bb_status.runmode == BB_RUN_EXIT) {
-    return;
+    return false;
   }
 
   if (pci_get_driver(driver, pci_bus_id_discrete, sizeof driver)) {
@@ -115,7 +106,7 @@ void start_secondary(void) {
     if (strcasecmp(bb_config.driver, driver)) {
       if (!module_unload(driver)) {
         /* driver failed to unload, aborting */
-        return;
+        return false;
       }
     }
   }
@@ -127,10 +118,22 @@ void start_secondary(void) {
     char *driver_name = bb_config.driver;
     if (!module_load(module_name, driver_name)) {
       set_bb_error("Could not load GPU driver");
-      return;
+      return false;
     }
   }
+  return true;
+}
 
+/**
+ * Start the X server by fork-exec, turn card on and load driver if needed.
+ * If after this method finishes X is running, it was successfull.
+ * If it somehow fails, X should not be running after this method finishes.
+ */
+bool start_secondary(bool need_secondary) {
+  if (!switch_and_load())
+    return false;
+  if (!need_secondary)
+    return true;
   //no problems, start X if not started yet
   if (!bb_is_running(bb_status.x_pid)) {
     char pci_id[12];
@@ -146,6 +149,7 @@ void start_secondary(void) {
       XORG_BINARY,
       bb_config.x_display,
       "-config", x_conf_file,
+      "-configdir", bb_config.x_conf_dir,
       "-sharevts",
       "-nolisten", "tcp",
       "-noreset",
@@ -164,7 +168,7 @@ void start_secondary(void) {
     //create a new pipe
     if (pipe2(bb_status.x_pipe, O_NONBLOCK | O_CLOEXEC)){
       set_bb_error("Could not create output pipe for X");
-      return;
+      return false;
     }
     bb_status.x_pid = bb_run_fork_ld_redirect(x_argv, bb_config.ld_path, bb_status.x_pipe[1]);
     //close the end of the pipe that is not ours
@@ -202,19 +206,17 @@ void start_secondary(void) {
     bb_log(LOG_INFO, "X successfully started in %i seconds\n", time(0) - xtimer);
     //reset errors, if any
     set_bb_error(0);
+    return true;
   }
+  return false;
 }//start_secondary
 
 /**
- * Kill the second X server if any, turn card off if requested.
+ * Unload the kernel module and power down the card
  */
-void stop_secondary() {
+static void switch_and_unload(void)
+{
   char driver[BUFFER_SIZE];
-  // kill X if it is running
-  if (bb_is_running(bb_status.x_pid)) {
-    bb_log(LOG_INFO, "Stopping X server\n");
-    bb_stop_wait(bb_status.x_pid);
-  }
 
   if (bb_config.pm_method == PM_DISABLED && bb_status.runmode != BB_RUN_EXIT) {
     /* do not disable the card if PM is disabled unless exiting */
@@ -227,10 +229,6 @@ void stop_secondary() {
       /* do not unload the drivers nor disable the card if the card is not on */
       if (switcher->status() != SWITCH_ON) {
         return;
-      }
-      if (pci_config_save(pci_bus_id_discrete, &pci_config_state_discrete)) {
-        bb_log(LOG_WARNING, "Could not save PCI configuration space: %s\n",
-                strerror(errno));
       }
       /* unload the driver loaded by the graphica card */
       if (pci_get_driver(driver, pci_bus_id_discrete, sizeof driver)) {
@@ -247,23 +245,19 @@ void stop_secondary() {
       bb_log(LOG_WARNING, "Unable to disable discrete card.");
     }
   }
-}//stop_secondary
+}
 
 /**
- * Check the status of the discrete card
- * @return 0 if card is off, 1 if card is on, -1 if not-switchable.
+ * Kill the second X server if any, turn card off if requested.
  */
-int status_secondary(void) {
-  switch (switch_status()) {
-    case SWITCH_ON:
-      return 1;
-    case SWITCH_OFF:
-      return 0;
-    case SWITCH_UNAVAIL:
-    default:
-      return -1;
+void stop_secondary() {
+  // kill X if it is running
+  if (bb_is_running(bb_status.x_pid)) {
+    bb_log(LOG_INFO, "Stopping X server\n");
+    bb_stop_wait(bb_status.x_pid);
   }
-}
+  switch_and_unload();
+}//stop_secondary
 
 /**
  * Check for the availability of a PM method, warn if no method is available

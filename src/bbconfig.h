@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, The Bumblebee Project
+ * Copyright (c) 2011-2013, The Bumblebee Project
  * Author: Joaquín Ignacio Aramendía samsagax@gmail.com
  * Author: Jaron Viëtor AKA "Thulinma" <jaron@vietors.com>
  *
@@ -63,12 +63,15 @@ enum {
     OPT_DRIVER = CHAR_MAX + 1,
     OPT_FAILSAFE,
     OPT_NO_FAILSAFE,
+    OPT_NO_XORG,
     OPT_VGL_OPTIONS,
     OPT_STATUS,
     OPT_PIDFILE,
     OPT_USE_SYSLOG,
     OPT_DEBUG,
     OPT_PM_METHOD,
+    OPT_PRIMUS_LD_PATH,
+    OPT_X_CONF_DIR_PATH,
 };
 
 /* Verbosity levels */
@@ -121,6 +124,7 @@ struct bb_status_struct {
 struct bb_config_struct {
     char * x_display; /// X display number to use.
     char * x_conf_file; /// Path to the X configuration file.
+    char * x_conf_dir; /// Path to the dummy X configuration directory.
     char * bb_conf_file; /// Path to the bumblebeed configuration file.
     char * ld_path; /// LD_LIBRARY_PATH to launch applications.
     char * mod_path; /// ModulePath for xorg.
@@ -129,9 +133,11 @@ struct bb_config_struct {
     enum bb_pm_method pm_method; /// Which method to use for power management.
     int stop_on_exit; /// Whether to stop the X server on last optirun instance exit.
     int fallback_start; /// Wheter the application should be launched on the integrated card when X is not available.
+    int no_xorg; /// Do not start secondary X server
     char * optirun_bridge; /// Accel/display bridge for optirun.
+    char * primus_ld_path; /// LD_LIBRARY_PATH containing primus libGL.so.1
     char * vgl_compress; /// VGL transport method.
-    char *vglrun_options; /* extra options passed to vglrun */
+    char * vglrun_options; /* extra options passed to vglrun */
     char * driver; /// Driver to use (nvidia or nouveau).
     char * module_name; /* Kernel module to be loaded for the driver.
                                     * If empty, driver will be used. This is
@@ -177,3 +183,5 @@ void bbconfig_parse_conf_driver(GKeyFile *bbcfg, char *driver);
 gboolean bb_bool_from_string(char* str);
 
 enum bb_pm_method bb_pm_method_from_string(char *value);
+
+size_t ensureZeroTerminated(char *buff, size_t size, size_t max);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Bumblebee Project
+ * Copyright (c) 2011-2013, The Bumblebee Project
  * Author: Jaron Viëtor AKA "Thulinma" <jaron@vietors.com>
  *
  * This file is part of Bumblebee.
@@ -233,4 +233,25 @@ int socketAccept(int * sock, int nonblock) {
     }
   }
   return r;
+}
+
+// Ensures that the given buffer is properly NUL terminated.
+// \param buff Writable uffer containing data to be NUL terminated.
+// \param size The expected size of data in the buffer, including NUL (if any).
+// Must be greater than zero and smaller or equal to the maximum size of the
+// buffer.
+// \param max Number of bytes that buff can hold.
+// \returns the length of data buffer including NUL byte
+size_t ensureZeroTerminated(char *buff, size_t size, size_t max) {
+  char *nil_pos = memchr(buff, '\0', size);
+  if (nil_pos == NULL) {
+    if (size >= max) {
+      buff[size - 1] = '\0'; // buffer is full, eat last byte
+    } else {
+      buff[size] = '\0'; // buffer can haz NUL, place it after data
+    }
+  } else {
+    size = nil_pos - buff + 1; // NUL byte present, include it in the actual length
+  }
+  return size;
 }

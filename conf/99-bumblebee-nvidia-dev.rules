@@ -1,0 +1,7 @@
+# Put this file in /lib/udev/rules.d or /etc/udev/rules.d
+# Prevent the nvidia card from "randomly" turning on
+DEVPATH=="/module/nvidia", ACTION=="remove", RUN+="/bin/rm -f /dev/nvidiactl /dev/nvidia0 /dev/nvidia1"
+
+# Create devices files upon loading the module
+DEVPATH=="/module/nvidia", ACTION=="add", RUN+="/bin/mknod -m 666 /dev/nvidiactl c 195 255"
+DEVPATH=="/module/nvidia", ACTION=="add", RUN+="/bin/mknod -m 666 /dev/nvidia0   c 195 0"

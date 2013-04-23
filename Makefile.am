@@ -1,13 +1,14 @@
 # -*- Makefile -*-
 
 GITVERSION = $(shell "$(top_srcdir)/version.sh" "$(top_srcdir)")
-relnotes = doc/RELEASE_NOTES_3_1
+relnotes = doc/RELEASE_NOTES_3_2
 
 bumblebeedconfdir=$(sysconfdir)/bumblebee
 
 AM_CPPFLAGS = ${regular_CPPFLAGS} \
 		-DCONFIG_FILE='"$(bumblebeedconfdir)/bumblebee.conf"' \
-		-DCONF_XORG='"$(bumblebeedconfdir)/xorg.conf.DRIVER"'
+		-DCONF_XORG='"$(bumblebeedconfdir)/xorg.conf.DRIVER"' \
+		-DCONF_XORG_DIR='"$(bumblebeedconfdir)/xorg.conf.d"'
 AM_CFLAGS = ${regular_CFLAGS} \
 		${x11_CFLAGS} ${libbsd_CFLAGS} ${glib_CFLAGS} \
 		-Wextra -funsigned-char -DGITVERSION='"${GITVERSION}"'
@@ -21,13 +22,19 @@ endif
 
 bin_SCRIPTS = scripts/bumblebee-bugreport
 
+xconfddir = $(bumblebeedconfdir)/xorg.conf.d
+xconfd_DATA = \
+	conf/xorg.conf.d/10-dummy.conf \
+	conf/xorg.conf.d/busid.conf
+
 CLEANFILES = $(noinst_SCRIPTS) conf/bumblebee.conf $(bin_SCRIPTS)
 EXTRA_DIST = scripts/systemd/bumblebeed.service.in \
 	scripts/upstart/bumblebeed.conf.in \
-	conf/99-remove-nvidia-dev.rules \
+	conf/99-bumblebee-nvidia-dev.rules \
 	conf/bumblebee.conf.in \
 	conf/xorg.conf.nvidia \
 	conf/xorg.conf.nouveau \
+	$(xconfd_DATA) \
 	README.markdown \
 	scripts/bash_completion/bumblebee \
 	scripts/bumblebee-bugreport.in \
@@ -60,7 +67,7 @@ completion_DATA = scripts/bash_completion/bumblebee
 
 if WITH_UDEV_RULES
 udevrulesdir = $(UDEV_RULES_DIR)
-udevrules_DATA = conf/99-remove-nvidia-dev.rules
+udevrules_DATA = conf/99-bumblebee-nvidia-dev.rules
 endif
 
 do_subst = sed -e 's|[@]GITVERSION[@]|$(GITVERSION)|g' \
@@ -72,12 +79,13 @@ do_subst = sed -e 's|[@]GITVERSION[@]|$(GITVERSION)|g' \
 	-e 's|[@]CONF_FALLBACKSTART[@]|$(CONF_FALLBACKSTART)|g' \
 	-e 's|[@]CONF_BRIDGE[@]|$(CONF_BRIDGE)|g' \
 	-e 's|[@]CONF_VGLCOMPRESS[@]|$(CONF_VGLCOMPRESS)|g' \
+	-e 's|[@]CONF_PRIMUS_LD_PATH[@]|$(CONF_PRIMUS_LD_PATH)|g' \
 	-e 's|[@]CONF_DRIVER[@]|$(CONF_DRIVER)|g' \
 	-e 's|[@]CONF_TURNOFFATEXIT[@]|$(CONF_TURNOFFATEXIT)|g' \
 	-e 's|[@]BINDIR[@]|$(bindir)|g' \
 	-e 's|[@]SBINDIR[@]|$(sbindir)|g' \
 	-e 's|[@]BBCONFDIR[@]|$(bumblebeedconfdir)|g' \
-	-e 's|[@]CONF_XORG[@]|$(bumblebeedconfdir)/xorg.conf.DRIVER|g' \
+	-e 's|[@]XCONFDDIR[@]|$(xconfddir)|g' \
 	-e 's|[@]CONF_DRIVER_MODULE_NVIDIA[@]|$(CONF_DRIVER_MODULE_NVIDIA)|g' \
 	-e 's|[@]CONF_LDPATH_NVIDIA[@]|$(CONF_LDPATH_NVIDIA)|g' \
 	-e 's|[@]CONF_MODPATH_NVIDIA[@]|$(CONF_MODPATH_NVIDIA)|g' \

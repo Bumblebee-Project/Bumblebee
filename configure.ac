@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.68])
-AC_INIT([bumblebee], [3.1])
+AC_INIT([bumblebee], [3.2])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_SRCDIR([src/bbsocket.c])
 #AC_CONFIG_HEADERS([config.h])
@@ -38,6 +38,12 @@ auto|primus|virtualgl) ;;
 "") CONF_BRIDGE=auto ;;
 *) AC_MSG_ERROR([Invalid value for CONF_BRIDGE]) ;;
 esac
+])
+
+AC_DEFINE_CONF(CONF_PRIMUS_LD_PATH, [List of paths which are searched for the primus libGL.so.1 when using the primus bridge], [
+if test "x" = "x$CONF_PRIMUS_LD_PATH"; then
+	CONF_PRIMUS_LD_PATH="/usr/lib/primus:/usr/lib32/primus"
+fi
 ])
 
 AC_DEFINE_CONF(CONF_PIDFILE, [Path to the pidfile or /var/run/bumblebeed.pid if empty], [

@@ -20,6 +20,8 @@ NoEcoModeOverride=false
 # auto-detection is performed. The available drivers are nvidia and nouveau
 # (See also the driver-specific sections below)
 Driver=@CONF_DRIVER@
+# Directory with a dummy config file to pass as a -configdir to secondary X
+XorgConfDir=@XCONFDDIR@
 
 ## Client options. Will take effect on the next optirun executed.
 [optirun]
@@ -29,6 +31,9 @@ Bridge=@CONF_BRIDGE@
 # The method used for VirtualGL to transport frames between X servers.
 # Possible values are proxy, jpeg, rgb, xv and yuv.
 VGLTransport=@CONF_VGLCOMPRESS@
+# List of paths which are searched for the primus libGL.so.1 when using
+# the primus bridge
+PrimusLibraryPath=@CONF_PRIMUS_LD_PATH@
 # Should the program run under optirun even if Bumblebee server or nvidia card
 # is not available?
 AllowFallbackToIGC=@CONF_FALLBACKSTART@

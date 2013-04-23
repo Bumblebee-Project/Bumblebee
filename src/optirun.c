@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Bumblebee Project
+ * Copyright (c) 2011-2013, The Bumblebee Project
  * Author: Joaquín Ignacio Aramendía <samsagax@gmail.com>
  * Author: Jaron Viëtor AKA "Thulinma" <jaron@vietors.com>
  * Author: Lekensteyn <lekensteyn@gmail.com>
@@ -39,6 +39,7 @@
 #include "bbrun.h"
 #include "driver.h"
 
+
 /**
  *  Handle recieved signals - except SIGCHLD, which is handled in bbrun.c
  */
@@ -71,7 +72,8 @@ static int report_daemon_status(void) {
   while (bb_status.bb_socket != -1) {
     r = socketRead(&bb_status.bb_socket, buffer, BUFFER_SIZE);
     if (r > 0) {
-      printf("Bumblebee status: %*s\n", r, buffer);
+      ensureZeroTerminated(buffer, r, BUFFER_SIZE);
+      printf("Bumblebee status: %s\n", buffer);
       socketClose(&bb_status.bb_socket);
       return EXIT_SUCCESS;
     }
@@ -92,6 +94,17 @@ static int run_fallback(char *argv[]) {
     bb_log(LOG_ERR, "Unable to start program in fallback mode.\n");
   }
   return EXIT_FAILURE;
+}
+
+static int check_virtualgl(void) {
+  /* check if vglrun and vglclient exist */
+  char *p = which_program("vglrun");
+  int has_virtualgl = (p != NULL);
+  free(p);
+  p = which_program("vglclient");
+  has_virtualgl = has_virtualgl && (p != NULL);
+  free(p);
+  return has_virtualgl;
 }
 
 static int run_virtualgl(int argc, char **argv) {
@@ -158,35 +171,58 @@ static int run_virtualgl(int argc, char **argv) {
   return exitcode;
 }
 
+static int check_primus(void) {
+  /* check if a libGL.so.1 can be found in one of the primus paths */
+  char *path = bb_config.primus_ld_path;
+  char *libgl = malloc(strlen(path) + sizeof("/libGL.so.1") + 1);
+  int libgl_found = 0;
+  do { /* iterate over paths separated by : */
+    char *p = strchrnul(path, ':');
+    int part_len = p - path;
+    if (part_len > 0) {
+      memcpy(libgl, path, part_len);
+      strcpy(libgl + part_len, "/libGL.so.1");
+      if (access(libgl, R_OK) == 0) {
+        libgl_found = 1;
+        break;
+      }
+    }
+    path = p;
+  } while (*path++ == ':'); /* after check, move to part after ':' */
+  free(libgl);
+  return libgl_found;
+}
+
 static int run_primus(int argc, char **argv) {
-  char **primusrun_args = malloc(sizeof (char *) * (2 + argc - optind));
+  char **run_args = malloc(sizeof (char *) * (1 + argc - optind));
   int r;
-  primusrun_args[0] = "primusrun";
   for (r = 0; r < argc - optind; r++) {
-    primusrun_args[r + 1] = argv[optind + r];
+    run_args[r] = argv[optind + r];
   }
-  primusrun_args[r + 1] = 0;
+  run_args[r] = 0;
 
   /* primus starts the X server when needed, fixes long-standing fork issue */
   setenv("BUMBLEBEE_SOCKET", bb_config.socket_path, 1);
 
+  /* set LD_LIBRARY_PATH to primus_ld_path plus ld_path plus current LD_LIBRARY_PATH */
   setenv("PRIMUS_DISPLAY", bb_config.x_display, 0);
+  char *ldpath_cur = getenv("LD_LIBRARY_PATH");
+  char *ldpath_new = malloc(strlen(bb_config.primus_ld_path) + 1 + strlen(bb_config.ld_path) + 1 +
+        (ldpath_cur ? strlen(ldpath_cur) : 0) + 1);
+  strcpy(ldpath_new, bb_config.primus_ld_path);
   if (bb_config.ld_path[0]) {
-    char *current_path = getenv("LD_LIBRARY_PATH");
-    if (current_path) {
-      char *ldpath_new = malloc(strlen(bb_config.ld_path) + 1 +
-          strlen(current_path) + 1);
-      strcpy(ldpath_new, bb_config.ld_path);
-      strcat(ldpath_new, ":");
-      strcat(ldpath_new, current_path);
-      setenv("LD_LIBRARY_PATH", ldpath_new, 1);
-      free(ldpath_new);
-    } else {
-      setenv("LD_LIBRARY_PATH", bb_config.ld_path, 1);
-    }
+    strcat(ldpath_new, ":");
+    strcat(ldpath_new, bb_config.ld_path);
   }
+  if (ldpath_cur) {
+    strcat(ldpath_new, ":");
+    strcat(ldpath_new, ldpath_cur);
+  }
+  setenv("LD_LIBRARY_PATH", ldpath_new, 1);
+  free(ldpath_new);
 
-  char *libgl_mesa = "/usr/$LIB/libGL.so.1:/usr/lib/$LIB/libGL.so.1:/usr/lib/$LIB/mesa/libGL.so.1";
+  /* set PRIMUS_libGLa */
+  char *libgl_mesa = "/usr/$LIB/libGL.so.1:/usr/lib/$LIB/libGL.so.1:/usr/$LIB/mesa/libGL.so.1:/usr/lib/$LIB/mesa/libGL.so.1";
   if (bb_config.ld_path[0]) { /* build new library path for PRIMUS_libGLa */
     int libgl_size = strlen(bb_config.ld_path) + 1;
     { /* calculate additional memories for adding "/libGL.so.1" */
@@ -221,20 +257,50 @@ static int run_primus(int argc, char **argv) {
   /* assume OSS drivers for primary display (Mesa for Intel) */
   setenv("PRIMUS_libGLd", libgl_mesa, 0);
 
-  int exitcode = bb_run_fork(primusrun_args, 0);
-  free(primusrun_args);
+  int exitcode = bb_run_fork(run_args, 0);
+  free(run_args);
+  return exitcode;
+}
+
+static int check_none(void) {
+  return 1;
+}
+
+static int run_none(int argc, char **argv) {
+  char **run_args = malloc(sizeof (char *) * (1 + argc - optind));
+  int r;
+  for (r = 0; r < argc - optind; r++) {
+    run_args[r] = argv[optind + r];
+  }
+  run_args[r] = 0;
+
+  if (bb_config.ld_path[0]) {
+    char *ldpath_cur = getenv("LD_LIBRARY_PATH");
+    char *ldpath_new = malloc(strlen(bb_config.ld_path) + 1 + (ldpath_cur ? strlen(ldpath_cur) : 0) + 1);
+    strcpy(ldpath_new, bb_config.ld_path);
+    if (ldpath_cur) {
+      strcat(ldpath_new, ":");
+      strcat(ldpath_new, ldpath_cur);
+    }
+    setenv("LD_LIBRARY_PATH", ldpath_new, 1);
+    free(ldpath_new);
+  }
+
+  int exitcode = bb_run_fork(run_args, 0);
+  free(run_args);
   return exitcode;
 }
 
 struct optirun_bridge {
   const char *name;
-  const char *program;
+  int (*check_availability)(void);
   int (*run)(int argc, char **argv);
 };
 
 static struct optirun_bridge backends[] = {
-  {"virtualgl", "vglrun", run_virtualgl},
-  {"primus", "primusrun", run_primus},
+  {"virtualgl", check_virtualgl, run_virtualgl},
+  {"primus", check_primus, run_primus},
+  {"none", check_none, run_none}, // keep last
   {NULL, NULL, NULL}
 };
 
@@ -254,11 +320,9 @@ static int run_app(int argc, char *argv[]) {
 
   struct optirun_bridge *back = backends;
   if (!strcmp(bb_config.optirun_bridge, "auto")) {
-    char *p = NULL;
-    while (back->name && !(p = which_program(back->program))) ++back;
-    if (p) free(p);
-    else {
-      bb_log(LOG_ERR, "No bridge found. Try installing primus or virtualgl\n");
+    while (back->name && !back->check_availability()) ++back;
+    if (!back->name || !strcmp(back->name, "none")) {
+      bb_log(LOG_ERR, "No bridge found. Try installing primus or virtualgl.\n");
       goto out;
     }
     bb_log(LOG_DEBUG, "Using auto-detected bridge %s\n", back->name);
@@ -268,23 +332,23 @@ static int run_app(int argc, char *argv[]) {
       bb_log(LOG_ERR, "Unknown accel/display bridge: %s\n", bb_config.optirun_bridge);
       goto out;
     }
-    char *p;
-    if ((p = which_program(back->program))) free(p);
-    else {
+    if (!back->check_availability()) {
       bb_log(LOG_ERR, "Accel/display bridge %s is not installed.\n", back->name);
       goto out;
     }
   }
 
-  r = snprintf(buffer, BUFFER_SIZE, "Checking availability...");
+  r = snprintf(buffer, BUFFER_SIZE, "Connect %s", bb_config.no_xorg ? "NoX" : "");
   socketWrite(&bb_status.bb_socket, buffer, r + 1);
   while (bb_status.bb_socket != -1) {
     r = socketRead(&bb_status.bb_socket, buffer, BUFFER_SIZE);
     if (r > 0) {
+      r = ensureZeroTerminated(buffer, r, BUFFER_SIZE);
       bb_log(LOG_INFO, "Response: %s\n", buffer);
       switch (buffer[0]) {
         case 'N': //No, run normally.
-          bb_log(LOG_ERR, "Cannot access secondary GPU%s\n", buffer+2);
+          // buffer should contain "No, ..." or "No - ..."
+          bb_log(LOG_ERR, "Cannot access secondary GPU%s\n", r > 2 ? buffer+2 : "");
           socketClose(&bb_status.bb_socket);
           if (!bb_config.fallback_start) {
             bb_log(LOG_ERR, "Aborting because fallback start is disabled.\n");
@@ -297,7 +361,7 @@ static int run_app(int argc, char *argv[]) {
           socketClose(&bb_status.bb_socket);
           break;
         default: //Something went wrong - output and exit.
-          bb_log(LOG_ERR, "Problem: %*s\n", r, buffer);
+          bb_log(LOG_ERR, "Problem: %s\n", buffer);
           socketClose(&bb_status.bb_socket);
           break;
       }
@@ -326,9 +390,11 @@ const struct option *bbconfig_get_lopts(void) {
   static struct option longOpts[] = {
     {"failsafe", 0, 0, OPT_FAILSAFE},
     {"no-failsafe", 0, 0, OPT_NO_FAILSAFE},
+    {"no-xorg", 0, 0, OPT_NO_XORG},
     {"bridge", 1, 0, 'b'},
     {"vgl-compress", 1, 0, 'c'},
     {"vgl-options", 1, 0, OPT_VGL_OPTIONS},
+    {"primus-ldpath", 1, 0, OPT_PRIMUS_LD_PATH},
     {"status", 0, 0, OPT_STATUS},
     BBCONFIG_COMMON_LOPTS
   };
@@ -355,8 +421,15 @@ int bbconfig_parse_options(int opt, char *value) {
     case OPT_NO_FAILSAFE:
       bb_config.fallback_start = 0;
       break;
+    case OPT_NO_XORG:
+      bb_config.no_xorg = 1;
+      set_string_value(&bb_config.optirun_bridge, "none");
+      break;
     case OPT_VGL_OPTIONS:
       set_string_value(&bb_config.vglrun_options, value);
+      break;
+    case OPT_PRIMUS_LD_PATH:
+      set_string_value(&bb_config.primus_ld_path, value);
       break;
     case OPT_STATUS:
       bb_status.runmode = BB_RUN_STATUS;

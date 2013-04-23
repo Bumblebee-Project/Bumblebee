@@ -1,7 +1,5 @@
-/// \file bbsecondary.h Contains definitions for enabling and disabling the secondary GPU.
-
 /*
- * Copyright (C) 2011 Bumblebee Project
+ * Copyright (c) 2011-2013, The Bumblebee Project
  * Author: Joaquín Ignacio Aramendía <samsagax@gmail.com>
  * Author: Jaron Viëtor AKA "Thulinma" <jaron@vietors.com>
  *
@@ -34,13 +32,10 @@
 struct pci_bus_id *pci_bus_id_discrete;
 
 /// Start the X server by fork-exec, turn card on if needed.
-void start_secondary(void);
+bool start_secondary(bool);
 
 /// Kill the second X server if any, turn card off if requested.
 void stop_secondary(void);
 
 /* check for the availability of PM methods */
 void check_pm_method(void);
-
-/// Returns 0 if card is off, 1 if card is on, -1 if not-switchable.
-int status_secondary(void);
