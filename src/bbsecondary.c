@@ -155,12 +155,12 @@ bool start_secondary(bool need_secondary) {
       "-noreset",
       "-verbose", "3",
       "-isolateDevice", pci_id,
-      "-modulepath",
-      bb_config.mod_path,
+      "-modulepath", bb_config.mod_path, // keep last
       NULL
     };
+    enum {n_x_args = sizeof(x_argv) / sizeof(x_argv[0])};
     if (!*bb_config.mod_path) {
-      x_argv[12] = 0; //remove -modulepath if not set
+      x_argv[n_x_args - 3] = 0; //remove -modulepath if not set
     }
     //close any previous pipe, if it (still) exists
     if (bb_status.x_pipe[0] != -1){close(bb_status.x_pipe[0]); bb_status.x_pipe[0] = -1;}
