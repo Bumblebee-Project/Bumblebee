@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 
 GITVERSION = $(shell "$(top_srcdir)/version.sh" "$(top_srcdir)")
-relnotes = doc/RELEASE_NOTES_3_2
+relnotes = doc/RELEASE_NOTES_3_2_1
 
 bumblebeedconfdir=$(sysconfdir)/bumblebee
 
