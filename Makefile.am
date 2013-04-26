@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 
 GITVERSION = $(shell "$(top_srcdir)/version.sh" "$(top_srcdir)")
-relnotes = doc/RELEASE_NOTES_3_2
+relnotes = doc/RELEASE_NOTES_3_2_1
 
 bumblebeedconfdir=$(sysconfdir)/bumblebee
 
@@ -23,9 +23,7 @@ endif
 bin_SCRIPTS = scripts/bumblebee-bugreport
 
 xconfddir = $(bumblebeedconfdir)/xorg.conf.d
-xconfd_DATA = \
-	conf/xorg.conf.d/10-dummy.conf \
-	conf/xorg.conf.d/busid.conf
+xconfd_DATA = conf/xorg.conf.d/10-dummy.conf
 
 CLEANFILES = $(noinst_SCRIPTS) conf/bumblebee.conf $(bin_SCRIPTS)
 EXTRA_DIST = scripts/systemd/bumblebeed.service.in \
