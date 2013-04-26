@@ -6,16 +6,22 @@ Highlights:
  - [fix] Fixed an issue where an empty XorgModulePath lead to -isolateDecide
    being removed from Xorg start command line instead of -modulepath.
 
-Important note for packagers:
-In 3.2 release, we have extended our nvidia-specific udev rule file to add
-device files (/dev/nvidia*) when the module is loaded (previously it would only
-remove those files when the module is unloaded). Consequently, we also changed
-its name. Some distributions, for example Gentoo, do not need to install this
-rule file because they already have a similar mechanism in place. Please also
-note that the rule file sets file permissions to 0666; you may want to adjust it
-to set permissions/owner/group more strictly according to your distribution's
-practice before installing. If you already use the kernel module options to
-declare permissions, simply running nvidia-smi on module load will do the job.
+Important notes for packagers:
+ - In 3.2.1 release, we removed the bumblebee/xorg.conf.d/busid.conf file,
+   because it was avoiding X to start in cases widely common. If your packaging
+   system does not automatically remove it on upgrade to 3.2.1, then you will
+   still have a broken optirun. You either need to remove this file on package
+   upgrade or tell your distro users to do so, depending on your distro policy.
+ - In 3.2 release, we have extended our nvidia-specific udev rule file to add
+   device files (/dev/nvidia*) when the module is loaded (previously it would
+   only remove those files when the module is unloaded). Consequently, we also
+   changed its name. Some distributions, for example Gentoo, do not need to
+   install this rule file because they already have a similar mechanism in
+   place. Please also note that the rule file sets file permissions to 0666; you
+   may want to adjust it to set permissions/owner/group more strictly according
+   to your distribution's practice before installing. If you already use the
+   kernel module options to declare permissions, simply running nvidia-smi on
+   module load will do the job.
 
 Notes:
 - bbswitch is independent of the driver; vga_switcheroo works for nouveau only.
