@@ -1,0 +1,53 @@
+Version 3.2.1 - 26 April 2013
+
+Highlights:
+ - [hotfix] Fixed Bumblebee 3.2 not working on a lot of setups.
+   This happened because of "Device" section splitting in xorg conf files.
+ - [fix] Fixed an issue where an empty XorgModulePath lead to -isolateDecide
+   being removed from Xorg start command line instead of -modulepath.
+
+Important notes for packagers:
+ - In 3.2.1 release, we removed the bumblebee/xorg.conf.d/busid.conf file,
+   because it was avoiding X to start in cases widely common. If your packaging
+   system does not automatically remove it on upgrade to 3.2.1, then you will
+   still have a broken optirun. You either need to remove this file on package
+   upgrade or tell your distro users to do so, depending on your distro policy.
+ - In 3.2 release, we have extended our nvidia-specific udev rule file to add
+   device files (/dev/nvidia*) when the module is loaded (previously it would
+   only remove those files when the module is unloaded). Consequently, we also
+   changed its name. Some distributions, for example Gentoo, do not need to
+   install this rule file because they already have a similar mechanism in
+   place. Please also note that the rule file sets file permissions to 0666; you
+   may want to adjust it to set permissions/owner/group more strictly according
+   to your distribution's practice before installing. If you already use the
+   kernel module options to declare permissions, simply running nvidia-smi on
+   module load will do the job.
+
+Notes:
+- bbswitch is independent of the driver; vga_switcheroo works for nouveau only.
+  See also the Known Issues section above and
+  https://github.com/Bumblebee-Project/Bumblebee/wiki/Comparison-of-PM-methods
+- the video drivers must be unloadable. This means that it should not be
+  compiled into the kernel. When using dynamically built modules like nvidia,
+  be sure that the toolchain used for building the kernel matches the one that
+  is used for building the module. This means that Ubuntu mainline kernels do
+  not work and will cause crashes.
+- VirtualGL performance is very dependent on the Transport method set. The
+  default "proxy" setting appears to perform bad in some situations. Try other
+  available settings like "rgb" or "yuv".
+- in many cases, primus offers better performance; please try it and report
+  compatibility issues in primus tracker, if you find any; for now VirtualGL is
+  still preferred as the default autodetected render bridge, while primus is
+  being tested at larger scales before being released as default. Try it and
+  ensure everything you use works to help us build the best backend.
+
+Known issues:
+- vga-switcheroo won't survive suspension/hibernation (patch for newer Optimus 
+  machines for OFF to work has been published in Kernel 3.3; a good patch for 
+  suspend is still being prepared).
+- bbswitch cannot disable the discrete nvidia card for the Dell Vostro 360
+  desktop with Synergy. If you have a machine using that technology, please
+  submit your machine information on: https://bugs.launchpad.net/bugs/752542
+- Some laptops (mainly Lenovo) are neither supported by bbswitch nor the video 
+  drivers. See https://github.com/Bumblebee-Project/bbswitch/issues/2. This is
+  fixed in Linux Kernel 3.9.
