@@ -138,7 +138,7 @@ bool start_secondary(bool need_secondary) {
   if (!bb_is_running(bb_status.x_pid)) {
     char pci_id[12];
     static char *x_conf_file;
-    snprintf(pci_id, 12, "PCI:%02x:%02x:%o", pci_bus_id_discrete->bus,
+    snprintf(pci_id, 12, "PCI:%02d:%02d:%o", pci_bus_id_discrete->bus,
             pci_bus_id_discrete->slot, pci_bus_id_discrete->func);
     if (!x_conf_file) {
       x_conf_file = xorg_path_w_driver(bb_config.x_conf_file, bb_config.driver);
