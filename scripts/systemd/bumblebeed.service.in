@@ -9,5 +9,4 @@ RestartSec=60
 StandardOutput=kmsg
 
 [Install]
-WantedBy=graphical.target
-
+WantedBy=multi-user.target
