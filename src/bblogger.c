@@ -144,6 +144,7 @@ static void parse_xorg_output(char * string){
   /* Error lines are errors. */
   if (strncmp(string, "(EE)", 4) == 0){
     if (strstr(string, "Failed to load module \"kbd\"") ||
+            strstr(string, "Failed to load module \"mouse\"") ||
             strstr(string, "No input driver matching") ||
             strstr(string, "systemd-logind: failed to get session:") ||
             strstr(string, "Server terminated successfully")) {
