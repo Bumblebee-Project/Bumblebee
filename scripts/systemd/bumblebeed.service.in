@@ -1,5 +1,6 @@
 [Unit]
 Description=Bumblebee C Daemon
+Requires=acpid.service
 
 [Service]
 Type=simple
