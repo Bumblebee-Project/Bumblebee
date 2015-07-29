@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include "module.h"
 #include "bblogger.h"
+#include "bbconfig.h"
 #include "bbrun.h"
 
 /**
@@ -85,6 +86,17 @@ int module_load(char *module_name, char *driver) {
 }
 
 /**
+ * Maps a driver name (such as nvidia) to the module name (such as
+ * nvidia-current).
+ */
+static char *module_from_driver(char *driver) {
+  if (!strcmp(driver, bb_config.driver)) {
+    return bb_config.module_name;
+  }
+  return driver;
+}
+
+/**
  * Attempts to unload a module if loaded, for ten seconds before
  * giving up
  *
@@ -92,13 +104,14 @@ int module_load(char *module_name, char *driver) {
  * @return 1 if the driver is succesfully unloaded, 0 otherwise
  */
 int module_unload(char *driver) {
+  char *module_name = module_from_driver(driver);
   if (module_is_loaded(driver) == 1) {
     int retries = 30;
     bb_log(LOG_INFO, "Unloading %s driver\n", driver);
     char *mod_argv[] = {
       "modprobe",
       "-r",
-      driver,
+      module_name,
       NULL
     };
     bb_run_fork_wait(mod_argv, 10);
