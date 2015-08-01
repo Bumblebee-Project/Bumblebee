@@ -2,6 +2,12 @@ Section "ServerLayout"
     Identifier  "Layout0"
     Option      "AutoAddDevices" "false"
     Option      "AutoAddGPU" "false"
+
+    # turn off integrated screen saver
+    Option          "BlankTime"     "0"
+    Option          "StandbyTime"   "0"
+    Option          "SuspendTime"   "0"
+    Option          "OffTime"       "0"
 EndSection
 
 Section "Device"
