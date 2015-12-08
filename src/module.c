@@ -96,7 +96,9 @@ int module_unload(char *driver) {
     int retries = 30;
     bb_log(LOG_INFO, "Unloading %s driver\n", driver);
     char *mod_argv[] = {
-      "rmmod",
+      "modprobe",
+      "-r",
+      "nvidia_modeset",
       driver,
       NULL
     };
