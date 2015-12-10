@@ -93,19 +93,18 @@ int module_load(char *module_name, char *driver) {
  */
 int module_unload(char *driver) {
 
-  if (module_is_loaded(driver) == 1 &&
-            module_is_loaded("nvidia_modeset") == 1) {
+  if (module_is_loaded("nvidia_uvm") == 1) {
     int retries = 30;
-    bb_log(LOG_INFO, "Unloading %s driver\n", driver);
+    bb_log(LOG_INFO, "Unloading nvidia_uvm driver\n");
     char *mod_argv[] = {
       "modprobe",
       "-r",
-      "nvidia-modeset",
-      driver,
+      "nvidia_uvm",
+      "nvidia_modeset",
       NULL
     };
     bb_run_fork_wait(mod_argv, 10);
-    while (retries-- > 0 && module_is_loaded(driver) == 1) {
+    while (retries-- > 0 && module_is_loaded("nvidia_uvm") == 1) {
       usleep(100000);
     }
     if (module_is_loaded(driver) == 1) {
@@ -113,7 +112,27 @@ int module_unload(char *driver) {
       return 0;
     }
   }
-    else if (module_is_loaded(driver) == 1) {
+
+  else if (module_is_loaded("nvidia_modeset") == 1) {
+    int retries = 30;
+    bb_log(LOG_INFO, "Unloading nvidia_modeset driver\n");
+    char *mod_argv[] = {
+      "modprobe",
+      "-r",
+      "nvidia_modeset",
+      NULL
+    };
+    bb_run_fork_wait(mod_argv, 10);
+    while (retries-- > 0 && module_is_loaded("nvidia_modeset") == 1) {
+      usleep(100000);
+    }
+    if (module_is_loaded(driver) == 1) {
+      bb_log(LOG_ERR, "Unloading %s driver timed out.\n", driver);
+      return 0;
+    }
+  }
+
+  else if (module_is_loaded(driver) == 1) {
       int retries = 30;
       bb_log(LOG_INFO, "Unloading %s driver\n", driver);
       char *mod_argv[] = {
@@ -130,7 +149,7 @@ int module_unload(char *driver) {
         bb_log(LOG_ERR, "Unloading %s driver timed out.\n", driver);
         return 0;
       }
-    }
+  }
   return 1;
 }
 
