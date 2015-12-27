@@ -3,10 +3,9 @@ Description=Bumblebee C Daemon
 
 [Service]
 Type=simple
-ExecStart=@SBINDIR@/bumblebeed
+ExecStart=@SBINDIR@/bumblebeed --use-syslog
 Restart=always
 RestartSec=60
-StandardOutput=kmsg
 
 [Install]
 WantedBy=multi-user.target
