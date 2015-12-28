@@ -1,6 +1,5 @@
 Section "ServerLayout"
     Identifier  "Layout0"
-    Option      "AutoAddDevices" "false"
     Option      "AutoAddGPU" "false"
 EndSection
 
