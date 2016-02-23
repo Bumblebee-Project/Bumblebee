@@ -230,8 +230,12 @@ static void switch_and_unload(void)
       if (switcher->status() != SWITCH_ON) {
         return;
       }
-      /* unload the driver loaded by the graphica card */
+      /* unload the driver loaded by the graphics card */
       if (pci_get_driver(driver, pci_bus_id_discrete, sizeof driver)) {
+        /* nvidia_modeset needs to be unloaded along with the nvidia module */
+        if (strstr(driver, "nvidia")) {
+          module_unload("nvidia_modeset");
+        }
         module_unload(driver);
       }
 
