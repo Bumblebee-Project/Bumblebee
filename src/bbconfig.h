@@ -122,6 +122,7 @@ struct bb_status_struct {
 
 /* Structure containing the configuration. */
 struct bb_config_struct {
+    char * xorg_binary; /// Xorg binary to run.
     char * x_display; /// X display number to use.
     char * x_conf_file; /// Path to the X configuration file.
     char * x_conf_dir; /// Path to the dummy X configuration directory.
