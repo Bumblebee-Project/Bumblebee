@@ -24,91 +24,151 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <libkmod.h>
+#include <errno.h>
 #include "module.h"
 #include "bblogger.h"
 #include "bbrun.h"
+#include "bbconfig.h"
+
+int module_unload_recursive(struct kmod_module *mod);
 
 /**
- * Checks in /proc/modules whether a kernel module is loaded
+ * Checks whether a kernel module is loaded
  *
  * @param driver The name of the driver (not a filename)
  * @return 1 if the module is loaded, 0 otherwise
  */
 int module_is_loaded(char *driver) {
-  // use the same buffer length as lsmod
-  char buffer[4096];
-  FILE * bbs = fopen("/proc/modules", "r");
-  int ret = 0;
-  /* assume mod_len <= sizeof(buffer) */
-  int mod_len = strlen(driver);
+  int err, state;
+  struct kmod_module *mod;
 
-  if (bbs == 0) {//error opening, return -1
-    bb_log(LOG_DEBUG, "Couldn't open /proc/modules");
+  err = kmod_module_new_from_name(bb_status.kmod_ctx, driver, &mod);
+  if(err < 0) {
+    bb_log(LOG_DEBUG, "kmod_module_new_from_name(%s) failed.\n", driver);
     return -1;
   }
-  while (fgets(buffer, sizeof(buffer), bbs)) {
-    /* match "module" with "module " and not "module-blah" */
-    if (!strncmp(buffer, driver, mod_len) && isspace(buffer[mod_len])) {
-      /* module is found */
-      ret = 1;
-      break;
-    }
-  }
-  fclose(bbs);
-  return ret;
+
+  state = kmod_module_get_initstate(mod);
+  kmod_module_unref(mod);
+
+  return state == KMOD_MODULE_LIVE;
 }
 
 /**
- * Attempts to load a module. If the module has not been loaded after ten
- * seconds, give up
+ * Attempts to load a module.
  *
  * @param module_name The filename of the module to be loaded
  * @param driver The name of the driver to be loaded
  * @return 1 if the driver is succesfully loaded, 0 otherwise
  */
 int module_load(char *module_name, char *driver) {
+  int err = 0;
+  int flags = KMOD_PROBE_IGNORE_LOADED;
+  struct kmod_list *l, *list = NULL;
+
   if (module_is_loaded(driver) == 0) {
     /* the module has not loaded yet, try to load it */
-    bb_log(LOG_INFO, "Loading driver %s (module %s)\n", driver, module_name);
-    char *mod_argv[] = {
-      "modprobe",
-      module_name,
-      NULL
-    };
-    bb_run_fork_wait(mod_argv, 10);
-    if (module_is_loaded(driver) == 0) {
-      bb_log(LOG_ERR, "Module %s could not be loaded (timeout?)\n", module_name);
+
+    bb_log(LOG_INFO, "Loading driver '%s' (module '%s')\n", driver, module_name);
+    err = kmod_module_new_from_lookup(bb_status.kmod_ctx, module_name, &list);
+
+    if(err < 0) {
+      bb_log(LOG_DEBUG, "kmod_module_new_from_lookup(%s) failed (err: %d).\n",
+        module_name, err);
       return 0;
     }
+
+    if(list == NULL) {
+      bb_log(LOG_ERR, "Module '%s' not found.\n");
+      return 0;
+    }
+
+    kmod_list_foreach(l, list) {
+      struct kmod_module *mod = kmod_module_get_module(l);
+
+      bb_log(LOG_DEBUG, "Loading module '%s'.\n", kmod_module_get_name(mod));
+      err = kmod_module_probe_insert_module(mod, flags, NULL, NULL, NULL, 0);
+
+      if (err < 0) {
+        bb_log(LOG_DEBUG, "kmod_module_probe_insert_module(%s) failed (err: %d).\n",
+          kmod_module_get_name(mod), err);
+      }
+
+      kmod_module_unref(mod);
+
+      if(err < 0) {
+        break;
+      }
+    }
+
+    kmod_module_unref_list(list);
   }
-  return 1;
+
+  return err >= 0;
 }
 
 /**
- * Attempts to unload a module if loaded, for ten seconds before
- * giving up
+ * Unloads module and modules that are depending on this module.
+ *
+ * @param mod Reference to libkmod module
+ * @return 1 if the module is succesfully unloaded, 0 otherwise
+ */
+int module_unload_recursive(struct kmod_module *mod) {
+  int err = 0, flags = 0, refcnt;
+  struct kmod_list *holders;
+
+  holders = kmod_module_get_holders(mod);
+  if (holders != NULL) {
+    struct kmod_list *itr;
+
+    kmod_list_foreach(itr, holders) {
+      struct kmod_module *hm = kmod_module_get_module(itr);
+      err = module_unload_recursive(hm);
+      kmod_module_unref(hm);
+
+      if(err < 0) {
+        break;
+      }
+    }
+    kmod_module_unref_list(holders);
+  }
+
+  refcnt = kmod_module_get_refcnt(mod);
+  if(refcnt == 0) {
+    bb_log(LOG_INFO, "Unloading module %s\n", kmod_module_get_name(mod));
+    err = kmod_module_remove_module(mod, flags);
+  } else {
+    bb_log(LOG_ERR, "Failed to unload module '%s' (ref count: %d).\n",
+      kmod_module_get_name(mod), refcnt);
+    err = 1;
+  }
+
+  return err == 0;
+}
+
+/**
+ * Attempts to unload a module if loaded.
  *
  * @param driver The name of the driver (not a filename)
  * @return 1 if the driver is succesfully unloaded, 0 otherwise
  */
 int module_unload(char *driver) {
+  int err;
+  struct kmod_module *mod;
   if (module_is_loaded(driver) == 1) {
-    int retries = 30;
-    bb_log(LOG_INFO, "Unloading %s driver\n", driver);
-    char *mod_argv[] = {
-      "modprobe",
-      "-r",
-      driver,
-      NULL
-    };
-    bb_run_fork_wait(mod_argv, 10);
-    while (retries-- > 0 && module_is_loaded(driver) == 1) {
-      usleep(100000);
-    }
-    if (module_is_loaded(driver) == 1) {
-      bb_log(LOG_ERR, "Unloading %s driver timed out.\n", driver);
+    err = kmod_module_new_from_name(bb_status.kmod_ctx, driver, &mod);
+
+    if(err < 0) {
+      bb_log(LOG_DEBUG, "kmod_module_new_from_name(%s) failed (err: %d).\n",
+        driver, err);
       return 0;
     }
+
+    err = module_unload_recursive(mod);
+    kmod_module_unref(mod);
+
+    return err;
   }
   return 1;
 }
@@ -120,18 +180,19 @@ int module_unload(char *driver) {
  * @return 1 if the module is available for loading, 0 otherwise
  */
 int module_is_available(char *module_name) {
-  /* HACK to support call from optirun */
-  char *modprobe_bin = "/sbin/modprobe";
-  if (access(modprobe_bin, X_OK)) {
-    /* if /sbin/modprobe is not found, pray that PATH contains it */
-    modprobe_bin = "modprobe";
+  int err, available;
+  struct kmod_list *list = NULL;
+
+  err = kmod_module_new_from_lookup(bb_status.kmod_ctx, module_name, &list);
+
+  if(err < 0) {
+    bb_log(LOG_DEBUG, "kmod_module_new_from_lookup(%s) failed (err: %d).\n",
+      module_name, err);
   }
-  char *mod_argv[] = {
-    modprobe_bin,
-    "--dry-run",
-    "--quiet",
-    module_name,
-    NULL
-  };
-  return bb_run_fork(mod_argv, 1) == EXIT_SUCCESS;
+
+  available = (err == 0) && list != NULL;
+
+  kmod_module_unref_list(list);
+
+  return available;
 }

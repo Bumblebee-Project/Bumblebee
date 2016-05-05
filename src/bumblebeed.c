@@ -34,6 +34,7 @@
 #include <string.h>
 #include <errno.h>
 #include <getopt.h>
+#include <libkmod.h>
 #ifdef WITH_PIDFILE
 #ifdef HAVE_LIBBSD_020
 #include <libutil.h>
@@ -500,6 +501,16 @@ int main(int argc, char* argv[]) {
 
   /* dump the config after detecting the driver */
   config_dump();
+
+  // kmod context have to be available for config validation
+  const char *null_cfg = NULL;
+  bb_status.kmod_ctx = kmod_new(NULL, &null_cfg);
+  if (bb_status.kmod_ctx == NULL) {
+    bb_log(LOG_ERR, "kmod_new() failed!\n");
+    bb_closelog();
+    exit(EXIT_FAILURE);
+  }
+
   if (config_validate() != 0) {
     return (EXIT_FAILURE);
   }
@@ -572,5 +583,7 @@ int main(int argc, char* argv[]) {
   //close X pipe, if any parts of it are open still
   if (bb_status.x_pipe[0] != -1){close(bb_status.x_pipe[0]); bb_status.x_pipe[0] = -1;}
   if (bb_status.x_pipe[1] != -1){close(bb_status.x_pipe[1]); bb_status.x_pipe[1] = -1;}
+  //cleanup kmod context
+  kmod_unref(bb_status.kmod_ctx);
   return (EXIT_SUCCESS);
 }
