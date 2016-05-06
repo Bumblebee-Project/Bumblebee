@@ -503,8 +503,7 @@ int main(int argc, char* argv[]) {
   config_dump();
 
   // kmod context have to be available for config validation
-  const char *null_cfg = NULL;
-  bb_status.kmod_ctx = kmod_new(NULL, &null_cfg);
+  bb_status.kmod_ctx = kmod_new(NULL, NULL);
   if (bb_status.kmod_ctx == NULL) {
     bb_log(LOG_ERR, "kmod_new() failed!\n");
     bb_closelog();
