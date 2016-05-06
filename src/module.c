@@ -64,7 +64,7 @@ int module_is_loaded(char *driver) {
  *
  * @param module_name The filename of the module to be loaded
  * @param driver The name of the driver to be loaded
- * @return 1 if the driver is succesfully loaded, 0 otherwise
+ * @return 1 if the driver is successfully loaded, 0 otherwise
  */
 int module_load(char *module_name, char *driver) {
   if (module_is_loaded(driver) == 0) {
@@ -89,7 +89,7 @@ int module_load(char *module_name, char *driver) {
  * giving up
  *
  * @param driver The name of the driver (not a filename)
- * @return 1 if the driver is succesfully unloaded, 0 otherwise
+ * @return 1 if the driver is successfully unloaded, 0 otherwise
  */
 int module_unload(char *driver) {
   if (module_is_loaded(driver) == 1) {

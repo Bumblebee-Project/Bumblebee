@@ -62,7 +62,7 @@ static void handle_signal(int sig) {
 
 /**
  * Prints the status of the Bumblebee server if available
- * @return EXIT_SUCCESS if the status is succesfully retrieved,
+ * @return EXIT_SUCCESS if the status is successfully retrieved,
  * EXIT_FAILURE otherwise
  */
 static int report_daemon_status(void) {

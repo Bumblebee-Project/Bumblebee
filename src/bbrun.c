@@ -170,7 +170,7 @@ int bb_run_fork(char **argv, int detached) {
         exitcode = 128 + WTERMSIG(status);
       }
     } else {
-      bb_log(LOG_ERR, "waitpid(%i) faild with %s\n", pid, strerror(errno));
+      bb_log(LOG_ERR, "waitpid(%i) failed with %s\n", pid, strerror(errno));
     }
     pidlist_remove(pid);
   } else {
