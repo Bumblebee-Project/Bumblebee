@@ -461,6 +461,7 @@ int main(int argc, char* argv[]) {
   /* first load the config to make the logging verbosity level available */
   init_config();
   bbconfig_parse_opts(argc, argv, PARSE_STAGE_PRECONF);
+  bbconfig_parse_opts(argc, argv, PARSE_STAGE_OTHER);
 
   /* First look for an intel card */
   struct pci_bus_id *pci_id_igd = pci_find_gfx_by_vendor(PCI_VENDOR_ID_INTEL, 0);
@@ -496,7 +497,6 @@ int main(int argc, char* argv[]) {
     bbconfig_parse_conf_driver(bbcfg, bb_config.driver);
     g_key_file_free(bbcfg);
   }
-  bbconfig_parse_opts(argc, argv, PARSE_STAGE_OTHER);
   check_pm_method();
 
   /* dump the config after detecting the driver */
