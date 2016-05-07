@@ -201,11 +201,11 @@ void print_usage(int exit_val) {
   }
   /* common options */
   fputs("\
-  -q, --quiet, --silent   supresses all logging messages\n\
+  -q, --quiet, --silent   suppresses all logging messages\n\
   -v, --verbose           increase the verbosity level of log messages. It\n\
                             can be specified up to two times (or five if\n\
                             --quiet is used)\n\
-      --debug             show all logging messsages by setting the verbosity\n\
+      --debug             show all logging messages by setting the verbosity\n\
                             level to the maximum\n\
   -C, --config FILE       retrieve settings for Bumblebee from FILE\n", out);
   if (is_optirun) {
