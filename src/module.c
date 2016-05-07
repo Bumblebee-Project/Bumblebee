@@ -45,8 +45,9 @@ int module_is_loaded(char *driver) {
 
   err = kmod_module_new_from_name(bb_status.kmod_ctx, driver, &mod);
   if(err < 0) {
-    bb_log(LOG_DEBUG, "kmod_module_new_from_name(%s) failed.\n", driver);
-    return -1;
+    bb_log(LOG_DEBUG, "kmod_module_new_from_name(%s) failed (err: %d).\n",
+      driver, err);
+    return 0;
   }
 
   state = kmod_module_get_initstate(mod);
