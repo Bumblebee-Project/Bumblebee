@@ -189,9 +189,10 @@ int module_is_available(char *module_name) {
   if(err < 0) {
     bb_log(LOG_DEBUG, "kmod_module_new_from_lookup(%s) failed (err: %d).\n",
       module_name, err);
+    return 0;
   }
 
-  available = (err == 0) && list != NULL;
+  available = list != NULL;
 
   kmod_module_unref_list(list);
 
