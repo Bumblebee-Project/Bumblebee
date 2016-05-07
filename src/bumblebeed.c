@@ -490,6 +490,14 @@ int main(int argc, char* argv[]) {
 
   free(pci_id_igd);
 
+  // kmod context have to be available for driver detection
+  bb_status.kmod_ctx = kmod_new(NULL, NULL);
+  if (bb_status.kmod_ctx == NULL) {
+    bb_log(LOG_ERR, "kmod_new() failed!\n");
+    bb_closelog();
+    exit(EXIT_FAILURE);
+  }
+
   GKeyFile *bbcfg = bbconfig_parse_conf();
   bbconfig_parse_opts(argc, argv, PARSE_STAGE_DRIVER);
   driver_detect();
@@ -501,14 +509,6 @@ int main(int argc, char* argv[]) {
 
   /* dump the config after detecting the driver */
   config_dump();
-
-  // kmod context have to be available for config validation
-  bb_status.kmod_ctx = kmod_new(NULL, NULL);
-  if (bb_status.kmod_ctx == NULL) {
-    bb_log(LOG_ERR, "kmod_new() failed!\n");
-    bb_closelog();
-    exit(EXIT_FAILURE);
-  }
 
   if (config_validate() != 0) {
     return (EXIT_FAILURE);
