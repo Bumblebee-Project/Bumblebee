@@ -38,7 +38,7 @@
  */
 enum switch_state bbswitch_status(void) {
   char buffer[BBS_BUFFER];
-  int ret = SWITCH_UNAVAIL;
+  enum switch_state ret = SWITCH_UNAVAIL;
   FILE * bbs = fopen(BBSWITCH_PATH, "r");
   if (bbs == 0) {
     return SWITCH_UNAVAIL;
