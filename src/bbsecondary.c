@@ -138,7 +138,7 @@ bool start_secondary(bool need_secondary) {
   if (!bb_is_running(bb_status.x_pid)) {
     char pci_id[12];
     static char *x_conf_file;
-    snprintf(pci_id, 12, "PCI:%02x:%02x:%o", pci_bus_id_discrete->bus,
+    snprintf(pci_id, 12, "PCI:%02d:%02d:%o", pci_bus_id_discrete->bus,
             pci_bus_id_discrete->slot, pci_bus_id_discrete->func);
     if (!x_conf_file) {
       x_conf_file = xorg_path_w_driver(bb_config.x_conf_file, bb_config.driver);
@@ -146,7 +146,7 @@ bool start_secondary(bool need_secondary) {
 
     bb_log(LOG_INFO, "Starting X server on display %s.\n", bb_config.x_display);
     char *x_argv[] = {
-      XORG_BINARY,
+      bb_config.xorg_binary,
       bb_config.x_display,
       "-config", x_conf_file,
       "-configdir", bb_config.x_conf_dir,
@@ -158,6 +158,12 @@ bool start_secondary(bool need_secondary) {
       "-modulepath", bb_config.mod_path, // keep last
       NULL
     };
+    char **argvp;
+    bb_log(LOG_DEBUG, "X server command line:");
+    for (argvp = x_argv; *argvp; argvp++) {
+	    bb_log(LOG_DEBUG, " %s", *argvp);
+    }
+    bb_log(LOG_DEBUG, "\n");
     enum {n_x_args = sizeof(x_argv) / sizeof(x_argv[0])};
     if (!*bb_config.mod_path) {
       x_argv[n_x_args - 3] = 0; //remove -modulepath if not set

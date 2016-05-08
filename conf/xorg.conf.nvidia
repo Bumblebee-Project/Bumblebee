@@ -31,4 +31,13 @@ Section "Device"
     Option "NoLogo" "true"
     Option "UseEDID" "false"
     Option "UseDisplayDevice" "none"
+
+#   If your NVIDIA drivers are version 331.13 or newer, and you have a laptop
+#   where some of the video outputs such as HDMI or DisplayPort are connected
+#   to the NVIDIA GPU, and you sometimes connect an external monitor to those
+#   ports, comment out the above two options and instead uncomment the option
+#   below to allow using the external monitor when it is connected while also
+#   allowing the X server to start when the monitor is disconnected.
+
+#   Option "AllowEmptyInitialConfiguration"
 EndSection

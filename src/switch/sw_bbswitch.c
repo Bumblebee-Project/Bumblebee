@@ -98,7 +98,7 @@ int bbswitch_is_available(struct switch_info info) {
    * recognized by bbswitch. Assuming that vga_switcheroo was not told to OFF
    * the device */
   if (module_load("bbswitch", "bbswitch")) {
-    bb_log(LOG_DEBUG, "succesfully loaded bbswitch\n");
+    bb_log(LOG_DEBUG, "successfully loaded bbswitch\n");
     /* hurrah, bbswitch could be loaded which means that the module is
      * available and that the card is supported */
     return 1;

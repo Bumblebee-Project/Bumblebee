@@ -32,6 +32,21 @@ AC_DEFINE_SUBST(CONF_FALLBACKSTART, "false", [make optirun start applications no
 AC_DEFINE_SUBST(CONF_VGLCOMPRESS, "proxy", [vglclient transport method])
 AC_DEFINE_SUBST(CONF_TURNOFFATEXIT, "false", [state of card when shutting off daemon])
 
+# OpenSUSE: /usr/bin/X -> /var/lib/X11/X -> /usr/bin/Xorg
+# Fedora, Arch Linux: /usr/bin/X -> /usr/bin/Xorg
+# Ubuntu: /usr/bin/X is a custom binary doing authorization and then executes
+#         /etc/X11/X -> /usr/bin/Xorg
+# Debian/Ubuntu and Xorg >= 1.18: /usr/bin/Xorg is a script that will run either the normal
+#                                 Xorg binary from /usr/lib/xorg/Xorg, or a SETUID
+#                                 wrapper at /usr/lib/xorg/Xorg.wrap
+#                                 Use this setting to run /usr/lib/xorg/Xorg specifically
+#                                 in that case.
+AC_DEFINE_CONF(CONF_XORG_BINARY, [Xorg binary to run], [
+if test "x" = "x$CONF_XORG_BINARY"; then
+	CONF_XORG_BINARY=Xorg
+fi
+])
+
 AC_DEFINE_CONF(CONF_BRIDGE, [optirun display/render bridge, valid values are auto (default), primus and virtualgl], [
 case $CONF_BRIDGE in
 auto|primus|virtualgl) ;;
