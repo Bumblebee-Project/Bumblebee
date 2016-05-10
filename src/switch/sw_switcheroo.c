@@ -34,9 +34,9 @@
  * @return SWITCH_OFF if card is off, SWITCH_ON if card is on and SWITCH_UNAVAIL
  * if switcheroo not available
  */
-int switcheroo_status(void) {
+enum switch_state switcheroo_status(void) {
   char buffer[BBS_BUFFER];
-  int ret = SWITCH_UNAVAIL;
+  enum switch_state ret = SWITCH_UNAVAIL;
   FILE * bbs = fopen(SWITCHEROO_PATH, "r");
   if (bbs == 0) {
     return SWITCH_UNAVAIL;
