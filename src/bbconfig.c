@@ -425,6 +425,10 @@ GKeyFile *bbconfig_parse_conf(void) {
   if (g_key_file_has_key(bbcfg, section, key, NULL)) {
     free_and_set_value(&bb_config.x_conf_dir, g_key_file_get_string(bbcfg, section, key, NULL));
   }
+  key = "XorgBinary";
+  if (g_key_file_has_key(bbcfg, section, key, NULL)) {
+    free_and_set_value(&bb_config.xorg_binary, g_key_file_get_string(bbcfg, section, key, NULL));
+  }
   return bbcfg;
 }
 
@@ -517,6 +521,7 @@ void init_config(void) {
   set_string_value(&bb_config.gid_name, CONF_GID);
   set_string_value(&bb_config.x_conf_file, CONF_XORG);
   set_string_value(&bb_config.x_conf_dir, CONF_XORG_DIR);
+  set_string_value(&bb_config.xorg_binary, CONF_XORG_BINARY);
   set_string_value(&bb_config.optirun_bridge, CONF_BRIDGE);
   set_string_value(&bb_config.primus_ld_path, CONF_PRIMUS_LD_PATH);
   set_string_value(&bb_config.vgl_compress, CONF_VGLCOMPRESS);
@@ -550,6 +555,7 @@ void config_dump(void) {
 #endif
     bb_log(LOG_DEBUG, " xorg.conf file: %s\n", bb_config.x_conf_file);
     bb_log(LOG_DEBUG, " xorg.conf.d dir: %s\n", bb_config.x_conf_dir);
+    bb_log(LOG_DEBUG, " Xorg binary: %s\n", bb_config.xorg_binary);
     bb_log(LOG_DEBUG, " ModulePath: %s\n", bb_config.mod_path);
     bb_log(LOG_DEBUG, " GID name: %s\n", bb_config.gid_name);
     bb_log(LOG_DEBUG, " Power method: %s\n",

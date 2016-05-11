@@ -70,6 +70,7 @@ endif
 
 do_subst = sed -e 's|[@]GITVERSION[@]|$(GITVERSION)|g' \
 	-e 's|[@]CONF_XDISP[@]|$(CONF_XDISP)|g' \
+	-e 's|[@]CONF_XORG_BINARY[@]|$(CONF_XORG_BINARY)|g' \
 	-e 's|[@]CONF_SOCKPATH[@]|$(CONF_SOCKPATH)|g' \
 	-e 's|[@]CONF_GID[@]|$(CONF_GID)|g' \
 	-e 's|[@]CONF_PM_METHOD[@]|$(CONF_PM_METHOD)|g' \

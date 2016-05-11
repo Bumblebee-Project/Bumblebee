@@ -22,6 +22,8 @@ NoEcoModeOverride=false
 Driver=@CONF_DRIVER@
 # Directory with a dummy config file to pass as a -configdir to secondary X
 XorgConfDir=@XCONFDDIR@
+# Xorg binary to run
+XorgBinary=@CONF_XORG_BINARY@
 
 ## Client options. Will take effect on the next optirun executed.
 [optirun]
