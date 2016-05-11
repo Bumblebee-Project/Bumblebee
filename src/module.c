@@ -81,7 +81,7 @@ int module_load(char *module_name, char *driver) {
     }
 
     if(list == NULL) {
-      bb_log(LOG_ERR, "Module '%s' not found.\n");
+      bb_log(LOG_ERR, "Module '%s' not found.\n", module_name);
       return 0;
     }
 
