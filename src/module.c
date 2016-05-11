@@ -44,7 +44,7 @@ int module_is_loaded(char *driver) {
   struct kmod_module *mod;
 
   err = kmod_module_new_from_name(bb_status.kmod_ctx, driver, &mod);
-  if(err < 0) {
+  if (err < 0) {
     bb_log(LOG_DEBUG, "kmod_module_new_from_name(%s) failed (err: %d).\n",
       driver, err);
     return 0;
@@ -74,13 +74,13 @@ int module_load(char *module_name, char *driver) {
     bb_log(LOG_INFO, "Loading driver '%s' (module '%s')\n", driver, module_name);
     err = kmod_module_new_from_lookup(bb_status.kmod_ctx, module_name, &list);
 
-    if(err < 0) {
+    if (err < 0) {
       bb_log(LOG_DEBUG, "kmod_module_new_from_lookup(%s) failed (err: %d).\n",
         module_name, err);
       return 0;
     }
 
-    if(list == NULL) {
+    if (list == NULL) {
       bb_log(LOG_ERR, "Module '%s' not found.\n", module_name);
       return 0;
     }
@@ -98,7 +98,7 @@ int module_load(char *module_name, char *driver) {
 
       kmod_module_unref(mod);
 
-      if(err < 0) {
+      if (err < 0) {
         break;
       }
     }
@@ -128,7 +128,7 @@ int module_unload_recursive(struct kmod_module *mod) {
       err = module_unload_recursive(hm);
       kmod_module_unref(hm);
 
-      if(err < 0) {
+      if (err < 0) {
         break;
       }
     }
@@ -136,7 +136,7 @@ int module_unload_recursive(struct kmod_module *mod) {
   }
 
   refcnt = kmod_module_get_refcnt(mod);
-  if(refcnt == 0) {
+  if (refcnt == 0) {
     bb_log(LOG_INFO, "Unloading module %s\n", kmod_module_get_name(mod));
     err = kmod_module_remove_module(mod, flags);
   } else {
@@ -160,7 +160,7 @@ int module_unload(char *driver) {
   if (module_is_loaded(driver) == 1) {
     err = kmod_module_new_from_name(bb_status.kmod_ctx, driver, &mod);
 
-    if(err < 0) {
+    if (err < 0) {
       bb_log(LOG_DEBUG, "kmod_module_new_from_name(%s) failed (err: %d).\n",
         driver, err);
       return 0;
@@ -186,7 +186,7 @@ int module_is_available(char *module_name) {
 
   err = kmod_module_new_from_lookup(bb_status.kmod_ctx, module_name, &list);
 
-  if(err < 0) {
+  if (err < 0) {
     bb_log(LOG_DEBUG, "kmod_module_new_from_lookup(%s) failed (err: %d).\n",
       module_name, err);
     return 0;
