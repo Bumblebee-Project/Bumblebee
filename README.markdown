@@ -120,3 +120,4 @@ Interesting Links
 - Arch wiki: https://wiki.archlinux.org/index.php/Bumblebee
 - Mandriva wiki: http://wiki.mandriva.com/en/Bumblebee
 - Debian wiki: http://wiki.debian.org/Bumblebee
+- Fedora wiki: https://fedoraproject.org/wiki/Bumblebee
