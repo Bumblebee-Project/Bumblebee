@@ -147,6 +147,7 @@ static void parse_xorg_output(char * string){
             strstr(string, "Failed to load module \"mouse\"") ||
             strstr(string, "No input driver matching") ||
             strstr(string, "systemd-logind: failed to get session:") ||
+            strstr(string, "failed to set DRM interface version 1.4:") ||
             strstr(string, "Server terminated successfully")) {
       /* non-fatal errors */
       prio = LOG_DEBUG;
