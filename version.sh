@@ -9,7 +9,7 @@ fi
 
 [ ! -f "$1/VERSION" ] || VN="$(cat VERSION)"
 
-if [ -z "$VN" ] && [ -d "$rootdir/.git" ]; then
+if [ -z "$VN" ] && [ -e "$rootdir/.git" ]; then
 	VN=$(cd "$rootdir" &&
 		git describe --tags --match 'v[0-9]*' 2>/dev/null)
 
