@@ -7,11 +7,11 @@ Section "Device"
     Identifier  "DiscreteNvidia"
     Driver      "nouveau"
 
-#   If the X server does not automatically detect your VGA device,
-#   you can manually set it here.
-#   To get the BusID prop, run `lspci | egrep 'VGA|3D'` and input the data
-#   as you see in the commented example.
-#   This Setting is needed on Ubuntu 13.04.
+#   If the X server does not automatically detect your VGA device, you can
+#   manually set it here.
+#   To get the BusID prop, run `lspci | egrep 'VGA|3D'` and input the data as
+#   you see in the commented example.
+#   This setting was needed on Ubuntu 13.04 for instance.
 #   BusID "PCI:01:00:0"
 
 EndSection
