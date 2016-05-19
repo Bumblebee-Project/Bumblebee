@@ -251,12 +251,6 @@ Bumblebee homepage: <http://Bumblebee-Project.org/>\n", out);
  */
 static int bbconfig_parse_common(int opt, char *value) {
   switch (opt) {
-    case 'q'://quiet mode
-      bb_status.verbosity = VERB_NONE;
-      break;
-    case OPT_DEBUG://debug mode
-      bb_status.verbosity = VERB_ALL;
-      break;
     case 'd'://X display number
       set_string_value(&bb_config.x_display, value);
       break;
@@ -306,6 +300,12 @@ void bbconfig_parse_opts(int argc, char *argv[], int conf_round) {
           if (bb_status.verbosity < VERB_ALL) {
             bb_status.verbosity++;
           }
+          break;
+        case 'q'://quiet mode
+          bb_status.verbosity = VERB_NONE;
+          break;
+        case OPT_DEBUG://debug mode
+          bb_status.verbosity = VERB_ALL;
           break;
         case 's': /* Unix socket to use for communication */
           set_string_value(&bb_config.socket_path, optarg);

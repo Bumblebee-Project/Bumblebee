@@ -26,6 +26,7 @@
 #include <unistd.h> //for pid_t
 #include <limits.h> //for CHAR_MAX
 #include <glib.h>
+#include <libkmod.h>
 
 /* Daemon states */
 #define BB_DAEMON 1
@@ -118,6 +119,7 @@ struct bb_status_struct {
     int x_pipe[2];//pipes for reading/writing output from X's stdout/stderr
     gboolean use_syslog;
     char *program_name;
+    struct kmod_ctx *kmod_ctx;
 };
 
 /* Structure containing the configuration. */
