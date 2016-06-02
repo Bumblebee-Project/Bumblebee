@@ -3,6 +3,8 @@
 GITVERSION = $(shell "$(top_srcdir)/version.sh" "$(top_srcdir)")
 relnotes = doc/RELEASE_NOTES_3_2_1
 
+DISTCHECK_CONFIGURE_FLAGS = --with-udev-rules=$$dc_install_base/lib/udev/rules.d
+
 bumblebeedconfdir=$(sysconfdir)/bumblebee
 
 AM_CPPFLAGS = ${regular_CPPFLAGS} \
