@@ -39,9 +39,17 @@ EXTRA_DIST = scripts/systemd/bumblebeed.service.in \
 	scripts/bash_completion/bumblebee \
 	scripts/bumblebee-bugreport.in \
 	$(relnotes) \
-	version.sh
-# for laziness include all headers found
-EXTRA_DIST += src/*.h src/*/switching.h
+	version.sh \
+	src/bbconfig.h \
+	src/bblogger.h \
+	src/bbrun.h \
+	src/bbsecondary.h \
+	src/bbsocketclient.h \
+	src/bbsocket.h \
+	src/driver.h \
+	src/module.h \
+	src/pci.h \
+	src/switch/switching.h
 
 if WITH_PIDFILE
 EXTRA_DIST += scripts/sysvinit/bumblebeed.in
