@@ -3,6 +3,8 @@
 GITVERSION = $(shell "$(top_srcdir)/version.sh" "$(top_srcdir)")
 relnotes = doc/RELEASE_NOTES_3_2_1
 
+DISTCHECK_CONFIGURE_FLAGS = --with-udev-rules=$$dc_install_base/lib/udev/rules.d
+
 bumblebeedconfdir=$(sysconfdir)/bumblebee
 
 AM_CPPFLAGS = ${regular_CPPFLAGS} \
@@ -37,9 +39,17 @@ EXTRA_DIST = scripts/systemd/bumblebeed.service.in \
 	scripts/bash_completion/bumblebee \
 	scripts/bumblebee-bugreport.in \
 	$(relnotes) \
-	version.sh
-# for laziness include all headers found
-EXTRA_DIST += src/*.h src/*/switching.h
+	version.sh \
+	src/bbconfig.h \
+	src/bblogger.h \
+	src/bbrun.h \
+	src/bbsecondary.h \
+	src/bbsocketclient.h \
+	src/bbsocket.h \
+	src/driver.h \
+	src/module.h \
+	src/pci.h \
+	src/switch/switching.h
 
 if WITH_PIDFILE
 EXTRA_DIST += scripts/sysvinit/bumblebeed.in
