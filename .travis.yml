@@ -18,3 +18,26 @@ addons:
     - libkmod-dev
 
 script: autoreconf -fi && ./configure && make distcheck
+
+before_deploy:
+- mkdir dist;
+- export FILES=dist/*
+- mv *.tar.gz dist
+- cd dist
+- sha512sum *.tar.gz > SHA512SUMS
+- sha256sum *.tar.gz > SHA256SUMS
+- sha1sum *.tar.gz > SHA1SUMS
+- md5sum *.tar.gz > MD5SUMS
+- cd -
+
+deploy:
+  provider: releases
+  api_key:
+    secure: T5lqhqfyuV+C+NMw8Tm5VY3HFuSTzuzTnurUoH7JN2HRfKKDFm9qgCj9rfrHnMBx448WmlwJnuVEalaZ9R4vtLseNapJvOI0yUhst+dnLz+MUyY7Mts3YiJT4AhPCuygaotu9NIENLuc4NS1K8nv3L1QDzSExeEesqOP2baTmoU=
+  file: "${FILES}"
+  skip_cleanup: true
+  file_glob: true
+  on:
+    repo: Bumblebee-Project/Bumblebee
+    branch: master
+    tags: true
