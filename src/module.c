@@ -92,12 +92,18 @@ int module_load(char *module_name, char *driver) {
  * @return 1 if the driver is succesfully unloaded, 0 otherwise
  */
 int module_unload(char *driver) {
-  if (module_is_loaded(driver) == 1) {
+
+	char uvm[] = "nvidia_uvm";
+	int uvm_is_loaded = module_is_loaded(uvm);
+
+  if (uvm_is_loaded || *driver == 1) {
     int retries = 30;
-    bb_log(LOG_INFO, "Unloading %s driver\n", driver);
+    bb_log(LOG_INFO, "Unloading UVM driver\n");
     char *mod_argv[] = {
-      "rmmod",
-      driver,
+      "modprobe",
+      "-r",
+      "nvidia_uvm",
+			driver,
       NULL
     };
     bb_run_fork_wait(mod_argv, 10);
@@ -109,7 +115,26 @@ int module_unload(char *driver) {
       return 0;
     }
   }
-  return 1;
+
+else if (module_is_loaded(driver) == 1) {
+     int retries = 30;
+      bb_log(LOG_INFO, "Unloading %s driver\n", driver);
+      char *mod_argv[] = {
+        "modprobe",
+        "-r",
+        driver,
+        NULL
+      };
+      bb_run_fork_wait(mod_argv, 10);
+      while (retries-- > 0 && module_is_loaded(driver) == 1) {
+        usleep(100000);
+      }
+      if (module_is_loaded(driver) == 1) {
+        bb_log(LOG_ERR, "Unloading %s driver timed out.\n", driver);
+        return 0;
+      }
+}
+ 	return 1;
 }
 
 /**
