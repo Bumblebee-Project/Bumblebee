@@ -159,7 +159,7 @@ int module_is_available(char *module_name) {
   char *mod_argv[] = {
     modprobe_bin,
     "--dry-run",
-    "--quiet",sudo
+    "--quiet",
     module_name,
     NULL
   };
