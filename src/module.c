@@ -94,15 +94,21 @@ int module_load(char *module_name, char *driver) {
 int module_unload(char *driver) {
 
 	char uvm[] = "nvidia_uvm";
+  char drm[] = "nvidia_drm";
+	char modeset[] = "nvidia_modeset";
 	int uvm_is_loaded = module_is_loaded(uvm);
+  int drm_is_loaded = module_is_loaded(drm);
+	int modeset_is_loaded = module_is_loaded(modeset);
 
-  if (uvm_is_loaded || *driver == 1) {
+  if (uvm_is_loaded || drm_is_loaded || modeset_is_loaded || *driver == 1) {
     int retries = 30;
-    bb_log(LOG_INFO, "Unloading UVM driver\n");
+    bb_log(LOG_INFO, "Unloading UVM/DRM/MODESET driver\n");
     char *mod_argv[] = {
       "modprobe",
       "-r",
       "nvidia_uvm",
+      "nvidia_drm",
+      "nvidia_modeset",
 			driver,
       NULL
     };
@@ -153,7 +159,7 @@ int module_is_available(char *module_name) {
   char *mod_argv[] = {
     modprobe_bin,
     "--dry-run",
-    "--quiet",
+    "--quiet",sudo
     module_name,
     NULL
   };
