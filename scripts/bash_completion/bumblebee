@@ -63,5 +63,5 @@ _optirun() {
     # after the options, auto-complete command
     _command_offset $i
 }
-have optirun && complete -F _optirun optirun
+_have optirun && complete -F _optirun optirun
 
