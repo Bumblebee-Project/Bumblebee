@@ -36,7 +36,7 @@ EXTRA_DIST = scripts/systemd/bumblebeed.service.in \
 	conf/xorg.conf.nouveau \
 	$(xconfd_DATA) \
 	README.markdown \
-	scripts/bash_completion/bumblebee \
+	scripts/bash_completion/optirun \
 	scripts/bumblebee-bugreport.in \
 	$(relnotes) \
 	version.sh \
@@ -71,7 +71,7 @@ dist_doc_DATA = $(relnotes) README.markdown
 bumblebeedconf_DATA = conf/bumblebee.conf conf/xorg.conf.nouveau conf/xorg.conf.nvidia
 
 completiondir = $(sysconfdir)/bash_completion.d
-completion_DATA = scripts/bash_completion/bumblebee
+completion_DATA = scripts/bash_completion/optirun
 
 if WITH_UDEV_RULES
 udevrulesdir = $(UDEV_RULES_DIR)
