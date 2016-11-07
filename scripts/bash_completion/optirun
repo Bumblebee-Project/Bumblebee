@@ -1,4 +1,4 @@
-# bash completion for bumblebee
+# bash completion for optirun
 
 _optirun() {
     local i prev cur last_optirun_offset compress_types in_option
@@ -63,5 +63,5 @@ _optirun() {
     # after the options, auto-complete command
     _command_offset $i
 }
-have optirun && complete -F _optirun optirun
+complete -F _optirun optirun
 
