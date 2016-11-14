@@ -54,7 +54,8 @@ _optirun() {
           *)
             COMPREPLY=( $(compgen -W "--vgl-compress -c --failsafe --quiet \
 	        --silent -q --verbose -v --display -d --config -C --ldpath -l \
-                --primus-ldpath --socket -s --help -h --" -- "$cur") )
+                --primus-ldpath --socket -s --help -h --no-xorg --no-failsafe \
+                -b --bridge --debug --vgl-options --version --" -- "$cur") )
             ;;
         esac
         return 0
