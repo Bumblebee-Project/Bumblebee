@@ -48,6 +48,11 @@ struct switching_method {
   void (*off)(void); /* attempts to disable a card */
 };
 
+enum switch_state nouveau_status(void);
+int nouveau_is_available(struct switch_info);
+void nouveau_on(void);
+void nouveau_off(void);
+
 enum switch_state bbswitch_status(void);
 int bbswitch_is_available(struct switch_info);
 void bbswitch_on(void);
@@ -59,7 +64,7 @@ void switcheroo_on(void);
 void switcheroo_off(void);
 
 /* number of switchers as defined in switching.c */
-#define SWITCHERS_COUNT 2
+#define SWITCHERS_COUNT 3
 struct switching_method switching_methods[SWITCHERS_COUNT];
 
 /* A switching method that can be used or NULL if none */
