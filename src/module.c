@@ -63,7 +63,7 @@ int module_is_loaded(char *driver) {
  * @param driver The name of the driver to be loaded
  * @return 1 if the driver is successfully loaded, 0 otherwise
  */
-int module_load(char *module_name, char *driver) {
+int module_load(char *module_name, char *driver, char* extra_flags) {
   int err = 0;
   int flags = KMOD_PROBE_IGNORE_LOADED;
   struct kmod_list *l, *list = NULL;
@@ -89,7 +89,7 @@ int module_load(char *module_name, char *driver) {
       struct kmod_module *mod = kmod_module_get_module(l);
 
       bb_log(LOG_DEBUG, "Loading module '%s'.\n", kmod_module_get_name(mod));
-      err = kmod_module_probe_insert_module(mod, flags, NULL, NULL, NULL, 0);
+      err = kmod_module_probe_insert_module(mod, flags, extra_flags, NULL, NULL, 0);
 
       if (err < 0) {
         bb_log(LOG_DEBUG, "kmod_module_probe_insert_module(%s) failed (err: %d).\n",
