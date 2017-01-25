@@ -66,7 +66,7 @@ static void switcheroo_write(char *msg) {
             strerror(errno));
     return;
   }
-  fwrite(msg, sizeof msg, strlen(msg) + 1, bbs);
+  fputs(msg, bbs);
   if (ferror(bbs)) {
     bb_log(LOG_WARNING, "Could not write to %s: %s\n", SWITCHEROO_PATH,
             strerror(errno));
