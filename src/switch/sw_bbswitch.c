@@ -70,7 +70,7 @@ static void bbswitch_write(char *msg) {
     bb_log(LOG_ERR, "Could not open %s: %s\n", BBSWITCH_PATH, strerror(errno));
     return;
   }
-  fwrite(msg, sizeof msg, strlen(msg) + 1, bbs);
+  fwrite(msg, strlen(msg), sizeof(*msg), bbs);
   if (ferror(bbs)) {
     bb_log(LOG_WARNING, "Could not write to %s: %s\n", BBSWITCH_PATH,
             strerror(errno));
