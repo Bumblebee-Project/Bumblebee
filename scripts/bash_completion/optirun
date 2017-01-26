@@ -16,7 +16,8 @@ _optirun() {
             in_option=false
         else
             case "$prev" in
-              -c|--vgl-compress|--failsafe|--display|-d|--config|-C|--ldpath|-l|--primus-ldpath|--socket|-s|-b|--bridge)
+              -c|--vgl-compress|--failsafe|--display|-d|--config|-C|--ldpath|-l\
+                  |--primus-ldpath|--socket|-s|-b|--bridge|--vgl-options)
                 in_option=true
                 ;;
               --)
@@ -49,12 +50,16 @@ _optirun() {
           -C|--config|-s|--socket)
             _filedir
             ;;
-	  -l|--ldpath|--primus-ldpath)
-	    ;;
+          -l|--ldpath|--primus-ldpath)
+            ;;
+          --vgl-options)
+            # XXX: get all vgl options and suggest these
+            ;;
           *)
             COMPREPLY=( $(compgen -W "--vgl-compress -c --failsafe --quiet \
-	        --silent -q --verbose -v --display -d --config -C --ldpath -l \
-                --primus-ldpath --socket -s --help -h --" -- "$cur") )
+                --silent -q --verbose -v --display -d --config -C --ldpath -l \
+                --primus-ldpath --socket -s --help -h --no-xorg --no-failsafe \
+                -b --bridge --debug --vgl-options --version --" -- "$cur") )
             ;;
         esac
         return 0
