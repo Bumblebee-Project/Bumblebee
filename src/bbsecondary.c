@@ -116,7 +116,7 @@ static bool switch_and_load(void)
   if (strcasecmp(bb_config.driver, driver)) {
     char *module_name = bb_config.module_name;
     char *driver_name = bb_config.driver;
-    if (!module_load(module_name, driver_name)) {
+    if (!module_load(module_name, driver_name, NULL)) {
       set_bb_error("Could not load GPU driver");
       return false;
     }

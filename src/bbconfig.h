@@ -101,6 +101,7 @@ enum bb_pm_method {
     PM_AUTO, /* at detection time, this value will be changed */
     PM_BBSWITCH,
     PM_VGASWITCHEROO,
+    PM_NOUVEAU,
     PM_METHODS_COUNT /* not a method but a marker for the end */
 };
 const char *bb_pm_method_string[PM_METHODS_COUNT];

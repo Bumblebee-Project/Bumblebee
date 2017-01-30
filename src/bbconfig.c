@@ -42,6 +42,7 @@ const char *bb_pm_method_string[PM_METHODS_COUNT] = {
   /* the below names are used in switch/switching.c */
   "bbswitch",
   "switcheroo",
+  "nouveau",
 };
 
 struct bb_status_struct bb_status;
@@ -183,13 +184,13 @@ void print_usage(int exit_val) {
   -k, --driver-module NAME    Name of kernel module to be loaded if different\n\
                                 from the driver\n\
       --pm-method METHOD  method to use for disabling the discrete video card,\n\
-                            valid values are auto, bbswitch, switcheroo and\n\
-                            none. auto selects a sensible method,\n\
+                            valid values are auto, bbswitch, nouveau,\n\
+                            switcheroo and none. auto selects a sensible method,\n\
                             bbswitch (kernel module) is available for nvidia\n\
-                            and nouveau drivers,\n\
-                            switcheroo (vga_switcheroo) is usually for\n\
-			    nouveau and radeon drivers and none disables PM\n\
-			    completely\n",
+                            and nouveau drivers, nouveau uses this driver's PM\n\
+                            faculities, switcheroo (vga_switcheroo) is usually for\n\
+                            nouveau and radeon drivers and none disables PM\n\
+                            completely\n",
             out);
 #ifdef WITH_PIDFILE
     fputs("\

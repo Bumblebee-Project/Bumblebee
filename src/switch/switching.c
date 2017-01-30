@@ -25,6 +25,8 @@
 
 /* increase SWITCHERS_COUNT in switching.h when more methods are added */
 struct switching_method switching_methods[SWITCHERS_COUNT] = {
+  {"nouveau", 2, nouveau_status, nouveau_is_available,
+          nouveau_on, nouveau_off},
   {"bbswitch", 1, bbswitch_status, bbswitch_is_available,
           bbswitch_on, bbswitch_off},
   {"switcheroo", 0, switcheroo_status, switcheroo_is_available,
