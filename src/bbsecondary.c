@@ -119,6 +119,17 @@ static bool switch_and_load(void)
     if (!module_load(module_name, driver_name)) {
       set_bb_error("Could not load GPU driver");
       return false;
+    } else {
+      /* XXX NVIDIA UVM support */
+      if (strstr(module_name, "nvidia")) { /* We are using NVIDIA's proprietary driver */
+        char uvm_module_name[1024];
+        sprintf(uvm_module_name, "%s-uvm", module_name);
+        if (!module_load(uvm_module_name, "nvidia_uvm")) {
+          char log_string[1024];
+          sprintf(log_string, "Cannot load UVM module: %s\n", uvm_module_name);
+          bb_log(LOG_ERR, log_string);
+        }
+      }
     }
   }
   return true;
@@ -238,6 +249,10 @@ static void switch_and_unload(void)
       }
       /* unload the driver loaded by the graphica card */
       if (pci_get_driver(driver, pci_bus_id_discrete, sizeof driver)) {
+        /* XXX NVIDIA UVM support */
+        if (strstr(driver, "nvidia")) {
+          module_unload("nvidia_uvm");
+        }
         module_unload(driver);
       }
 
