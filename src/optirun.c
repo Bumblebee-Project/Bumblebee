@@ -203,7 +203,11 @@ static int run_primus(int argc, char **argv) {
 
   /* primus starts the X server when needed, fixes long-standing fork issue */
   setenv("BUMBLEBEE_SOCKET", bb_config.socket_path, 1);
-
+  
+/* primus needs this variable workaround for libglvnd enabled mesa */
+ 
+   setenv("__GLVND_DISALLOW_PATCHING", "1", 0);
+  
   /* set LD_LIBRARY_PATH to primus_ld_path plus ld_path plus current LD_LIBRARY_PATH */
   setenv("PRIMUS_DISPLAY", bb_config.x_display, 0);
   char *ldpath_cur = getenv("LD_LIBRARY_PATH");
