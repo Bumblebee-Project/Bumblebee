@@ -1,4 +1,7 @@
 /*
+ * Copyright (c) 2017, The Bumblebee Project
+ * Author: Stefan Helmert (TheTesla) <stefan.helmert@t-online.de>
+ *
  * Copyright (c) 2011-2013, The Bumblebee Project
  * Author: Joaquín Ignacio Aramendía samsagax@gmail.com
  * Author: Jaron Viëtor AKA "Thulinma" <jaron@vietors.com>
@@ -460,7 +463,13 @@ void bbconfig_parse_conf_driver(GKeyFile *bbcfg, char *driver) {
     /* if KernelDriver is empty, the default behavior is to copy Driver which
      * is done in driver_detect() */
     if (*module_name) {
-      free_and_set_value(&bb_config.module_name, module_name);
+      char* kernelDriver;
+      kernelDriver = malloc(MAX_STR_LEN);
+      if(findDriverWild(kernelDriver, module_name)) {
+          free_and_set_value(&bb_config.module_name, kernelDriver);
+      } else {
+          free_and_set_value(&bb_config.module_name, module_name);
+      }
     } else {
       g_free(module_name);
     }

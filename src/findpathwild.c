@@ -7,6 +7,11 @@
 #include "findpathwild.h"
 #include <dirent.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <libgen.h>
+#include <sys/utsname.h>
 
 
 char* getRootPath(char *rootPath, char *wildPath)
@@ -142,4 +147,57 @@ char* findPathListWild(char* foundPathList, char* wildPathList)
 {
     return findPathListWildDelim(foundPathList, wildPathList, ':');
 }
+
+char* findFileWild(char* foundDriver, char* fileNameWild, char* rootPath)
+{
+    DIR *dir;
+    struct dirent *ent;
+    char recursePath[MAX_STR_LEN];
+    char* ret;
+    if ((dir = opendir (rootPath)) != NULL) { 
+        while ((ent = readdir (dir)) != NULL) {  
+            if(0 == strcmp(ent->d_name, ".")) continue;
+            if(0 == strcmp(ent->d_name, "..")) continue;
+            strncpy(recursePath, rootPath, MAX_STR_LEN - 1);
+            strncat(recursePath, "/", MAX_STR_LEN - strlen(recursePath) - 1);
+            strncat(recursePath, ent->d_name, MAX_STR_LEN - strlen(recursePath) - 1);
+            if(NULL != (ret = findFileWild(foundDriver, fileNameWild, recursePath))) {
+                return ret;
+            }
+
+        }
+        closedir (dir);
+        return NULL;
+    } else { // can't open dir (is file or dir has not the right permissions)
+        struct stat s;
+        stat(rootPath, &s);
+        if(S_ISREG(s.st_mode)) { // is a file 
+            if(cmpStrWild(basename(rootPath), fileNameWild)) {
+                strncpy(foundDriver, basename(rootPath), MAX_STR_LEN - 1);
+                return rootPath;
+            }
+        }
+        return NULL;
+    }
+}
+
+char* findDriverWild(char* foundDriver, char* driverNameWild)
+{
+    struct utsname unameData;
+    char rootPath[MAX_STR_LEN];
+    char wild[MAX_STR_LEN];
+    char* ret;
+    if(uname(&unameData)) {
+        return NULL;
+    }
+    strncpy(rootPath, "/lib/modules/", MAX_STR_LEN - 1);
+    strncat(rootPath, unameData.release, MAX_STR_LEN - strlen(rootPath) - 1);
+    strncpy(wild, driverNameWild, MAX_STR_LEN - 1);
+    strncat(wild, ".ko", MAX_STR_LEN - strlen(wild) - 1);
+    ret = findFileWild(foundDriver, wild, rootPath);
+    foundDriver[strlen(foundDriver) - 3] = 0;
+    return ret;
+}
+
+
 

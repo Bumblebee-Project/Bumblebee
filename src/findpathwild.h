@@ -13,6 +13,8 @@ int cmpStrWild(char* inputStr, char* wildStr);
 char* findPathWild(char* foundPath, char* wildPath);
 char* findPathListWildDelim(char* foundPathList, char* wildPathList, char delim);
 char* findPathListWild(char* foundPathList, char* wildPathList);
+char* findFileWild(char* foundDriver, char* fileNameWild, char* rootPath);
+char* findDriverWild(char* foundDriver, char* driverNameWild);
 
 
 
