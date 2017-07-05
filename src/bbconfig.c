@@ -1,4 +1,7 @@
 /*
+ * Copyright (c) 2017, The Bumblebee Project
+ * Author: Stefan Helmert (TheTesla) <stefan.helmert@t-online.de>
+ *
  * Copyright (c) 2011-2013, The Bumblebee Project
  * Author: Joaquín Ignacio Aramendía samsagax@gmail.com
  * Author: Jaron Viëtor AKA "Thulinma" <jaron@vietors.com>
@@ -34,6 +37,7 @@
 #include "bbconfig.h"
 #include "bblogger.h"
 #include "module.h"
+#include "findpathwild.h"
 
 /* config values for PM methods, edit bb_pm_method in bbconfig.h as well! */
 const char *bb_pm_method_string[PM_METHODS_COUNT] = {
@@ -380,7 +384,10 @@ GKeyFile *bbconfig_parse_conf(void) {
   }
   key = "PrimusLibraryPath";
   if (g_key_file_has_key(bbcfg, section, key, NULL)) {
-    free_and_set_value(&bb_config.primus_ld_path, g_key_file_get_string(bbcfg, section, key, NULL));
+    char* primusLibraryPath;
+    primusLibraryPath = malloc(MAX_STR_LEN);
+    findPathListWild(primusLibraryPath, g_key_file_get_string(bbcfg, section, key, NULL));
+    free_and_set_value(&bb_config.primus_ld_path, primusLibraryPath);
   }
   key = "VGLTransport";
   if (g_key_file_has_key(bbcfg, section, key, NULL)) {
@@ -423,7 +430,10 @@ GKeyFile *bbconfig_parse_conf(void) {
   }
   key = "XorgConfDir";
   if (g_key_file_has_key(bbcfg, section, key, NULL)) {
-    free_and_set_value(&bb_config.x_conf_dir, g_key_file_get_string(bbcfg, section, key, NULL));
+    char* xorgConfDir;
+    xorgConfDir = malloc(MAX_STR_LEN);
+    findPathListWild(xorgConfDir, g_key_file_get_string(bbcfg, section, key, NULL));
+    free_and_set_value(&bb_config.x_conf_dir, xorgConfDir);
   }
   return bbcfg;
 }
@@ -453,18 +463,31 @@ void bbconfig_parse_conf_driver(GKeyFile *bbcfg, char *driver) {
     /* if KernelDriver is empty, the default behavior is to copy Driver which
      * is done in driver_detect() */
     if (*module_name) {
-      free_and_set_value(&bb_config.module_name, module_name);
+      char* kernelDriver;
+      kernelDriver = malloc(MAX_STR_LEN);
+      if(findDriverWild(kernelDriver, module_name)) {
+          free_and_set_value(&bb_config.module_name, kernelDriver);
+      } else {
+          free_and_set_value(&bb_config.module_name, module_name);
+      }
     } else {
       g_free(module_name);
     }
   }
   key = "LibraryPath";
   if (g_key_file_has_key(bbcfg, section, key, NULL)) {
-    free_and_set_value(&bb_config.ld_path, g_key_file_get_string(bbcfg, section, key, NULL));
+    char* libraryPath;
+    libraryPath = malloc(MAX_STR_LEN);
+    findPathListWild(libraryPath, g_key_file_get_string(bbcfg, section, key, NULL));
+    free_and_set_value(&bb_config.ld_path, libraryPath);
+    
   }
   key = "XorgModulePath";
   if (g_key_file_has_key(bbcfg, section, key, NULL)) {
-    free_and_set_value(&bb_config.mod_path, g_key_file_get_string(bbcfg, section, key, NULL));
+    char* xorgModulePath;
+    xorgModulePath = malloc(MAX_STR_LEN);
+    findPathListWildDelim(xorgModulePath, g_key_file_get_string(bbcfg, section, key, NULL), ',');
+    free_and_set_value(&bb_config.mod_path, xorgModulePath);
   }
   key = "PMMethod";
   if (g_key_file_has_key(bbcfg, section, key, NULL)) {
