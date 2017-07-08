@@ -47,6 +47,7 @@ EXTRA_DIST = scripts/systemd/bumblebeed.service.in \
 	src/bbsocketclient.h \
 	src/bbsocket.h \
 	src/driver.h \
+	src/findpathwild.h \
 	src/module.h \
 	src/pci.h \
 	src/switch/switching.h
