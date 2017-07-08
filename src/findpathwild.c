@@ -19,7 +19,8 @@ char* getRootPath(char *rootPath, char *wildPath)
     char c;
     c = 1;
     unsigned pidxend = 0;
-    for(int i=0; c && i < MAX_STR_LEN; i++){
+    int i;
+    for(i=0; c && i < MAX_STR_LEN; i++){
       c = wildPath[i];
       rootPath[i] = c;
       if('/' == c){
@@ -37,7 +38,8 @@ char* splitStr(char* str, char delim)
 {
     char c;
     c = 1;
-    for(int i=0; c && i < MAX_STR_LEN; i++){
+    int i;
+    for(i=0; c && i < MAX_STR_LEN; i++){
         c = str[i];
         if(delim == c){
             str[i] = 0;
@@ -53,7 +55,8 @@ int cmpStrWild(char* inputStr, char* wildStr)
     char ci, cw;
     ci = 1;
     cw = 1;
-    for(int i = 0; ci && cw && i < MAX_STR_LEN; i++){
+    int i;
+    for(i = 0; ci && cw && i < MAX_STR_LEN; i++){
         ci = inputStr[i];
         cw = wildStr[i];
         if(ci == cw) continue;
