@@ -1,7 +1,8 @@
 /*
- * Copyright (c) 2011-2013, The Bumblebee Project
+ * Copyright (c) 2011-2017, The Bumblebee Project
  * Author: Joaquín Ignacio Aramendía samsagax@gmail.com
  * Author: Jaron Viëtor AKA "Thulinma" <jaron@vietors.com>
+ * Author: Stefan Helmert AKA "TheTesla" <stefan.helmert@t-online.de>
  *
  * This file is part of Bumblebee.
  *
