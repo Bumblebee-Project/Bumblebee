@@ -377,14 +377,14 @@ GKeyFile *bbconfig_parse_conf(void) {
   section = "optirun";
   key = "Bridge";
   if (g_key_file_has_key(bbcfg, section, key, NULL)) {
+    free_and_set_value(&bb_config.optirun_bridge, g_key_file_get_string(bbcfg, section, key, NULL));
+  }
+  key = "PrimusLibraryPath";
+  if (g_key_file_has_key(bbcfg, section, key, NULL)) {
     char* primusLibraryPath;
     primusLibraryPath = malloc(MAX_STR_LEN);
     findPathListWild(primusLibraryPath, g_key_file_get_string(bbcfg, section, key, NULL));
     free_and_set_value(&bb_config.primus_ld_path, primusLibraryPath);
-  }
-  key = "PrimusLibraryPath";
-  if (g_key_file_has_key(bbcfg, section, key, NULL)) {
-    free_and_set_value(&bb_config.primus_ld_path, g_key_file_get_string(bbcfg, section, key, NULL));
   }
   key = "VGLTransport";
   if (g_key_file_has_key(bbcfg, section, key, NULL)) {
