@@ -28,9 +28,11 @@ Section "Device"
 #   render it unusable (unless you have some way to run killall Xorg).
     Option "ProbeAllGpus" "false"
 
+    Option "AllowEmptyInitialConfiguration" "true"
+
     Option "NoLogo" "true"
-    Option "UseEDID" "false"
-    Option "UseDisplayDevice" "none"
+#    Option "UseEDID" "false"
+#    Option "UseDisplayDevice" "none"
 
 #   If your NVIDIA drivers are version 331.13 or newer, and you have a laptop
 #   where some of the video outputs such as HDMI or DisplayPort are connected
