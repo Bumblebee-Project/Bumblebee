@@ -28,7 +28,7 @@ bin_SCRIPTS = scripts/bumblebee-bugreport
 xconfddir = $(bumblebeedconfdir)/xorg.conf.d
 xconfd_DATA = conf/xorg.conf.d/10-dummy.conf
 
-CLEANFILES = $(noinst_SCRIPTS) conf/bumblebee.conf $(bin_SCRIPTS)
+CLEANFILES = $(noinst_SCRIPTS) conf/bumblebee.conf $(bin_SCRIPTS) $(sbin_SCRIPTS)
 EXTRA_DIST = scripts/systemd/bumblebeed.service.in \
 	scripts/bumblebee.bash.in \
 	scripts/upstart/bumblebeed.conf.in \
