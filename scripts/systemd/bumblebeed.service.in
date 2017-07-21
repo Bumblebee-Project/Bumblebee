@@ -3,7 +3,8 @@ Description=Bumblebee C Daemon
 
 [Service]
 Type=simple
-ExecStart=@SBINDIR@/bumblebeed --use-syslog
+ExecStartPre=-/usr/bin/prime-select intel
+ExecStart=@SBINDIR@/bumblebee.bash @BBCONFDIR@/bumblebee.conf
 Restart=always
 RestartSec=60
 

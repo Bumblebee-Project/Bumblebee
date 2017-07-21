@@ -22,6 +22,7 @@ if WITH_PIDFILE
 noinst_SCRIPTS += scripts/sysvinit/bumblebeed
 endif
 
+sbin_SCRIPTS = scripts/bumblebee.bash
 bin_SCRIPTS = scripts/bumblebee-bugreport
 
 xconfddir = $(bumblebeedconfdir)/xorg.conf.d
@@ -29,6 +30,7 @@ xconfd_DATA = conf/xorg.conf.d/10-dummy.conf
 
 CLEANFILES = $(noinst_SCRIPTS) conf/bumblebee.conf $(bin_SCRIPTS)
 EXTRA_DIST = scripts/systemd/bumblebeed.service.in \
+	scripts/bumblebee.bash.in \
 	scripts/upstart/bumblebeed.conf.in \
 	conf/99-bumblebee-nvidia-dev.rules \
 	conf/bumblebee.conf.in \
@@ -106,6 +108,10 @@ conf/bumblebee.conf: $(srcdir)/conf/bumblebee.conf.in
 
 scripts/systemd/bumblebeed.service: $(srcdir)/scripts/systemd/bumblebeed.service.in
 	mkdir -p scripts/systemd
+	$(do_subst) < $< > $@
+
+scripts/bumblebee.bash: $(srcdir)/scripts/bumblebee.bash.in
+	mkdir -p scripts
 	$(do_subst) < $< > $@
 
 scripts/bumblebee-bugreport: $(srcdir)/scripts/bumblebee-bugreport.in
