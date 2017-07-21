@@ -23,20 +23,20 @@ echo "    XorgModulePath = $ConfXorgModulePath"
 
 Driver=$ConfDriver
 
-KernelDriver=$(find /lib/modules/$(uname -r) -name $ConfKernelDriver.ko -printf "%f\n")
+KernelDriver=$(find /lib/modules/$(uname -r) -name $ConfKernelDriver.ko -printf "%f\n" | tail --lines=1 )
 KernelDriver=${KernelDriver:0:-3}
 
 LibraryPath=
 for i in $(echo "$ConfLibraryPath" | sed "s/:/ /g")
 do
-  LibraryPath=$LibraryPath:$(ls -d $i)
+  LibraryPath=$LibraryPath:$(ls -drt $i | tail --lines=1 )
 done
 LibraryPath=${LibraryPath:1}
 
 XorgModulePath=
 for i in $(echo "$ConfXorgModulePath" | sed "s/,/ /g")
 do
-  XorgModulePath=$XorgModulePath,$(ls -d $i)
+  XorgModulePath=$XorgModulePath,$(ls -drt $i | tail --lines=1 )
 done
 XorgModulePath=${XorgModulePath:1}
 
