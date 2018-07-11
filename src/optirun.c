@@ -96,6 +96,33 @@ static int run_fallback(char *argv[]) {
   return EXIT_FAILURE;
 }
 
+static int check_xpra(void) {
+  /* check if xpra exists */
+  char *p = which_program("xpra");
+  int has_xpra = (p != NULL);
+  free(p);
+  return has_xpra;
+}
+
+static int run_xpra(int argc, char **argv) {
+  char * xpra_args[12];
+  xpra_args[0] = "xpra";
+  xpra_args[1] = "start";
+  xpra_args[2] = "--start-child";
+  // TODO: Parse all arguments into a proper command string. We ignore everything after the first argument now.
+  xpra_args[3] = argv[optind];
+  xpra_args[4] = "--use-display=yes";
+  xpra_args[5] = "--pulseaudio=no";
+  xpra_args[6] = "--attach=yes";
+  xpra_args[7] = "--exit-with-client=yes";
+  xpra_args[8] = "--exit-with-children=yes";
+  xpra_args[9] = "--daemon=no";
+  xpra_args[10] = bb_config.x_display;
+  xpra_args[11] = 0;
+  int exitcode = bb_run_fork(xpra_args, 0);
+  return exitcode;
+}
+
 static int check_virtualgl(void) {
   /* check if vglrun and vglclient exist */
   char *p = which_program("vglrun");
@@ -298,6 +325,7 @@ struct optirun_bridge {
 };
 
 static struct optirun_bridge backends[] = {
+  {"xpra", check_xpra, run_xpra},
   {"virtualgl", check_virtualgl, run_virtualgl},
   {"primus", check_primus, run_primus},
   {"none", check_none, run_none}, // keep last
@@ -322,7 +350,7 @@ static int run_app(int argc, char *argv[]) {
   if (!strcmp(bb_config.optirun_bridge, "auto")) {
     while (back->name && !back->check_availability()) ++back;
     if (!back->name || !strcmp(back->name, "none")) {
-      bb_log(LOG_ERR, "No bridge found. Try installing primus or virtualgl.\n");
+      bb_log(LOG_ERR, "No bridge found. Try installing primus, virtualgl or xpra.\n");
       goto out;
     }
     bb_log(LOG_DEBUG, "Using auto-detected bridge %s\n", back->name);
