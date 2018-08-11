@@ -184,8 +184,8 @@ bool start_secondary(bool need_secondary) {
   //check if X is available, for maximum 10 seconds.
   time_t xtimer = time(0);
   Display * xdisp = 0;
-  char unix_x_display[5 + sizeof(bb_config.x_display)] = "unix/";
-  strcat(unix_x_display, bb_config.x_display);
+  char unix_x_display[16];
+  snprintf(unix_x_display, sizeof(unix_x_display), "unix/%s", bb_config.x_display);
   while ((time(0) - xtimer <= 10) && bb_is_running(bb_status.x_pid)) {
     xdisp = XOpenDisplay(unix_x_display);
     if (xdisp != 0) {
