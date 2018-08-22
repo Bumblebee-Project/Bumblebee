@@ -462,6 +462,10 @@ void bbconfig_parse_conf_driver(GKeyFile *bbcfg, char *driver) {
       g_free(module_name);
     }
   }
+  key = "AlwaysUnloadKernelDriver";
+  if (g_key_file_has_key(bbcfg, section, key, NULL)) {
+    bb_config.force_driver_unload = g_key_file_get_boolean(bbcfg, section, key, NULL);
+  }
   key = "LibraryPath";
   if (g_key_file_has_key(bbcfg, section, key, NULL)) {
     free_and_set_value(&bb_config.ld_path, g_key_file_get_string(bbcfg, section, key, NULL));
