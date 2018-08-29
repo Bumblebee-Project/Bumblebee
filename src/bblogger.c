@@ -225,7 +225,7 @@ void check_xorg_pipe(void){
         /* line / buffer is full, process the remaining buffer the next round */
         repeat = 1;
       }
-    }else{
+    } else {
       if (r == 0 || (errno != EAGAIN && r == -1)){
         /* the pipe is closed/invalid. Clean up. */
         if (bb_status.x_pipe[0] != -1){close(bb_status.x_pipe[0]); bb_status.x_pipe[0] = -1;}
@@ -254,5 +254,5 @@ void check_xorg_pipe(void){
         memmove(x_output_buffer, next_part, x_buffer_pos);
       }
     }
-  }while(repeat);
+  }while (repeat);
 }/* check_xorg_pipe */

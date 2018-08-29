@@ -34,6 +34,7 @@
 #include <string.h>
 #include <errno.h>
 #include <getopt.h>
+#include <libkmod.h>
 #ifdef WITH_PIDFILE
 #ifdef HAVE_LIBBSD_020
 #include <libutil.h>
@@ -488,6 +489,14 @@ int main(int argc, char* argv[]) {
 
   free(pci_id_igd);
 
+  // kmod context have to be available for driver detection
+  bb_status.kmod_ctx = kmod_new(NULL, NULL);
+  if (bb_status.kmod_ctx == NULL) {
+    bb_log(LOG_ERR, "kmod_new() failed!\n");
+    bb_closelog();
+    exit(EXIT_FAILURE);
+  }
+
   GKeyFile *bbcfg = bbconfig_parse_conf();
   bbconfig_parse_opts(argc, argv, PARSE_STAGE_DRIVER);
   driver_detect();
@@ -500,6 +509,7 @@ int main(int argc, char* argv[]) {
 
   /* dump the config after detecting the driver */
   config_dump();
+
   if (config_validate() != 0) {
     return (EXIT_FAILURE);
   }
@@ -572,5 +582,7 @@ int main(int argc, char* argv[]) {
   //close X pipe, if any parts of it are open still
   if (bb_status.x_pipe[0] != -1){close(bb_status.x_pipe[0]); bb_status.x_pipe[0] = -1;}
   if (bb_status.x_pipe[1] != -1){close(bb_status.x_pipe[1]); bb_status.x_pipe[1] = -1;}
+  //cleanup kmod context
+  kmod_unref(bb_status.kmod_ctx);
   return (EXIT_SUCCESS);
 }
