@@ -464,12 +464,19 @@ int main(int argc, char* argv[]) {
 
   /* First look for an intel card */
   struct pci_bus_id *pci_id_igd = pci_find_gfx_by_vendor(PCI_VENDOR_ID_INTEL, 0);
+
+  /* Then look for an amd card */
+  if (!pci_id_igd) {
+    bb_log(LOG_INFO, "No Intel video card found, testing for system with an AMD APU.\n");
+    pci_id_igd = pci_find_gfx_by_vendor(PCI_VENDOR_ID_AMD, 0);
+  }
+
   if (!pci_id_igd) {
     /* This is no Optimus configuration. But maybe it's a
        dual-nvidia configuration. Let us test that.
     */
     pci_id_igd = pci_find_gfx_by_vendor(PCI_VENDOR_ID_NVIDIA, 1);
-    bb_log(LOG_INFO, "No Intel video card found, testing for dual-nvidia system.\n");
+    bb_log(LOG_INFO, "No Intel/AMD video card found, testing for dual-nvidia system.\n");
 
     if (!pci_id_igd) {
       /* Ok, this is not a double gpu setup supported (there is at most
