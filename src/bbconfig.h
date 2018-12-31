@@ -145,6 +145,7 @@ struct bb_config_struct {
     char * module_name; /* Kernel module to be loaded for the driver.
                                     * If empty, driver will be used. This is
                                     * for Ubuntu which uses nvidia-current */
+    int force_driver_unload; /* Force driver unload, even without active PM method */
     int card_shutdown_state;
 #ifdef WITH_PIDFILE
     char *pid_file; /* pid file for storing the daemons PID */

@@ -225,24 +225,31 @@ bool start_secondary(bool need_secondary) {
 static void switch_and_unload(void)
 {
   char driver[BUFFER_SIZE];
+  int unload_driver = 0;
 
-  if (bb_config.pm_method == PM_DISABLED && bb_status.runmode != BB_RUN_EXIT) {
+  if (bb_config.pm_method == PM_DISABLED && !bb_config.force_driver_unload && bb_status.runmode != BB_RUN_EXIT) {
     /* do not disable the card if PM is disabled unless exiting */
     return;
   }
 
   //if card is on and can be switched, switch it off
+  if (switcher && switcher->need_driver_unloaded) {
+    /* do not unload the drivers nor disable the card if the card is not on */
+    if (switcher->status() != SWITCH_ON) {
+      return;
+    }
+    unload_driver = 1;
+  }
+
+  if (unload_driver || bb_config.force_driver_unload) {
+    /* unload the driver loaded by the graphica card */
+    if (pci_get_driver(driver, pci_bus_id_discrete, sizeof driver)) {
+      module_unload(driver);
+    }
+  }
+
   if (switcher) {
     if (switcher->need_driver_unloaded) {
-      /* do not unload the drivers nor disable the card if the card is not on */
-      if (switcher->status() != SWITCH_ON) {
-        return;
-      }
-      /* unload the driver loaded by the graphica card */
-      if (pci_get_driver(driver, pci_bus_id_discrete, sizeof driver)) {
-        module_unload(driver);
-      }
-
       //only turn card off if no drivers are loaded
       if (pci_get_driver(NULL, pci_bus_id_discrete, 0)) {
         bb_log(LOG_DEBUG, "Drivers are still loaded, unable to disable card\n");
