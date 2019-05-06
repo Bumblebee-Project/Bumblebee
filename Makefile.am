@@ -29,6 +29,7 @@ xconfd_DATA = conf/xorg.conf.d/10-dummy.conf
 
 CLEANFILES = $(noinst_SCRIPTS) conf/bumblebee.conf $(bin_SCRIPTS)
 EXTRA_DIST = scripts/systemd/bumblebeed.service.in \
+	scripts/bumblebee.bash.in \
 	scripts/upstart/bumblebeed.conf.in \
 	conf/99-bumblebee-nvidia-dev.rules \
 	conf/bumblebee.conf.in \
@@ -103,9 +104,21 @@ do_subst = sed -e 's|[@]GITVERSION[@]|$(GITVERSION)|g' \
 conf/bumblebee.conf: $(srcdir)/conf/bumblebee.conf.in
 	mkdir -p conf
 	$(do_subst) < $< > $@
-
-scripts/systemd/bumblebeed.service: $(srcdir)/scripts/systemd/bumblebeed.service.in
+if CONF_WILD
+  scripts/systemd/bumblebeed.service: $(srcdir)/scripts/systemd/bumblebeed_wild.service.in
 	mkdir -p scripts/systemd
+	$(do_subst) < $< > $@
+  sbin_SCRIPTS = scripts/bumblebee.bash
+  CLEANFILES += $(sbin_SCRIPTS)
+else
+  scripts/systemd/bumblebeed.service: $(srcdir)/scripts/systemd/bumblebeed.service.in
+	mkdir -p scripts/systemd
+	$(do_subst) < $< > $@
+endif
+
+
+scripts/bumblebee.bash: $(srcdir)/scripts/bumblebee.bash.in
+	mkdir -p scripts
 	$(do_subst) < $< > $@
 
 scripts/bumblebee-bugreport: $(srcdir)/scripts/bumblebee-bugreport.in

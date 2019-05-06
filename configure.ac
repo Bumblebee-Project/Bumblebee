@@ -101,6 +101,17 @@ AS_IF([test "x$with_pidfile" != xno],
 	])
 AM_CONDITIONAL([WITH_PIDFILE], [test "x$with_pidfile" != xno])
 
+
+AC_ARG_ENABLE([wild],
+[  --enable-wild    Turn on wildcard support],
+[case "${enableval}" in
+  yes) conf_wild=yes ;;
+  no)  conf_wild=no ;;
+  *) AC_MSG_ERROR([bad value ${enableval} for --enable-wild]) ;;
+esac],[conf_wild=no])
+AM_CONDITIONAL([CONF_WILD], [test "x$conf_wild" != xno])
+
+
 UDEV_RULES_DIR=/lib/udev/rules.d
 AC_ARG_WITH([udev-rules],
 	[AS_HELP_STRING([--with-udev-rules@<:@=DIR@:>@],
