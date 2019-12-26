@@ -233,6 +233,8 @@ static void handle_socket(struct clientsocket * C) {
             snprintf(buffer, BUFFER_SIZE, "Value: %s\n", bb_config.x_display);
           } else if (strcmp(conf_key, "LibraryPath") == 0) {
             snprintf(buffer, BUFFER_SIZE, "Value: %s\n", bb_config.ld_path);
+          } else if (strcmp(conf_key, "GLXName") == 0) {
+            snprintf(buffer, BUFFER_SIZE, "Value: %s\n", bb_config.glx_name);
           } else if (strcmp(conf_key, "Driver") == 0) {
             /* note: this is not the auto-detected value, but the actual one */
             snprintf(buffer, BUFFER_SIZE, "Value: %s\n", bb_config.driver);

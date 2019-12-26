@@ -485,6 +485,10 @@ void bbconfig_parse_conf_driver(GKeyFile *bbcfg, char *driver) {
   if (g_key_file_has_key(bbcfg, section, key, NULL)) {
     free_and_set_value(&bb_config.x_conf_file, g_key_file_get_string(bbcfg, section, key, NULL));
   }
+  key = "GLXName";
+  if (g_key_file_has_key(bbcfg, section, key, NULL)) {
+    free_and_set_value(&bb_config.glx_name, g_key_file_get_string(bbcfg, section, key, NULL));
+  }
   if (err != NULL) {
     g_error_free(err);
   }
@@ -520,6 +524,7 @@ void init_config(void) {
   set_string_value(&bb_config.x_display, CONF_XDISP);
   set_string_value(&bb_config.bb_conf_file, CONFIG_FILE);
   set_string_value(&bb_config.ld_path, "");
+  set_string_value(&bb_config.glx_name, "libGL.so.1");
   set_string_value(&bb_config.mod_path, "");
   set_string_value(&bb_config.socket_path, CONF_SOCKPATH);
   set_string_value(&bb_config.gid_name, CONF_GID);
@@ -551,6 +556,7 @@ void config_dump(void) {
   bb_log(LOG_DEBUG, " bumblebeed config file: %s\n", bb_config.bb_conf_file);
   bb_log(LOG_DEBUG, " X display: %s\n", bb_config.x_display);
   bb_log(LOG_DEBUG, " LD_LIBRARY_PATH: %s\n", bb_config.ld_path);
+  bb_log(LOG_DEBUG, " GLX library name: %s\n", bb_config.glx_name);
   bb_log(LOG_DEBUG, " Socket path: %s\n", bb_config.socket_path);
   if (bb_status.runmode == BB_RUN_SERVER || bb_status.runmode == BB_RUN_DAEMON) {
     /* daemon options */

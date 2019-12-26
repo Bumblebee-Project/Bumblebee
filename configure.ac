@@ -85,6 +85,12 @@ AC_DEFINE_CONF(CONF_DRIVER_MODULE_NVIDIA, [name of module for nvidia driver, i.e
 AC_DEFINE_CONF(CONF_LDPATH_NVIDIA, [Path to nvidia libraries for nvidia driver])
 AC_DEFINE_CONF(CONF_MODPATH_NVIDIA, [ModulePath for xorg modules when using nvidia driver])
 
+AC_DEFINE_CONF(CONF_GLXNAME_NVIDIA, [Name of the GLX library. Default: libGL.so.1], [
+if test "x" = "x$CONF_GLXNAME_NVIDIA"; then
+	CONF_GLXNAME_NVIDIA="libGL.so.1"
+fi
+])
+
 # non-config related compile-time defines
 AC_DEFINE(DAEMON_NAME, "bumblebeed", "daemon name")
 

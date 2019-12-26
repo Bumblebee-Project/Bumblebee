@@ -224,11 +224,11 @@ static int run_primus(int argc, char **argv) {
   char *libgl_mesa = "/usr/$LIB/libGL.so.1:/usr/lib/$LIB/libGL.so.1:/usr/$LIB/mesa/libGL.so.1:/usr/lib/$LIB/mesa/libGL.so.1";
   if (bb_config.ld_path[0]) { /* build new library path for PRIMUS_libGLa */
     int libgl_size = strlen(bb_config.ld_path) + 1;
-    { /* calculate additional memories for adding "/libGL.so.1" */
+    { /* calculate additional memories for adding "/<GLXName>" */
       char *p = bb_config.ld_path;
       do {
         p = strchr(p, ':');
-        libgl_size += sizeof("/libGL.so.1") - 1;
+        libgl_size += 1 + strlen(bb_config.glx_name); /* count / as prefix */
       } while (p++);
     }
     char *libgl = malloc(libgl_size);
@@ -241,8 +241,8 @@ static int run_primus(int argc, char **argv) {
         if (part_len > 0) {
           memcpy(libgl + pos, path, part_len);
           pos += part_len;
-          snprintf(libgl + pos, libgl_size - pos, "/libGL.so.1%c", *p);
-          pos += sizeof("/libGL.so.1:") - 1;
+          snprintf(libgl + pos, libgl_size - pos, "/%s%c", bb_config.glx_name, *p);
+          pos += 2 + strlen(bb_config.glx_name); /* count / as prefix and : as suffix */
         }
         path = p;
       } while (*path++ == ':'); /* after check, move to part after ':' */
@@ -471,6 +471,11 @@ int main(int argc, char *argv[]) {
   free_and_set_value(&bb_config.ld_path, malloc(BUFFER_SIZE));
   if (bbsocket_query("LibraryPath", bb_config.ld_path, BUFFER_SIZE)) {
     bb_log(LOG_ERR, "Failed to retrieve LibraryPath setting.\n");
+    return EXIT_FAILURE;
+  }
+  free_and_set_value(&bb_config.glx_name, malloc(BUFFER_SIZE));
+  if (bbsocket_query("GLXName", bb_config.glx_name, BUFFER_SIZE)) {
+    bb_log(LOG_ERR, "Failed to retrieve GLXName setting.\n");
     return EXIT_FAILURE;
   }
   free_and_set_value(&bb_config.x_display, malloc(BUFFER_SIZE));

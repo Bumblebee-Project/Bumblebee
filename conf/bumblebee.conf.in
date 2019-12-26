@@ -58,6 +58,9 @@ KernelDriver=@CONF_DRIVER_MODULE_NVIDIA@
 PMMethod=@CONF_PM_METHOD@
 # colon-separated path to the nvidia libraries
 LibraryPath=@CONF_LDPATH_NVIDIA@
+# name of the nvidia-specific GLX implementation - needs to be libGLX_nvidia.so.0
+# when using the GLVND libraries (435+) to work with Primus
+GLXName=@CONF_GLXNAME_NVIDIA@
 # comma-separated path of the directory containing nvidia_drv.so and the
 # default Xorg modules path
 XorgModulePath=@CONF_MODPATH_NVIDIA@

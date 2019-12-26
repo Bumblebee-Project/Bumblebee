@@ -97,6 +97,7 @@ do_subst = sed -e 's|[@]GITVERSION[@]|$(GITVERSION)|g' \
 	-e 's|[@]XCONFDDIR[@]|$(xconfddir)|g' \
 	-e 's|[@]CONF_DRIVER_MODULE_NVIDIA[@]|$(CONF_DRIVER_MODULE_NVIDIA)|g' \
 	-e 's|[@]CONF_LDPATH_NVIDIA[@]|$(CONF_LDPATH_NVIDIA)|g' \
+	-e 's|[@]CONF_GLXNAME_NVIDIA[@]|$(CONF_GLXNAME_NVIDIA)|g' \
 	-e 's|[@]CONF_MODPATH_NVIDIA[@]|$(CONF_MODPATH_NVIDIA)|g' \
 	-e 's|[@]CONF_PIDFILE[@]|$(CONF_PIDFILE)|g'
 

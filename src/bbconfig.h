@@ -130,6 +130,7 @@ struct bb_config_struct {
     char * x_conf_dir; /// Path to the dummy X configuration directory.
     char * bb_conf_file; /// Path to the bumblebeed configuration file.
     char * ld_path; /// LD_LIBRARY_PATH to launch applications.
+    char * glx_name; /// GLX implementation library name. Default: libGL.so.1
     char * mod_path; /// ModulePath for xorg.
     char * socket_path; /// Path to the server socket.
     char * gid_name; /// Group name for setgid.
