@@ -2,6 +2,26 @@ Section "ServerLayout"
     Identifier  "Layout0"
     Option      "AutoAddDevices" "false"
     Option      "AutoAddGPU" "false"
+
+#   When using `intel-virtual-output`, the X-server for the second monitor
+#   uses its own screensaver settings for the built-in screensaver of X. If
+#   any application like e.g. a video player suppresses the screensaver, the
+#   external screen will still turn black after 10 minutes without any
+#   keyboard or mouse input. The following settings suppress this behaviour 
+#   by completely disabling the built-in screensaver.
+
+#   Note that this does not affect the screensaver of your desktop
+#   environment, as they usually do their own screensaving. Also locking
+#   the workstation works just fine. However, power saving features will not
+#   work on the external monitor, it will never go to powersaving mode.
+
+#   This is a workaround for issue #93562 against `intel-virtual-output`:
+#   https://bugs.freedesktop.org/show_bug.cgi?id=93562
+
+#   Option          "BlankTime"     "0"
+#   Option          "StandbyTime"   "0"
+#   Option          "SuspendTime"   "0"
+#   Option          "OffTime"       "0"
 EndSection
 
 Section "Device"
