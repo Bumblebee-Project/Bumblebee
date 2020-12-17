@@ -31,4 +31,5 @@ Section "Device"
     Option "NoLogo" "true"
     Option "UseEDID" "false"
     Option "UseDisplayDevice" "none"
+    Option "HardDPMS" "false"
 EndSection
