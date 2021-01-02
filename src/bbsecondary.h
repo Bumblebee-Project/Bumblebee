@@ -21,7 +21,7 @@
 #pragma once
 
 /* PCI Bus ID of the discrete video card */
-struct pci_bus_id *pci_bus_id_discrete;
+extern struct pci_bus_id *pci_bus_id_discrete;
 
 /// Start the X server by fork-exec, turn card on if needed.
 bool start_secondary(bool);

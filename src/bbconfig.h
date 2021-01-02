@@ -103,7 +103,7 @@ enum bb_pm_method {
     PM_VGASWITCHEROO,
     PM_METHODS_COUNT /* not a method but a marker for the end */
 };
-const char *bb_pm_method_string[PM_METHODS_COUNT];
+extern const char *bb_pm_method_string[PM_METHODS_COUNT];
 
 /* String buffer size */
 #define BUFFER_SIZE 1024

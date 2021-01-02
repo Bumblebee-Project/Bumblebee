@@ -37,6 +37,9 @@
 #include "pci.h"
 #include "module.h"
 
+/* PCI Bus ID of the discrete video card */
+struct pci_bus_id *pci_bus_id_discrete;
+
 /**
  * Substitutes DRIVER in the passed path
  * @param x_conf_file A path to be processed
