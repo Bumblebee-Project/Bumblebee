@@ -19,6 +19,7 @@ The following packages are dependencies for the build process:
 - pkg-config
 - glib-2.0 and development headers
 - libx11 and development headers
+- libkmod2 and development headers
 - libbsd and development headers (if pidfile support is enabled, default yes)
 - help2man (optional, it is needed for building manual pages)
 
@@ -120,3 +121,4 @@ Interesting Links
 - Arch wiki: https://wiki.archlinux.org/index.php/Bumblebee
 - Mandriva wiki: http://wiki.mandriva.com/en/Bumblebee
 - Debian wiki: http://wiki.debian.org/Bumblebee
+- Fedora wiki: https://fedoraproject.org/wiki/Bumblebee

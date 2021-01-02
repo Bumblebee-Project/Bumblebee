@@ -34,6 +34,7 @@
 #include <string.h>
 #include <errno.h>
 #include <getopt.h>
+#include <libkmod.h>
 #ifdef WITH_PIDFILE
 #ifdef HAVE_LIBBSD_020
 #include <libutil.h>
@@ -463,12 +464,19 @@ int main(int argc, char* argv[]) {
 
   /* First look for an intel card */
   struct pci_bus_id *pci_id_igd = pci_find_gfx_by_vendor(PCI_VENDOR_ID_INTEL, 0);
+
+  /* Then look for an amd card */
+  if (!pci_id_igd) {
+    bb_log(LOG_INFO, "No Intel video card found, testing for system with an AMD APU.\n");
+    pci_id_igd = pci_find_gfx_by_vendor(PCI_VENDOR_ID_AMD, 0);
+  }
+
   if (!pci_id_igd) {
     /* This is no Optimus configuration. But maybe it's a
        dual-nvidia configuration. Let us test that.
     */
     pci_id_igd = pci_find_gfx_by_vendor(PCI_VENDOR_ID_NVIDIA, 1);
-    bb_log(LOG_INFO, "No Intel video card found, testing for dual-nvidia system.\n");
+    bb_log(LOG_INFO, "No Intel/AMD video card found, testing for dual-nvidia system.\n");
 
     if (!pci_id_igd) {
       /* Ok, this is not a double gpu setup supported (there is at most
@@ -488,6 +496,14 @@ int main(int argc, char* argv[]) {
 
   free(pci_id_igd);
 
+  // kmod context have to be available for driver detection
+  bb_status.kmod_ctx = kmod_new(NULL, NULL);
+  if (bb_status.kmod_ctx == NULL) {
+    bb_log(LOG_ERR, "kmod_new() failed!\n");
+    bb_closelog();
+    exit(EXIT_FAILURE);
+  }
+
   GKeyFile *bbcfg = bbconfig_parse_conf();
   bbconfig_parse_opts(argc, argv, PARSE_STAGE_DRIVER);
   driver_detect();
@@ -500,6 +516,7 @@ int main(int argc, char* argv[]) {
 
   /* dump the config after detecting the driver */
   config_dump();
+
   if (config_validate() != 0) {
     return (EXIT_FAILURE);
   }
@@ -572,5 +589,7 @@ int main(int argc, char* argv[]) {
   //close X pipe, if any parts of it are open still
   if (bb_status.x_pipe[0] != -1){close(bb_status.x_pipe[0]); bb_status.x_pipe[0] = -1;}
   if (bb_status.x_pipe[1] != -1){close(bb_status.x_pipe[1]); bb_status.x_pipe[1] = -1;}
+  //cleanup kmod context
+  kmod_unref(bb_status.kmod_ctx);
   return (EXIT_SUCCESS);
 }

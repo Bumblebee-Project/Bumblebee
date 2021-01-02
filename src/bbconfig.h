@@ -26,6 +26,7 @@
 #include <unistd.h> //for pid_t
 #include <limits.h> //for CHAR_MAX
 #include <glib.h>
+#include <libkmod.h>
 
 /* Daemon states */
 #define BB_DAEMON 1
@@ -118,10 +119,12 @@ struct bb_status_struct {
     int x_pipe[2];//pipes for reading/writing output from X's stdout/stderr
     gboolean use_syslog;
     char *program_name;
+    struct kmod_ctx *kmod_ctx;
 };
 
 /* Structure containing the configuration. */
 struct bb_config_struct {
+    char * xorg_binary; /// Xorg binary to run.
     char * x_display; /// X display number to use.
     char * x_conf_file; /// Path to the X configuration file.
     char * x_conf_dir; /// Path to the dummy X configuration directory.
@@ -142,6 +145,7 @@ struct bb_config_struct {
     char * module_name; /* Kernel module to be loaded for the driver.
                                     * If empty, driver will be used. This is
                                     * for Ubuntu which uses nvidia-current */
+    int force_driver_unload; /* Force driver unload, even without active PM method */
     int card_shutdown_state;
 #ifdef WITH_PIDFILE
     char *pid_file; /* pid file for storing the daemons PID */

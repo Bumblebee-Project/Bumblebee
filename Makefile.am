@@ -3,6 +3,8 @@
 GITVERSION = $(shell "$(top_srcdir)/version.sh" "$(top_srcdir)")
 relnotes = doc/RELEASE_NOTES_3_2_1
 
+DISTCHECK_CONFIGURE_FLAGS = --with-udev-rules=$$dc_install_base/lib/udev/rules.d
+
 bumblebeedconfdir=$(sysconfdir)/bumblebee
 
 AM_CPPFLAGS = ${regular_CPPFLAGS} \
@@ -10,7 +12,7 @@ AM_CPPFLAGS = ${regular_CPPFLAGS} \
 		-DCONF_XORG='"$(bumblebeedconfdir)/xorg.conf.DRIVER"' \
 		-DCONF_XORG_DIR='"$(bumblebeedconfdir)/xorg.conf.d"'
 AM_CFLAGS = ${regular_CFLAGS} \
-		${x11_CFLAGS} ${libbsd_CFLAGS} ${glib_CFLAGS} \
+		${x11_CFLAGS} ${libbsd_CFLAGS} ${glib_CFLAGS} ${kmod_CFLAGS} \
 		-Wextra -funsigned-char -DGITVERSION='"${GITVERSION}"'
 
 noinst_SCRIPTS = scripts/systemd/bumblebeed.service \
@@ -34,12 +36,20 @@ EXTRA_DIST = scripts/systemd/bumblebeed.service.in \
 	conf/xorg.conf.nouveau \
 	$(xconfd_DATA) \
 	README.markdown \
-	scripts/bash_completion/bumblebee \
+	scripts/bash_completion/optirun \
 	scripts/bumblebee-bugreport.in \
 	$(relnotes) \
-	version.sh
-# for laziness include all headers found
-EXTRA_DIST += src/*.h src/*/switching.h
+	version.sh \
+	src/bbconfig.h \
+	src/bblogger.h \
+	src/bbrun.h \
+	src/bbsecondary.h \
+	src/bbsocketclient.h \
+	src/bbsocket.h \
+	src/driver.h \
+	src/module.h \
+	src/pci.h \
+	src/switch/switching.h
 
 if WITH_PIDFILE
 EXTRA_DIST += scripts/sysvinit/bumblebeed.in
@@ -49,19 +59,19 @@ sbin_PROGRAMS = bin/bumblebeed
 bin_PROGRAMS = bin/optirun
 
 bin_optirun_SOURCES = src/module.c src/bbconfig.c src/bblogger.c src/bbrun.c \
-	src/bbsocket.c src/driver.c src/optirun.c src/bbsocketclient.c
-bin_optirun_LDADD = ${glib_LIBS} -lrt
+	src/bbsocket.c src/optirun.c src/bbsocketclient.c
+bin_optirun_LDADD = ${glib_LIBS} ${kmod_LIBS} -lrt
 bin_bumblebeed_SOURCES = src/pci.c src/bbconfig.c src/bblogger.c src/bbrun.c \
 	src/bbsocket.c src/module.c src/bbsecondary.c src/switch/switching.c \
 	src/switch/sw_bbswitch.c src/switch/sw_switcheroo.c \
 	src/driver.c src/bumblebeed.c
-bin_bumblebeed_LDADD = ${x11_LIBS} ${libbsd_LIBS} ${glib_LIBS} -lrt
+bin_bumblebeed_LDADD = ${x11_LIBS} ${libbsd_LIBS} ${glib_LIBS} ${kmod_LIBS} -lrt
 
 dist_doc_DATA = $(relnotes) README.markdown
 bumblebeedconf_DATA = conf/bumblebee.conf conf/xorg.conf.nouveau conf/xorg.conf.nvidia
 
 completiondir = $(sysconfdir)/bash_completion.d
-completion_DATA = scripts/bash_completion/bumblebee
+completion_DATA = scripts/bash_completion/optirun
 
 if WITH_UDEV_RULES
 udevrulesdir = $(UDEV_RULES_DIR)
@@ -70,6 +80,7 @@ endif
 
 do_subst = sed -e 's|[@]GITVERSION[@]|$(GITVERSION)|g' \
 	-e 's|[@]CONF_XDISP[@]|$(CONF_XDISP)|g' \
+	-e 's|[@]CONF_XORG_BINARY[@]|$(CONF_XORG_BINARY)|g' \
 	-e 's|[@]CONF_SOCKPATH[@]|$(CONF_SOCKPATH)|g' \
 	-e 's|[@]CONF_GID[@]|$(CONF_GID)|g' \
 	-e 's|[@]CONF_PM_METHOD[@]|$(CONF_PM_METHOD)|g' \

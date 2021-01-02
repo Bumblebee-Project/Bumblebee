@@ -1,0 +1,20 @@
+# Travis CI script
+
+language: c
+
+os:
+- linux
+
+dist: trusty
+
+sudo: required
+
+addons:
+  apt:
+    packages:
+    - libbsd-dev
+    - libglib2.0-dev
+    - libx11-dev
+    - libkmod-dev
+
+script: autoreconf -fi && ./configure && make distcheck

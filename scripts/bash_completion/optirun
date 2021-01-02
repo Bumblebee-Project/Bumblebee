@@ -1,4 +1,4 @@
-# bash completion for bumblebee
+# bash completion for optirun
 
 _optirun() {
     local i prev cur last_optirun_offset compress_types in_option
@@ -16,7 +16,8 @@ _optirun() {
             in_option=false
         else
             case "$prev" in
-              -c|--vgl-compress|--failsafe|--display|-d|--config|-C|--ldpath|-l|--primus-ldpath|--socket|-s|-b|--bridge)
+              -c|--vgl-compress|--failsafe|--display|-d|--config|-C|--ldpath|-l\
+                  |--primus-ldpath|--socket|-s|-b|--bridge|--vgl-options)
                 in_option=true
                 ;;
               --)
@@ -49,12 +50,16 @@ _optirun() {
           -C|--config|-s|--socket)
             _filedir
             ;;
-	  -l|--ldpath|--primus-ldpath)
-	    ;;
+          -l|--ldpath|--primus-ldpath)
+            ;;
+          --vgl-options)
+            # XXX: get all vgl options and suggest these
+            ;;
           *)
             COMPREPLY=( $(compgen -W "--vgl-compress -c --failsafe --quiet \
-	        --silent -q --verbose -v --display -d --config -C --ldpath -l \
-                --primus-ldpath --socket -s --help -h --" -- "$cur") )
+                --silent -q --verbose -v --display -d --config -C --ldpath -l \
+                --primus-ldpath --socket -s --help -h --no-xorg --no-failsafe \
+                -b --bridge --debug --vgl-options --version --" -- "$cur") )
             ;;
         esac
         return 0
@@ -63,5 +68,5 @@ _optirun() {
     # after the options, auto-complete command
     _command_offset $i
 }
-have optirun && complete -F _optirun optirun
+complete -F _optirun optirun
 

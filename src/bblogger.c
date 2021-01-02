@@ -144,7 +144,11 @@ static void parse_xorg_output(char * string){
   /* Error lines are errors. */
   if (strncmp(string, "(EE)", 4) == 0){
     if (strstr(string, "Failed to load module \"kbd\"") ||
-            strstr(string, "No input driver matching")) {
+            strstr(string, "Failed to load module \"mouse\"") ||
+            strstr(string, "No input driver matching") ||
+            strstr(string, "systemd-logind: failed to get session:") ||
+            strstr(string, "failed to set DRM interface version 1.4:") ||
+            strstr(string, "Server terminated successfully")) {
       /* non-fatal errors */
       prio = LOG_DEBUG;
     } else {
@@ -200,7 +204,7 @@ static void parse_xorg_output(char * string){
       }
     }
   }
-  
+
   /* do the actual logging */
   bb_log(prio, "[XORG] %s\n", string);
 }
@@ -225,7 +229,7 @@ void check_xorg_pipe(void){
         /* line / buffer is full, process the remaining buffer the next round */
         repeat = 1;
       }
-    }else{
+    } else {
       if (r == 0 || (errno != EAGAIN && r == -1)){
         /* the pipe is closed/invalid. Clean up. */
         if (bb_status.x_pipe[0] != -1){close(bb_status.x_pipe[0]); bb_status.x_pipe[0] = -1;}
@@ -254,5 +258,5 @@ void check_xorg_pipe(void){
         memmove(x_output_buffer, next_part, x_buffer_pos);
       }
     }
-  }while(repeat);
+  }while (repeat);
 }/* check_xorg_pipe */

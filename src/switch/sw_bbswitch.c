@@ -38,7 +38,7 @@
  */
 enum switch_state bbswitch_status(void) {
   char buffer[BBS_BUFFER];
-  int ret = SWITCH_UNAVAIL;
+  enum switch_state ret = SWITCH_UNAVAIL;
   FILE * bbs = fopen(BBSWITCH_PATH, "r");
   if (bbs == 0) {
     return SWITCH_UNAVAIL;
@@ -70,7 +70,7 @@ static void bbswitch_write(char *msg) {
     bb_log(LOG_ERR, "Could not open %s: %s\n", BBSWITCH_PATH, strerror(errno));
     return;
   }
-  fwrite(msg, sizeof msg, strlen(msg) + 1, bbs);
+  fputs(msg, bbs);
   if (ferror(bbs)) {
     bb_log(LOG_WARNING, "Could not write to %s: %s\n", BBSWITCH_PATH,
             strerror(errno));
@@ -98,7 +98,7 @@ int bbswitch_is_available(struct switch_info info) {
    * recognized by bbswitch. Assuming that vga_switcheroo was not told to OFF
    * the device */
   if (module_load("bbswitch", "bbswitch")) {
-    bb_log(LOG_DEBUG, "succesfully loaded bbswitch\n");
+    bb_log(LOG_DEBUG, "successfully loaded bbswitch\n");
     /* hurrah, bbswitch could be loaded which means that the module is
      * available and that the card is supported */
     return 1;

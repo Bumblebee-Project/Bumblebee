@@ -22,6 +22,8 @@ NoEcoModeOverride=false
 Driver=@CONF_DRIVER@
 # Directory with a dummy config file to pass as a -configdir to secondary X
 XorgConfDir=@XCONFDDIR@
+# Xorg binary to run
+XorgBinary=@CONF_XORG_BINARY@
 
 ## Client options. Will take effect on the next optirun executed.
 [optirun]
@@ -60,6 +62,10 @@ LibraryPath=@CONF_LDPATH_NVIDIA@
 # default Xorg modules path
 XorgModulePath=@CONF_MODPATH_NVIDIA@
 XorgConfFile=@BBCONFDIR@/xorg.conf.nvidia
+# If set to true, will always unload the kernel module(s) even with
+# PMMethod=none - useful for newer Optimus models on which the kernel power
+# management works out of the box to power the card on/off without bbswitch.
+AlwaysUnloadKernelDriver=false
 
 ## Section with nouveau driver specific options, only parsed if Driver=nouveau
 [driver-nouveau]
