@@ -31,6 +31,7 @@ Section "Device"
     Option "NoLogo" "true"
     Option "UseEDID" "false"
     Option "UseDisplayDevice" "none"
+    Option "HardDPMS" "false"
 
 #   If your NVIDIA drivers are version 331.13 or newer, and you have a laptop
 #   where some of the video outputs such as HDMI or DisplayPort are connected
