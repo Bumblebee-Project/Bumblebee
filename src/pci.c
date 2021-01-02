@@ -54,7 +54,7 @@ int pci_parse_bus_id(struct pci_bus_id *dest, int bus_id_numeric) {
  */
 int pci_get_class(struct pci_bus_id *bus_id) {
   /* the Bus ID is always of fixed length */
-  char class_path[40];
+  char class_path[42];
   FILE *fp;
 
   snprintf(class_path, sizeof class_path,
@@ -172,7 +172,7 @@ size_t pci_get_driver(char *dest, struct pci_bus_id *bus_id, size_t len) {
  * @return a file handle on success, or NULL on failure
  */
 static int pci_config_open(struct pci_bus_id *bus_id, mode_t mode) {
-  char config_path[41];
+  char config_path[43];
 
   snprintf(config_path, sizeof config_path,
           "/sys/bus/pci/devices/0000:%02x:%02x.%o/config", bus_id->bus,
