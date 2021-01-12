@@ -123,7 +123,7 @@ scripts/upstart/bumblebeed.conf: $(srcdir)/scripts/upstart/bumblebeed.conf.in
 	$(do_subst) < $< > $@
 
 if HAVE_HELP2MAN
-man_MANS = bumblebeed.1 optirun.1
+man_MANS = bumblebeed.8 optirun.1
 CLEANFILES += $(man_MANS)
 
 optirun.1: bin/optirun $(bin_optirun_SOURCES)
@@ -131,9 +131,10 @@ optirun.1: bin/optirun $(bin_optirun_SOURCES)
 		--name='run programs on the discrete video card' \
 		bin/optirun
 
-bumblebeed.1: bin/bumblebeed $(bin_bumblebeed_SOURCES)
+bumblebeed.8: bin/bumblebeed $(bin_bumblebeed_SOURCES)
 	$(HELP2MAN) --output=$@ --no-info \
 		--name='bumblebee daemon' \
+		--section=8 \
 		bin/bumblebeed
 else
 	@echo "Warning: help2man not available, no man page is created."

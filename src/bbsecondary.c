@@ -37,6 +37,9 @@
 #include "pci.h"
 #include "module.h"
 
+/* PCI Bus ID of the discrete video card */
+struct pci_bus_id *pci_bus_id_discrete;
+
 /**
  * Substitutes DRIVER in the passed path
  * @param x_conf_file A path to be processed
@@ -136,10 +139,10 @@ bool start_secondary(bool need_secondary) {
     return true;
   //no problems, start X if not started yet
   if (!bb_is_running(bb_status.x_pid)) {
-    char pci_id[13];
+    char pci_id[16];
     static char *x_conf_file;
     // 0-255 bus, 0-31 slot, 0-7 func
-    snprintf(pci_id, 13, "PCI:%03d:%02d:%o", pci_bus_id_discrete->bus,
+    snprintf(pci_id, sizeof(pci_id), "PCI:%03d:%02d:%o", pci_bus_id_discrete->bus,
             pci_bus_id_discrete->slot, pci_bus_id_discrete->func);
     if (!x_conf_file) {
       x_conf_file = xorg_path_w_driver(bb_config.x_conf_file, bb_config.driver);

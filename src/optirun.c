@@ -256,6 +256,9 @@ static int run_primus(int argc, char **argv) {
   /* assume OSS drivers for primary display (Mesa for Intel) */
   setenv("PRIMUS_libGLd", libgl_mesa, 0);
 
+  /* vulkan applications are handled via primus-vk */
+  setenv("ENABLE_PRIMUS_LAYER", "1", 0);
+
   int exitcode = bb_run_fork(run_args, 0);
   free(run_args);
   return exitcode;

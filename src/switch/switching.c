@@ -31,6 +31,8 @@ struct switching_method switching_methods[SWITCHERS_COUNT] = {
           switcheroo_on, switcheroo_off}
 };
 
+struct switching_method *switcher = NULL;
+
 /**
  * Enumerates through available switching methods and try a method
  * 

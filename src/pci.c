@@ -54,7 +54,7 @@ int pci_parse_bus_id(struct pci_bus_id *dest, int bus_id_numeric) {
  */
 int pci_get_class(struct pci_bus_id *bus_id) {
   /* the Bus ID is always of fixed length */
-  char class_path[40];
+  char class_path[42];
   FILE *fp;
 
   snprintf(class_path, sizeof class_path,
@@ -133,7 +133,7 @@ struct pci_bus_id *pci_find_gfx_by_vendor(unsigned int vendor_id, unsigned int i
  * buffer was too small) or 0 on error
  */
 size_t pci_get_driver(char *dest, struct pci_bus_id *bus_id, size_t len) {
-  char path[1024];
+  char path[1024], resolved_path[1024];
   ssize_t read_bytes;
   char *name;
 
@@ -145,16 +145,16 @@ size_t pci_get_driver(char *dest, struct pci_bus_id *bus_id, size_t len) {
   /* the path to the driver if one is loaded */
   snprintf(path, sizeof path,  "/sys/bus/pci/devices/0000:%02x:%02x.%o/driver",
           bus_id->bus, bus_id->slot, bus_id->func);
-  read_bytes = readlink(path, path, sizeof(path) - 1);
+  read_bytes = readlink(path, resolved_path, sizeof(resolved_path) - 1);
   if (read_bytes < 0) {
     /* error, assume that the driver is not loaded */
     return 0;
   }
 
   /* readlink does not append a NULL according to the manpage */
-  path[read_bytes] = 0;
+  resolved_path[read_bytes] = 0;
 
-  name = basename(path);
+  name = basename(resolved_path);
   /* save the name if a valid destination and buffer size was given */
   if (dest && len > 0) {
     strncpy(dest, name, len - 1);
@@ -172,7 +172,7 @@ size_t pci_get_driver(char *dest, struct pci_bus_id *bus_id, size_t len) {
  * @return a file handle on success, or NULL on failure
  */
 static int pci_config_open(struct pci_bus_id *bus_id, mode_t mode) {
-  char config_path[41];
+  char config_path[43];
 
   snprintf(config_path, sizeof config_path,
           "/sys/bus/pci/devices/0000:%02x:%02x.%o/config", bus_id->bus,
