@@ -1,6 +1,5 @@
 Section "ServerLayout"
     Identifier  "Layout0"
-    Option      "AutoAddDevices" "false"
     Option      "AutoAddGPU" "false"
 EndSection
 
@@ -9,26 +8,28 @@ Section "Device"
     Driver      "nvidia"
     VendorName  "NVIDIA Corporation"
 
-#   If the X server does not automatically detect your VGA device,
-#   you can manually set it here.
-#   To get the BusID prop, run `lspci | egrep 'VGA|3D'` and input the data
-#   as you see in the commented example.
-#   This Setting may be needed in some platforms with more than one
-#   nvidia card, which may confuse the proprietary driver (e.g.,
-#   trying to take ownership of the wrong device). Also needed on Ubuntu 13.04.
+#   If the X server does not automatically detect your VGA device, you can
+#   manually set it here.
+#   To get the BusID prop, run `lspci | egrep 'VGA|3D'` and input the data as
+#   you see in the commented example.
+#   This setting may be needed in some platforms with more than one nvidia
+#   card, which may confuse the proprietary driver (e.g., trying to take
+#   ownership of the wrong device). It was also needed on Ubuntu 13.04.
 #   BusID "PCI:01:00:0"
 
-#   Setting ProbeAllGpus to false prevents the new proprietary driver
-#   instance spawned to try to control the integrated graphics card,
-#   which is already being managed outside bumblebee.
-#   This option doesn't hurt and it is required on platforms running
-#   more than one nvidia graphics card with the proprietary driver.
-#   (E.g. Macbook Pro pre-2010 with nVidia 9400M + 9600M GT).
-#   If this option is not set, the new Xorg may blacken the screen and
-#   render it unusable (unless you have some way to run killall Xorg).
+#   Setting ProbeAllGpus to false prevents the new proprietary driver instance
+#   spawned to try to control the integrated graphics card, which is already
+#   being managed outside bumblebee.
+#   This option does not hurt and it is required on platforms running more than
+#   one nvidia graphics card with the proprietary driver (e.g. Macbook Pro
+#   pre-2010 with nVidia 9400M + 9600M GT).
+#   If this option is not set, the new Xorg may blacken the screen and render
+#   it unusable (unless you have some way to run killall Xorg).
     Option "ProbeAllGpus" "false"
 
     Option "NoLogo" "true"
+
+#   Do not probe display properties while there is no expected display.
     Option "UseEDID" "false"
     Option "UseDisplayDevice" "none"
     Option "HardDPMS" "false"
@@ -41,4 +42,5 @@ Section "Device"
 #   allowing the X server to start when the monitor is disconnected.
 
 #   Option "AllowEmptyInitialConfiguration"
+
 EndSection
