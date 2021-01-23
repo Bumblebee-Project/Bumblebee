@@ -32,3 +32,8 @@ Section "Device"
     Option "UseEDID" "false"
     Option "UseDisplayDevice" "none"
 EndSection
+
+Section "Screen"
+  Identifier "Default Screen"
+  Device "DiscreteNvidia"
+EndSection
